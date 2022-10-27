@@ -40,6 +40,7 @@ async fn main() -> eyre::Result<()> {
 
     let mut out = std::fs::File::create("generated.ts")?;
     let schema_out = std::fs::File::create("schema.json")?;
+
     let mut util_types = String::new();
     let mut scalars = String::new();
     let mut enums = String::new();
@@ -88,9 +89,7 @@ async fn main() -> eyre::Result<()> {
                 possibly_write_description(&mut enums, description)?;
                 writeln!(enums, "enum {name} {{")?;
                 for v in enum_values {
-                    if let Some(description) = v.description {
-                        writeln!(enums, "/**\n * {}\n */", description.replace('\n', "\n * "))?;
-                    }
+                    possibly_write_description(&mut enums, v.description)?;
                     writeln!(
                         enums,
                         "  {} = \"{}\",",
