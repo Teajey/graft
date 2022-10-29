@@ -1,14 +1,19 @@
 mod config;
 mod introspection_response;
+mod transform;
+mod util;
 
-use std::fmt::Write as FmtWrite;
 use std::io::Write;
+use std::{collections::HashMap, fmt::Write as FmtWrite};
 
 use convert_case::{Case, Casing};
-use eyre::Result;
+use eyre::{eyre, Result};
 use graphql_client::GraphQLQuery;
+use graphql_parser::query::{Definition, OperationDefinition};
 
-use introspection_response::{IntrospectionResponse, Type};
+use crate::introspection_response::{IntrospectionResponse, Type, TypeRef};
+use crate::transform::try_type_ref_from_arg;
+use crate::util::Named;
 
 #[derive(GraphQLQuery)]
 #[graphql(
@@ -41,10 +46,17 @@ async fn main() -> eyre::Result<()> {
     let mut out = std::fs::File::create("generated.ts")?;
     let schema_out = std::fs::File::create("schema.json")?;
 
+    let mut imports = String::new();
     let mut util_types = String::new();
     let mut scalars = String::new();
     let mut enums = String::new();
     let mut objects = String::new();
+    let mut input_objects = String::new();
+    let mut selection_sets = String::new();
+    let mut args = String::new();
+    let mut queries = String::new();
+    let mut mutations = String::new();
+    let mut subscriptions = String::new();
 
     let body = IntrospectionQuery::build_query(introspection_query::Variables {});
 
@@ -56,13 +68,90 @@ async fn main() -> eyre::Result<()> {
 
     let res: IntrospectionResponse = res.json().await?;
 
+    let type_index: HashMap<&str, TypeRef> =
+        res.data
+            .schema
+            .types
+            .iter()
+            .fold(HashMap::new(), |mut map, t| {
+                map.insert(t.name(), (*t).clone().into());
+                map
+            });
+
     serde_json::to_writer_pretty(schema_out, &res)?;
+
+    writeln!(imports, r#"import {{ parse }} from "graphql";"#)?;
 
     writeln!(util_types, "export type Nullable<T> = T | null;")?;
     writeln!(
         util_types,
+        "export type Omissible<T> = T | null | undefined;"
+    )?;
+    writeln!(
+        util_types,
         "export type NewType<T, U> = T & {{ readonly __newtype: U }};"
     )?;
+
+    let document = std::fs::read_to_string(config.document)?;
+    let document = graphql_parser::parse_query::<&str>(&document)?;
+
+    for def in document.definitions {
+        if let Definition::Operation(operation_definition) = def {
+            let operation_bundle = match operation_definition {
+                OperationDefinition::SelectionSet(set) => {
+                    return Err(eyre!(
+                        "Top-level SelectionSets are not supported.\nThis selection set should be a query, mutation, or subscription:\n{}",
+                        set
+                    ))
+                }
+                OperationDefinition::Query(query) => (
+                    query.to_string(),
+                    query
+                        .name
+                        .ok_or_else(|| eyre!("Encountered a query with no name."))?,
+                    &mut queries,
+                    "Query",
+                    query.variable_definitions,
+                ),
+                OperationDefinition::Mutation(mutation) => (
+                    mutation.to_string(),
+                    mutation
+                        .name
+                        .ok_or_else(|| eyre!("Encountered a mutation with no name."))?,
+                    &mut mutations,
+                    "Mutation",
+                    mutation.variable_definitions,
+                ),
+                OperationDefinition::Subscription(subscription) => (
+                    subscription.to_string(),
+                    subscription
+                        .name
+                        .ok_or_else(|| eyre!("Encountered a mutation with no name."))?,
+                    &mut subscriptions,
+                    "Subscription",
+                    subscription.variable_definitions,
+                ),
+            };
+            let (
+                operation_ast,
+                operation_name,
+                string_buffer,
+                operation_type_name,
+                variable_definitions,
+            ) = operation_bundle;
+            let operation_name = operation_name.to_case(Case::Pascal);
+            writeln!(
+                string_buffer,
+                "const {operation_name}{operation_type_name}Document = parse(`{operation_ast}`);",
+            )?;
+            writeln!(args, "type {operation_name}{operation_type_name}Args = {{")?;
+            for def in variable_definitions {
+                let ts_type = try_type_ref_from_arg(&type_index, &def.var_type)?;
+                writeln!(args, "  {}: {},", def.name, ts_type)?;
+            }
+            writeln!(args, "}}")?;
+        }
+    }
 
     for t in res.data.schema.types {
         match t {
@@ -116,18 +205,47 @@ async fn main() -> eyre::Result<()> {
                 }
                 writeln!(objects, "}}")?;
             }
+            Type::InputObject {
+                name,
+                description,
+                input_fields,
+            } => {
+                if name.starts_with('_') {
+                    continue;
+                }
+                possibly_write_description(&mut objects, description)?;
+                writeln!(input_objects, "type {name} = {{")?;
+                for f in input_fields {
+                    possibly_write_description(&mut input_objects, f.description)?;
+                    writeln!(input_objects, "  {}: {},", f.name, f.of_type)?;
+                }
+                writeln!(input_objects, "}}")?;
+            }
             _ => (),
         }
     }
 
+    writeln!(out, "{}", imports)?;
     writeln!(out, "// Utility types")?;
     writeln!(out, "{}", util_types)?;
     writeln!(out, "// Scalars")?;
     writeln!(out, "{}", scalars)?;
     writeln!(out, "// Enums")?;
     writeln!(out, "{}", enums)?;
-    writeln!(out, "// Object Types")?;
+    writeln!(out, "// Objects")?;
     writeln!(out, "{}", objects)?;
+    writeln!(out, "// Input Objects")?;
+    writeln!(out, "{}", input_objects)?;
+    writeln!(out, "// Selection Sets")?;
+    writeln!(out, "{}", selection_sets)?;
+    writeln!(out, "// Args")?;
+    writeln!(out, "{}", args)?;
+    writeln!(out, "// Queries")?;
+    writeln!(out, "{}", queries)?;
+    writeln!(out, "// Mutations")?;
+    writeln!(out, "{}", mutations)?;
+    writeln!(out, "// Subscriptions")?;
+    writeln!(out, "{}", subscriptions)?;
 
     Ok(())
 }
