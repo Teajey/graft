@@ -105,30 +105,20 @@ impl TypeIndex {
     }
 
     pub fn type_from_ref(&self, type_ref: &TypeRef) -> Type {
-        let resolve_or_panic = |type_ref: &TypeRef| {
-            self.map.get(type_ref.name()).unwrap_or_else(|| {
+        match type_ref {
+            TypeRef::NonNull { of_type } => Type::NonNull {
+                of_type: (**of_type).clone(),
+            },
+            TypeRef::List { of_type } => Type::List {
+                of_type: (**of_type).clone(),
+            },
+            type_ref => self.map.get(type_ref.name()).unwrap_or_else(|| {
                 panic!(
                     "TypeIndex couldn't find the Type referred to by TypeRef::{:?}\nKeys available in TypeMap: {:#?}",
                     type_ref,
                     self.map.keys().collect::<Vec<_>>()
                 )
-            }).to_owned()
-        };
-
-        match type_ref {
-            TypeRef::NonNull { of_type } => {
-                resolve_or_panic(of_type);
-                Type::NonNull {
-                    of_type: (**of_type).clone(),
-                }
-            }
-            TypeRef::List { of_type } => {
-                resolve_or_panic(of_type);
-                Type::List {
-                    of_type: (**of_type).clone(),
-                }
-            }
-            type_ref => resolve_or_panic(type_ref),
+            }).to_owned(),
         }
     }
 

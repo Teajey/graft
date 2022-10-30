@@ -178,8 +178,16 @@ async fn main() -> eyre::Result<()> {
                             .ok_or_else(|| {
                                 eyre!("Tried to select non-existent field at {position}")
                             })?;
-                        let name = alias.unwrap_or(&selected_field.name);
-                        write!(selection_sets, "{}: {}, ", name, selection_set.items.len())?;
+                        let selected_field_type = type_index.type_from_ref(&selected_field.of_type);
+                        let field_name = alias.unwrap_or(&selected_field.name);
+                        match selected_field_type {
+                            Type::Object { .. } => (),
+                            Type::NonNull { of_type } => (),
+                            Type::List { of_type } => (),
+                            leaf_field_type => {
+                                write!(selection_sets, "{field_name}: {leaf_field_type}, ")?;
+                            }
+                        }
                     }
                     Selection::FragmentSpread(_) => todo!(),
                     Selection::InlineFragment(_) => todo!(),
