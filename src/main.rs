@@ -10,6 +10,7 @@ use convert_case::{Case, Casing};
 use eyre::{eyre, Result};
 use graphql_client::GraphQLQuery;
 use graphql_parser::query::{Definition, Field, OperationDefinition, Selection};
+use transform::recursively_typescriptify_selected_object;
 
 use crate::introspection_response::{IntrospectionResponse, Type};
 use crate::transform::try_type_ref_from_arg;
@@ -162,37 +163,12 @@ async fn main() -> eyre::Result<()> {
                 "type {}{}SelectionSet = {{ ",
                 operation_name, operation_type_name,
             )?;
-            for selection in selection_set.items {
-                match selection {
-                    Selection::Field(Field {
-                        position,
-                        alias,
-                        name,
-                        arguments,
-                        directives,
-                        selection_set,
-                    }) => {
-                        let selected_field = operation_fields
-                            .iter()
-                            .find(|f| f.name == name)
-                            .ok_or_else(|| {
-                                eyre!("Tried to select non-existent field at {position}")
-                            })?;
-                        let selected_field_type = type_index.type_from_ref(&selected_field.of_type);
-                        let field_name = alias.unwrap_or(&selected_field.name);
-                        match selected_field_type {
-                            Type::Object { .. } => (),
-                            Type::NonNull { of_type } => (),
-                            Type::List { of_type } => (),
-                            leaf_field_type => {
-                                write!(selection_sets, "{field_name}: {leaf_field_type}, ")?;
-                            }
-                        }
-                    }
-                    Selection::FragmentSpread(_) => todo!(),
-                    Selection::InlineFragment(_) => todo!(),
-                }
-            }
+            recursively_typescriptify_selected_object(
+                selection_set,
+                &mut selection_sets,
+                operation_fields,
+                &type_index,
+            )?;
             writeln!(selection_sets, "}};")?;
         }
     }

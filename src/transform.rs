@@ -1,9 +1,9 @@
 use std::fmt::Write;
 
 use eyre::{eyre, Result};
-use graphql_parser::query::{Field, Selection};
+use graphql_parser::query::{Field as SelectedField, Selection, SelectionSet};
 
-use crate::introspection_response::{Type, TypeRef};
+use crate::introspection_response::{Field, Type, TypeRef};
 use crate::util::{Arg, MaybeNamed, TypeIndex};
 
 pub trait TypescriptableGraphQLType {
@@ -81,41 +81,48 @@ impl TypescriptableGraphQLType for TypeRef {
     }
 }
 
-// TODO: Each field still needs to be validated against `selection_type`, which is the hard part...
-pub fn recursively_typescriptify_selection<'a>(
-    selection: Selection<'a, &'a str>,
+pub fn recursively_typescriptify_selected_object<'a>(
+    selection_set: SelectionSet<'a, &'a str>,
     buffer: &mut String,
-    selection_type: &Type,
+    selectable_fields: &Vec<Field>,
     type_index: &TypeIndex,
 ) -> Result<()> {
-    match selection {
-        Selection::Field(Field {
-            position,
-            alias,
-            name,
-            arguments,
-            directives,
-            selection_set,
-        }) => {
-            write!(buffer, "{}: ", alias.unwrap_or(name))?;
-            if selection_set.items.is_empty() {
-                write!(buffer, "{}, ", selection_set.items.len())?;
-            } else {
-                write!(buffer, "{{ ")?;
-                for selection in selection_set.items {
-                    recursively_typescriptify_selection(
-                        selection,
-                        buffer,
-                        selection_type,
-                        type_index,
-                    )?;
+    for selection in selection_set.items {
+        match selection {
+            Selection::Field(SelectedField {
+                position,
+                alias,
+                name,
+                arguments,
+                directives,
+                selection_set,
+            }) => {
+                let selected_field = selectable_fields
+                    .iter()
+                    .find(|f| f.name == name)
+                    .ok_or_else(|| eyre!("Tried to select non-existent field at {position}"))?;
+                let selected_field_type = type_index.type_from_ref(&selected_field.of_type);
+                let field_name = alias.unwrap_or(&selected_field.name);
+                match selected_field_type {
+                    Type::Object { fields, .. } => {
+                        recursively_typescriptify_selected_object(
+                            selection_set,
+                            buffer,
+                            &fields,
+                            type_index,
+                        )?;
+                    }
+                    Type::NonNull { of_type } => (),
+                    Type::List { of_type } => (),
+                    leaf_field_type => {
+                        write!(buffer, "{field_name}: {leaf_field_type}, ")?;
+                    }
                 }
-                write!(buffer, "}}, ")?;
             }
+            Selection::FragmentSpread(_) => todo!(),
+            Selection::InlineFragment(_) => todo!(),
         }
-        Selection::FragmentSpread(_) => todo!(),
-        Selection::InlineFragment(_) => todo!(),
-    };
+    }
 
     Ok(())
 }
