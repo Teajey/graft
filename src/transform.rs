@@ -101,28 +101,44 @@ pub fn recursively_typescriptify_selected_object<'a>(
                     .iter()
                     .find(|f| f.name == name)
                     .ok_or_else(|| eyre!("Tried to select non-existent field at {position}"))?;
-                let selected_field_type = type_index.type_from_ref(&selected_field.of_type);
                 let field_name = alias.unwrap_or(&selected_field.name);
-                match selected_field_type {
-                    Type::Object { fields, .. } => {
-                        recursively_typescriptify_selected_object(
-                            selection_set,
-                            buffer,
-                            &fields,
-                            type_index,
-                        )?;
-                    }
-                    Type::NonNull { of_type } => (),
-                    Type::List { of_type } => (),
-                    leaf_field_type => {
-                        write!(buffer, "{field_name}: {leaf_field_type}, ")?;
-                    }
-                }
+
+                write!(buffer, "{}: ", field_name)?;
+
+                recursively_typescriptify_selected_field(
+                    selection_set,
+                    buffer,
+                    &selected_field.of_type,
+                    type_index,
+                )?;
+
+                write!(buffer, ", ")?;
             }
             Selection::FragmentSpread(_) => todo!(),
             Selection::InlineFragment(_) => todo!(),
         }
     }
+
+    Ok(())
+}
+
+fn recursively_typescriptify_selected_field<'a>(
+    selection_set: SelectionSet<'a, &'a str>,
+    buffer: &mut String,
+    type_ref: &TypeRef,
+    type_index: &TypeIndex,
+) -> Result<()> {
+    let selected_field_type = type_index.type_from_ref(type_ref);
+    match selected_field_type {
+        Type::Object { fields, .. } => {
+            recursively_typescriptify_selected_object(selection_set, buffer, &fields, type_index)?;
+        }
+        Type::NonNull { of_type } => (),
+        Type::List { of_type } => (),
+        leaf_field_type => {
+            write!(buffer, "{leaf_field_type}, ")?;
+        }
+    };
 
     Ok(())
 }
