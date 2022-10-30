@@ -10,7 +10,7 @@ use convert_case::{Case, Casing};
 use eyre::{eyre, Result};
 use graphql_client::GraphQLQuery;
 use graphql_parser::query::{Definition, Field, OperationDefinition, Selection};
-use transform::recursively_typescriptify_selected_object;
+use transform::recursively_typescriptify_selected_object_fields;
 
 use crate::introspection_response::{IntrospectionResponse, Type};
 use crate::transform::try_type_ref_from_arg;
@@ -163,7 +163,7 @@ async fn main() -> eyre::Result<()> {
                 "type {}{}SelectionSet = {{ ",
                 operation_name, operation_type_name,
             )?;
-            recursively_typescriptify_selected_object(
+            recursively_typescriptify_selected_object_fields(
                 selection_set,
                 &mut selection_sets,
                 operation_fields,

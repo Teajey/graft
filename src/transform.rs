@@ -81,7 +81,7 @@ impl TypescriptableGraphQLType for TypeRef {
     }
 }
 
-pub fn recursively_typescriptify_selected_object<'a>(
+pub fn recursively_typescriptify_selected_object_fields<'a>(
     selection_set: SelectionSet<'a, &'a str>,
     buffer: &mut String,
     selectable_fields: &Vec<Field>,
@@ -131,12 +131,24 @@ fn recursively_typescriptify_selected_field<'a>(
     let selected_field_type = type_index.type_from_ref(type_ref);
     match selected_field_type {
         Type::Object { fields, .. } => {
-            recursively_typescriptify_selected_object(selection_set, buffer, &fields, type_index)?;
+            write!(buffer, "{{ ")?;
+            recursively_typescriptify_selected_object_fields(
+                selection_set,
+                buffer,
+                &fields,
+                type_index,
+            )?;
+            write!(buffer, "}} ")?;
         }
-        Type::NonNull { of_type } => (),
-        Type::List { of_type } => (),
+        Type::NonNull { of_type } => {
+            recursively_typescriptify_selected_field(selection_set, buffer, &of_type, type_index)?;
+        }
+        Type::List { of_type } => {
+            recursively_typescriptify_selected_field(selection_set, buffer, &of_type, type_index)?;
+            write!(buffer, "[]")?;
+        }
         leaf_field_type => {
-            write!(buffer, "{leaf_field_type}, ")?;
+            write!(buffer, "{leaf_field_type}")?;
         }
     };
 
