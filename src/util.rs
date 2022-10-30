@@ -70,6 +70,27 @@ impl MaybeNamed for TypeRef {
     }
 }
 
+pub trait OkOrElse {
+    fn ok_or_else<E, F>(self, err: F) -> std::result::Result<(), E>
+    where
+        F: FnOnce() -> E,
+        Self: Sized;
+}
+
+impl OkOrElse for bool {
+    fn ok_or_else<E, F>(self, err: F) -> std::result::Result<(), E>
+    where
+        F: FnOnce() -> E,
+        Self: Sized,
+    {
+        if !self {
+            Err(err())
+        } else {
+            Ok(())
+        }
+    }
+}
+
 // TODO: `Type` should probably be `&Type`
 pub struct TypeIndex {
     map: HashMap<String, Type>,
@@ -83,14 +104,32 @@ impl TypeIndex {
         self.map.get(k)
     }
 
-    pub fn resolve_ref(&self, type_ref: &TypeRef) -> &Type {
-        self.map.get(type_ref.name()).unwrap_or_else(|| {
-            panic!(
-                "Couldn't find the Type referred to by TypeRef::{:?}\nKeys available in TypeMap: {:#?}",
-                type_ref,
-                self.map.keys().collect::<Vec<_>>()
-            )
-        })
+    pub fn type_from_ref(&self, type_ref: &TypeRef) -> Type {
+        let resolve_or_panic = |type_ref: &TypeRef| {
+            self.map.get(type_ref.name()).unwrap_or_else(|| {
+                panic!(
+                    "TypeIndex couldn't find the Type referred to by TypeRef::{:?}\nKeys available in TypeMap: {:#?}",
+                    type_ref,
+                    self.map.keys().collect::<Vec<_>>()
+                )
+            }).to_owned()
+        };
+
+        match type_ref {
+            TypeRef::NonNull { of_type } => {
+                resolve_or_panic(of_type);
+                Type::NonNull {
+                    of_type: (**of_type).clone(),
+                }
+            }
+            TypeRef::List { of_type } => {
+                resolve_or_panic(of_type);
+                Type::List {
+                    of_type: (**of_type).clone(),
+                }
+            }
+            type_ref => resolve_or_panic(type_ref),
+        }
     }
 
     pub fn try_new(schema: &Schema) -> Result<Self> {

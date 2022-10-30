@@ -9,10 +9,10 @@ use std::io::Write;
 use convert_case::{Case, Casing};
 use eyre::{eyre, Result};
 use graphql_client::GraphQLQuery;
-use graphql_parser::query::{Definition, OperationDefinition};
+use graphql_parser::query::{Definition, Field, OperationDefinition, Selection};
 
 use crate::introspection_response::{IntrospectionResponse, Type};
-use crate::transform::{recursively_typescriptify_selection, try_type_ref_from_arg};
+use crate::transform::try_type_ref_from_arg;
 use crate::util::TypeIndex;
 
 #[derive(GraphQLQuery)]
@@ -137,13 +137,14 @@ async fn main() -> eyre::Result<()> {
                 operation_type_name,
                 variable_definitions,
                 selection_set,
-                type_ref,
+                operation_type,
             ) = operation_bundle;
             let operation_name = operation_name.to_case(Case::Pascal);
             writeln!(
                 string_buffer,
                 "const {operation_name}{operation_type_name}Document = parse(`{operation_ast}`);",
             )?;
+
             writeln!(args, "type {operation_name}{operation_type_name}Args = {{")?;
             for def in variable_definitions {
                 let ts_type = try_type_ref_from_arg(&type_index, &def.var_type)?;
@@ -151,21 +152,40 @@ async fn main() -> eyre::Result<()> {
             }
             writeln!(args, "}}")?;
 
+            let operation_fields = if let Type::Object { fields, .. } = operation_type {
+                fields
+            } else {
+                return Err(eyre!("Top-level operation must be an object"));
+            };
+            write!(
+                selection_sets,
+                "type {}{}SelectionSet = {{ ",
+                operation_name, operation_type_name,
+            )?;
             for selection in selection_set.items {
-                let name = &operation_name.to_case(Case::Pascal);
-                write!(
-                    selection_sets,
-                    "type {}{}SelectionSet = {{ ",
-                    name, operation_type_name,
-                )?;
-                recursively_typescriptify_selection(
-                    selection,
-                    &mut selection_sets,
-                    type_ref,
-                    &type_index,
-                )?;
-                writeln!(selection_sets, "}};")?;
+                match selection {
+                    Selection::Field(Field {
+                        position,
+                        alias,
+                        name,
+                        arguments,
+                        directives,
+                        selection_set,
+                    }) => {
+                        let selected_field = operation_fields
+                            .iter()
+                            .find(|f| f.name == name)
+                            .ok_or_else(|| {
+                                eyre!("Tried to select non-existent field at {position}")
+                            })?;
+                        let name = alias.unwrap_or(&selected_field.name);
+                        write!(selection_sets, "{}: {}, ", name, selection_set.items.len())?;
+                    }
+                    Selection::FragmentSpread(_) => todo!(),
+                    Selection::InlineFragment(_) => todo!(),
+                }
             }
+            writeln!(selection_sets, "}};")?;
         }
     }
 
