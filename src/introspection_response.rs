@@ -59,10 +59,8 @@ pub enum TypeRef {
 
 impl Display for TypeRef {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self.as_typescript() {
-            Ok(string) => write!(f, "{}", string),
-            Err(_) => Err(std::fmt::Error),
-        }
+        let ts = self.as_typescript().map_err(|_| std::fmt::Error)?;
+        write!(f, "{}", ts)
     }
 }
 
@@ -110,6 +108,12 @@ pub enum Type {
     NonNull { of_type: TypeRef },
     #[serde(rename_all = "camelCase")]
     List { of_type: TypeRef },
+}
+
+impl Display for Type {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", TypeRef::from(self.to_owned()))
+    }
 }
 
 impl From<Type> for TypeRef {

@@ -3,17 +3,17 @@ mod introspection_response;
 mod transform;
 mod util;
 
+use std::fmt::Write as FmtWrite;
 use std::io::Write;
-use std::{collections::HashMap, fmt::Write as FmtWrite};
 
 use convert_case::{Case, Casing};
 use eyre::{eyre, Result};
 use graphql_client::GraphQLQuery;
 use graphql_parser::query::{Definition, OperationDefinition};
 
-use crate::introspection_response::{IntrospectionResponse, Type, TypeRef};
-use crate::transform::try_type_ref_from_arg;
-use crate::util::Named;
+use crate::introspection_response::{IntrospectionResponse, Type};
+use crate::transform::{recursively_typescriptify_selection, try_type_ref_from_arg};
+use crate::util::TypeIndex;
 
 #[derive(GraphQLQuery)]
 #[graphql(
@@ -68,15 +68,7 @@ async fn main() -> eyre::Result<()> {
 
     let res: IntrospectionResponse = res.json().await?;
 
-    let type_index: HashMap<&str, TypeRef> =
-        res.data
-            .schema
-            .types
-            .iter()
-            .fold(HashMap::new(), |mut map, t| {
-                map.insert(t.name(), (*t).clone().into());
-                map
-            });
+    let type_index = TypeIndex::try_new(&res.data.schema)?;
 
     serde_json::to_writer_pretty(schema_out, &res)?;
 
@@ -112,6 +104,8 @@ async fn main() -> eyre::Result<()> {
                     &mut queries,
                     "Query",
                     query.variable_definitions,
+                    query.selection_set,
+                    &type_index.query
                 ),
                 OperationDefinition::Mutation(mutation) => (
                     mutation.to_string(),
@@ -121,6 +115,8 @@ async fn main() -> eyre::Result<()> {
                     &mut mutations,
                     "Mutation",
                     mutation.variable_definitions,
+                    mutation.selection_set,
+                    type_index.mutation.as_ref().ok_or_else(|| eyre!("Mutation type does not exist in TypeIndex"))?
                 ),
                 OperationDefinition::Subscription(subscription) => (
                     subscription.to_string(),
@@ -130,6 +126,8 @@ async fn main() -> eyre::Result<()> {
                     &mut subscriptions,
                     "Subscription",
                     subscription.variable_definitions,
+                    subscription.selection_set,
+                    type_index.subscription.as_ref().ok_or_else(|| eyre!("Subscription type does not exist in TypeIndex"))?
                 ),
             };
             let (
@@ -138,6 +136,8 @@ async fn main() -> eyre::Result<()> {
                 string_buffer,
                 operation_type_name,
                 variable_definitions,
+                selection_set,
+                type_ref,
             ) = operation_bundle;
             let operation_name = operation_name.to_case(Case::Pascal);
             writeln!(
@@ -150,6 +150,22 @@ async fn main() -> eyre::Result<()> {
                 writeln!(args, "  {}: {},", def.name, ts_type)?;
             }
             writeln!(args, "}}")?;
+
+            for selection in selection_set.items {
+                let name = &operation_name.to_case(Case::Pascal);
+                write!(
+                    selection_sets,
+                    "type {}{}SelectionSet = {{ ",
+                    name, operation_type_name,
+                )?;
+                recursively_typescriptify_selection(
+                    selection,
+                    &mut selection_sets,
+                    type_ref,
+                    &type_index,
+                )?;
+                writeln!(selection_sets, "}};")?;
+            }
         }
     }
 
