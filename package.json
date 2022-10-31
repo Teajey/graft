@@ -1,26 +1,6 @@
 {
-  "name": "graphql-2-ts",
-  "version": "0.1.0",
-  "description": "Generate Typescript according to a GraphQL schema.",
-  "author": "Teajey <21069848+Teajey@users.noreply.github.com>",
-  "keywords": [],
-  "license": "ISC",
-  "homepage": "",
-  "main": "start.ts",
-  "type": "module",
-  "directories": {
-    "test": "tests"
-  },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "postinstall": "node ./post-install.js"
-  },
-  "files": [
-    "post-install.js",
-    "start.js",
-    "uninstall.js",
-    "README.md",
-    "LICENSE"
-  ],
-  "packageManager": "yarn@3.2.4"
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ]
 }

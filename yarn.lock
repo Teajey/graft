@@ -4,8 +4,14 @@
 __metadata:
   version: 6
 
-"graphql-2-ts@workspace:.":
+"graphql-2-ts@workspace:packages/graphql-2-ts":
   version: 0.0.0-use.local
-  resolution: "graphql-2-ts@workspace:."
+  resolution: "graphql-2-ts@workspace:packages/graphql-2-ts"
+  languageName: unknown
+  linkType: soft
+
+"root-workspace-0b6124@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "root-workspace-0b6124@workspace:."
   languageName: unknown
   linkType: soft

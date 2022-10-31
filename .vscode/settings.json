@@ -2,5 +2,6 @@
   "search.exclude": {
     "**/.yarn": true,
     "**/.pnp.*": true
-  }
+  },
+  "rust-analyzer.linkedProjects": ["packages/graphql-2-ts"]
 }

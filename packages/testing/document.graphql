@@ -1,0 +1,172 @@
+mutation registerTriviaPlayer($name: String!) {
+  registerTriviaPlayer(name: $name) {
+    id
+    name
+    score
+  }
+}
+
+mutation submitPlayerAnswer($playerId: String!, $answer: Int!) {
+  submitPlayerAnswer(playerId: $playerId, answer: $answer) {
+    id
+    name
+    score
+  }
+}
+
+mutation loadTrivia(
+  $difficulty: TriviaDifficulty
+  $categoryId: TriviaCategoryID
+  $token: String
+) {
+  loadTrivia(difficulty: $difficulty, categoryId: $categoryId, token: $token) {
+    present {
+      correctAnswer
+      locked
+      pointsValue
+    }
+  }
+}
+
+mutation lockTriviaAnswers {
+  lockTriviaAnswers {
+    locked
+  }
+}
+
+mutation revealTriviaAnswer {
+  revealTriviaAnswer {
+    correctAnswer
+  }
+}
+
+mutation cleanUpTrivia($name: String!) {
+  cleanUpTriviaAndSave(name: $name) {
+    id
+    players {
+      id
+      name
+      score
+    }
+    created
+  }
+}
+
+mutation setTriviaPresentationState($state: TriviaPresentationState!) {
+  setTriviaPresentationState(state: $state) {
+    state
+  }
+}
+
+mutation setTriviaPointsValue($pointsValue: Int!) {
+  setTriviaPointsValue(pointsValue: $pointsValue) {
+    pointsValue
+  }
+}
+
+query currentTrivia {
+  currentTrivia {
+    present {
+      answers
+      correctAnswer
+      category
+      difficulty
+      question
+      locked
+      number
+      pointsValue
+      poll
+    }
+  }
+}
+
+query triviaPlayers {
+  triviaPlayers {
+    players {
+      id
+      name
+      score
+    }
+  }
+}
+
+query triviaDataForControl {
+  currentTrivia {
+    present {
+      locked
+      correctAnswer
+      pointsValue
+    }
+  }
+}
+
+query getTriviaPlayer($playerId: String!) {
+  getTriviaPlayer(id: $playerId) {
+    id
+    name
+    score
+  }
+}
+
+query getTriviaPresentationState {
+  getTriviaPresentationState {
+    state
+  }
+}
+
+query getCategories {
+  getTriviaCategories {
+    id
+    name
+  }
+}
+
+subscription triviaEvent {
+  triviaEvent {
+    eventType
+    trivia {
+      present {
+        category
+        difficulty
+        question
+        answers
+        correctAnswer
+        poll
+        locked
+        number
+        pointsValue
+      }
+    }
+  }
+}
+
+subscription triviaPlayerUpdate($playerId: String) {
+  triviaPlayerUpdate(id: $playerId) {
+    id
+    name
+    score
+  }
+}
+
+subscription triviaPresentationStateUpdate {
+  triviaPresentationStateUpdate {
+    state
+  }
+}
+
+subscription triviaPlayerRegistryUpdate {
+  triviaPlayerRegistryUpdate {
+    players {
+      id
+      name
+      score
+    }
+  }
+}
+
+subscription message {
+  message {
+    code
+    args
+  }
+}
