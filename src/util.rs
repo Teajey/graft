@@ -7,50 +7,6 @@ use crate::introspection_response::{Schema, Type, TypeRef};
 
 pub type Arg<'a> = GraphQLParserType<'a, &'a str>;
 
-pub trait Named {
-    fn name(&self) -> &str;
-}
-
-impl<'a> Named for Arg<'a> {
-    fn name(&self) -> &str {
-        match self {
-            Arg::NamedType(name) => name,
-            Arg::ListType(_) => "List",
-            Arg::NonNullType(_) => "NonNull",
-        }
-    }
-}
-
-impl Named for Type {
-    fn name(&self) -> &str {
-        match self {
-            Type::Scalar { name, .. } => name,
-            Type::Object { name, .. } => name,
-            Type::Interface { name, .. } => name,
-            Type::Union { name, .. } => name,
-            Type::Enum { name, .. } => name,
-            Type::InputObject { name, .. } => name,
-            Type::NonNull { .. } => "NonNull",
-            Type::List { .. } => "List",
-        }
-    }
-}
-
-impl Named for TypeRef {
-    fn name(&self) -> &str {
-        match self {
-            TypeRef::Scalar { name, .. } => name,
-            TypeRef::Object { name, .. } => name,
-            TypeRef::Interface { name, .. } => name,
-            TypeRef::Union { name, .. } => name,
-            TypeRef::Enum { name, .. } => name,
-            TypeRef::InputObject { name, .. } => name,
-            TypeRef::NonNull { .. } => "NonNull",
-            TypeRef::List { .. } => "List",
-        }
-    }
-}
-
 pub trait MaybeNamed {
     fn maybe_name(&self) -> Option<&str>;
 }
@@ -58,14 +14,27 @@ pub trait MaybeNamed {
 impl MaybeNamed for TypeRef {
     fn maybe_name(&self) -> Option<&str> {
         match self {
-            TypeRef::Scalar { name } => Some(name),
-            TypeRef::Object { name } => Some(name),
-            TypeRef::Interface { name } => Some(name),
-            TypeRef::Union { name } => Some(name),
-            TypeRef::Enum { name } => Some(name),
-            TypeRef::InputObject { name } => Some(name),
-            TypeRef::NonNull { .. } => None,
-            TypeRef::List { .. } => None,
+            TypeRef::Scalar { name }
+            | TypeRef::Object { name }
+            | TypeRef::Interface { name }
+            | TypeRef::Union { name }
+            | TypeRef::Enum { name }
+            | TypeRef::InputObject { name } => Some(name),
+            TypeRef::NonNull { .. } | TypeRef::List { .. } => None,
+        }
+    }
+}
+
+impl MaybeNamed for Type {
+    fn maybe_name(&self) -> Option<&str> {
+        match self {
+            Type::Scalar { name, .. }
+            | Type::Object { name, .. }
+            | Type::Interface { name, .. }
+            | Type::Union { name, .. }
+            | Type::Enum { name, .. }
+            | Type::InputObject { name, .. } => Some(name),
+            Type::NonNull { .. } | Type::List { .. } => None,
         }
     }
 }
@@ -112,7 +81,12 @@ impl TypeIndex {
             TypeRef::List { of_type } => Type::List {
                 of_type: (**of_type).clone(),
             },
-            type_ref => self.map.get(type_ref.name()).unwrap_or_else(|| {
+            TypeRef::Enum { name } 
+            | TypeRef::InputObject { name } 
+            | TypeRef::Interface { name } 
+            | TypeRef::Object { name } 
+            | TypeRef::Union { name } 
+            | TypeRef::Scalar { name } => self.map.get(name).unwrap_or_else(|| {
                 panic!(
                     "TypeIndex couldn't find the Type referred to by TypeRef::{:?}\nKeys available in TypeMap: {:#?}",
                     type_ref,
@@ -124,7 +98,11 @@ impl TypeIndex {
 
     pub fn try_new(schema: &Schema) -> Result<Self> {
         let mut map = schema.types.iter().fold(HashMap::new(), |mut map, t| {
-            map.insert(t.name().to_owned(), (*t).clone());
+            if let Some(name) = t.maybe_name() {
+                map.insert(name.to_owned(), (*t).clone());
+            } else {
+                eprintln!("WARN: TypeIndex tried to index an unnamed type.");
+            }
             map
         });
         let query = map
