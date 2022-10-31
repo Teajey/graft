@@ -151,11 +151,11 @@ async fn main() -> eyre::Result<()> {
 
             writeln!(
                 string_buffer,
-                "const {document_name} = parse(`{operation_ast}`) \
+                "export const {document_name} = parse(`{operation_ast}`) \
                 as TypedQueryDocumentNode<{selection_set_name}, {args_name}>;",
             )?;
 
-            writeln!(args, "type {args_name} = {{")?;
+            writeln!(args, "export type {args_name} = {{")?;
             for def in variable_definitions {
                 let ts_type = try_type_ref_from_arg(&type_index, &def.var_type)?;
                 if let TypeRef::NonNull { .. } = ts_type {
@@ -171,7 +171,7 @@ async fn main() -> eyre::Result<()> {
             } else {
                 return Err(eyre!("Top-level operation must be an object"));
             };
-            write!(selection_sets, "type {selection_set_name} = {{ ",)?;
+            write!(selection_sets, "export type {selection_set_name} = {{ ",)?;
             recursively_typescriptify_selected_object_fields(
                 selection_set,
                 &mut selection_sets,
@@ -194,7 +194,7 @@ async fn main() -> eyre::Result<()> {
                     "Boolean" => "boolean",
                     _ => "unknown",
                 };
-                writeln!(scalars, "type {name}Scalar = {scalar_type};")?;
+                writeln!(scalars, "export type {name}Scalar = {scalar_type};")?;
             }
             Type::Enum {
                 name,
@@ -205,7 +205,7 @@ async fn main() -> eyre::Result<()> {
                     continue;
                 }
                 possibly_write_description(&mut enums, description)?;
-                writeln!(enums, "enum {name} {{")?;
+                writeln!(enums, "export enum {name} {{")?;
                 for v in enum_values {
                     possibly_write_description(&mut enums, v.description)?;
                     writeln!(
@@ -227,7 +227,7 @@ async fn main() -> eyre::Result<()> {
                     continue;
                 }
                 possibly_write_description(&mut objects, description)?;
-                writeln!(objects, "type {name} = {{")?;
+                writeln!(objects, "export type {name} = {{")?;
                 for f in fields {
                     possibly_write_description(&mut objects, f.description)?;
                     writeln!(objects, "  {}: {},", f.name, f.of_type)?;
@@ -243,7 +243,7 @@ async fn main() -> eyre::Result<()> {
                     continue;
                 }
                 possibly_write_description(&mut objects, description)?;
-                writeln!(input_objects, "type {name} = {{")?;
+                writeln!(input_objects, "export type {name} = {{")?;
                 for f in input_fields {
                     possibly_write_description(&mut input_objects, f.description)?;
                     if let TypeRef::NonNull { .. } = f.of_type {
