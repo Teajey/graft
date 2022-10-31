@@ -77,7 +77,10 @@ async fn main() -> eyre::Result<()> {
 
     serde_json::to_writer_pretty(schema_out, &res)?;
 
-    writeln!(imports, r#"import {{ parse }} from "graphql";"#)?;
+    writeln!(
+        imports,
+        r#"import {{ parse, TypedQueryDocumentNode }} from "graphql";"#
+    )?;
 
     writeln!(util_types, "export type Nullable<T> = T | null;")?;
     writeln!(
@@ -141,12 +144,18 @@ async fn main() -> eyre::Result<()> {
                 operation_type,
             ) = operation_bundle;
             let operation_name = operation_name.to_case(Case::Pascal);
+
+            let document_name = format!("{operation_name}{operation_type_name}Document");
+            let args_name = format!("{operation_name}{operation_type_name}Args");
+            let selection_set_name = format!("{operation_name}{operation_type_name}SelectionSet");
+
             writeln!(
                 string_buffer,
-                "const {operation_name}{operation_type_name}Document = parse(`{operation_ast}`);",
+                "const {document_name} = parse(`{operation_ast}`) \
+                as TypedQueryDocumentNode<{selection_set_name}, {args_name}>;",
             )?;
 
-            writeln!(args, "type {operation_name}{operation_type_name}Args = {{")?;
+            writeln!(args, "type {args_name} = {{")?;
             for def in variable_definitions {
                 let ts_type = try_type_ref_from_arg(&type_index, &def.var_type)?;
                 if let TypeRef::NonNull { .. } = ts_type {
@@ -162,11 +171,7 @@ async fn main() -> eyre::Result<()> {
             } else {
                 return Err(eyre!("Top-level operation must be an object"));
             };
-            write!(
-                selection_sets,
-                "type {}{}SelectionSet = {{ ",
-                operation_name, operation_type_name,
-            )?;
+            write!(selection_sets, "type {selection_set_name} = {{ ",)?;
             recursively_typescriptify_selected_object_fields(
                 selection_set,
                 &mut selection_sets,
