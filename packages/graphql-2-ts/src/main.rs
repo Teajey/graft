@@ -139,7 +139,7 @@ async fn main() -> eyre::Result<()> {
                     return Err(eyre!(
                         "Top-level SelectionSets are not supported.\nThis selection set should be a query, mutation, or subscription:\n{}",
                         set
-                    ))
+                    ));
                 }
                 OperationDefinition::Query(query) => (
                     query.to_string(),
@@ -150,7 +150,7 @@ async fn main() -> eyre::Result<()> {
                     "Query",
                     query.variable_definitions,
                     query.selection_set,
-                    &type_index.query
+                    &type_index.query,
                 ),
                 OperationDefinition::Mutation(mutation) => (
                     mutation.to_string(),
@@ -161,7 +161,10 @@ async fn main() -> eyre::Result<()> {
                     "Mutation",
                     mutation.variable_definitions,
                     mutation.selection_set,
-                    type_index.mutation.as_ref().ok_or_else(|| eyre!("Mutation type does not exist in TypeIndex"))?
+                    type_index
+                        .mutation
+                        .as_ref()
+                        .ok_or_else(|| eyre!("Mutation type does not exist in TypeIndex"))?,
                 ),
                 OperationDefinition::Subscription(subscription) => (
                     subscription.to_string(),
@@ -172,13 +175,16 @@ async fn main() -> eyre::Result<()> {
                     "Subscription",
                     subscription.variable_definitions,
                     subscription.selection_set,
-                    type_index.subscription.as_ref().ok_or_else(|| eyre!("Subscription type does not exist in TypeIndex"))?
+                    type_index
+                        .subscription
+                        .as_ref()
+                        .ok_or_else(|| eyre!("Subscription type does not exist in TypeIndex"))?,
                 ),
             };
             let (
                 operation_ast,
                 operation_name,
-                string_buffer,
+                operation_buffer,
                 operation_type_name,
                 variable_definitions,
                 selection_set,
@@ -191,7 +197,7 @@ async fn main() -> eyre::Result<()> {
             let selection_set_name = format!("{operation_name}{operation_type_name}SelectionSet");
 
             writeln!(
-                string_buffer,
+                operation_buffer,
                 "export const {document_name} = parse(`{operation_ast}`) \
                 as TypedQueryDocumentNode<{selection_set_name}, {args_name}>;",
             )?;
