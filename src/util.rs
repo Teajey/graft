@@ -39,27 +39,6 @@ impl MaybeNamed for Type {
     }
 }
 
-pub trait OkOrElse {
-    fn ok_or_else<E, F>(self, err: F) -> std::result::Result<(), E>
-    where
-        F: FnOnce() -> E,
-        Self: Sized;
-}
-
-impl OkOrElse for bool {
-    fn ok_or_else<E, F>(self, err: F) -> std::result::Result<(), E>
-    where
-        F: FnOnce() -> E,
-        Self: Sized,
-    {
-        if !self {
-            Err(err())
-        } else {
-            Ok(())
-        }
-    }
-}
-
 // TODO: `Type` should probably be `&Type`
 pub struct TypeIndex {
     map: HashMap<String, Type>,
@@ -107,7 +86,7 @@ impl TypeIndex {
         });
         let query = map
             .remove(&schema.query_type.name)
-            .ok_or_else(|| eyre!("Type Index has no query type"))?;
+            .ok_or_else(|| eyre!("TypeIndex has no query type"))?;
         let mutation = schema
             .mutation_type
             .as_ref()
