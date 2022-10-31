@@ -298,7 +298,19 @@ async fn main() -> eyre::Result<()> {
                 }
                 writeln!(buffer.input_objects, "}}")?;
             }
-            _ => (),
+            Type::Union {
+                name,
+                description,
+                possible_types,
+            } => todo!(),
+            Type::Interface {
+                name,
+                description,
+                fields,
+                possible_types,
+            } => todo!(),
+            Type::List { .. } => return Err(eyre!("Top-level lists not supported.")),
+            Type::NonNull { .. } => return Err(eyre!("Top-level non-nulls not supported.")),
         }
     }
 
