@@ -6,7 +6,7 @@
   "keywords": [],
   "license": "ISC",
   "homepage": "",
-  "main": "start.ts",
+  "bin": "start.js",
   "type": "module",
   "directories": {
     "test": "tests"

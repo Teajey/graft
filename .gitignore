@@ -1,5 +1,7 @@
 target/
 
+node_modules/
+
 .pnp.*
 .yarn/*
 !.yarn/patches
@@ -8,4 +10,4 @@ target/
 !.yarn/sdks
 !.yarn/versions
 
-g2t-config.yaml
+g2t-config.yml

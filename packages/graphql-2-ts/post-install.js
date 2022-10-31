@@ -11,7 +11,7 @@ if (fs.existsSync(cargoDir)) {
   //   console.log("Cargo found.");
 } else {
   console.error(
-    "`cargo` is not installed. This package requires Rust: https://www.rust-lang.org/"
+    "`cargo` does not appear to be installed ($HOME/.cargo not found). This package requires Rust: https://www.rust-lang.org/"
   );
   process.exit(1);
 }

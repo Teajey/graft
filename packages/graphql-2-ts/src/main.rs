@@ -39,6 +39,10 @@ fn possibly_write_description<W: FmtWrite>(out: &mut W, description: Option<Stri
 
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
+    if let Some(working_dir) = std::env::args().nth(1) {
+        std::env::set_current_dir(working_dir)?;
+    }
+
     let config = config::load().unwrap_or_else(|err| {
         eprintln!("Failed to load config: {}", err);
         std::process::exit(1);
