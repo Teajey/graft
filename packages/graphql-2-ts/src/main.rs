@@ -12,7 +12,7 @@ use graphql_client::GraphQLQuery;
 use graphql_parser::query::{Definition, OperationDefinition};
 use transform::recursively_typescriptify_selected_object_fields;
 
-use crate::introspection_response::{IntrospectionResponse, Type};
+use crate::introspection_response::{IntrospectionResponse, Type, TypeRef};
 use crate::transform::try_type_ref_from_arg;
 use crate::util::TypeIndex;
 
@@ -82,10 +82,6 @@ async fn main() -> eyre::Result<()> {
     writeln!(util_types, "export type Nullable<T> = T | null;")?;
     writeln!(
         util_types,
-        "export type Omissible<T> = T | null | undefined;"
-    )?;
-    writeln!(
-        util_types,
         "export type NewType<T, U> = T & {{ readonly __newtype: U }};"
     )?;
 
@@ -153,7 +149,11 @@ async fn main() -> eyre::Result<()> {
             writeln!(args, "type {operation_name}{operation_type_name}Args = {{")?;
             for def in variable_definitions {
                 let ts_type = try_type_ref_from_arg(&type_index, &def.var_type)?;
-                writeln!(args, "  {}: {},", def.name, ts_type)?;
+                if let TypeRef::NonNull { .. } = ts_type {
+                    writeln!(args, "  {}: {},", def.name, ts_type)?;
+                } else {
+                    writeln!(args, "  {}?: {},", def.name, ts_type)?;
+                }
             }
             writeln!(args, "}}")?;
 
@@ -241,7 +241,11 @@ async fn main() -> eyre::Result<()> {
                 writeln!(input_objects, "type {name} = {{")?;
                 for f in input_fields {
                     possibly_write_description(&mut input_objects, f.description)?;
-                    writeln!(input_objects, "  {}: {},", f.name, f.of_type)?;
+                    if let TypeRef::NonNull { .. } = f.of_type {
+                        writeln!(input_objects, "  {}: {},", f.name, f.of_type)?;
+                    } else {
+                        writeln!(input_objects, "  {}?: {},", f.name, f.of_type)?;
+                    }
                 }
                 writeln!(input_objects, "}}")?;
             }

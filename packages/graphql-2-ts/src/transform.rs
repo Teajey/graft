@@ -16,7 +16,7 @@ pub trait TypescriptableGraphQLType {
     ) -> Result<(String, bool)>;
 
     fn as_typescript(&self) -> Result<String> {
-        Ok(self.recursive_typescriptify(None, false)?.0)
+        Ok(self.recursive_typescriptify(None, true)?.0)
     }
 
     fn wrap_if_nullable(string: String, wrap_me: bool) -> (String, bool) {
