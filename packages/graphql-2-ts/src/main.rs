@@ -126,7 +126,7 @@ async fn main() -> eyre::Result<()> {
                     subscription.to_string(),
                     subscription
                         .name
-                        .ok_or_else(|| eyre!("Encountered a mutation with no name."))?,
+                        .ok_or_else(|| eyre!("Encountered a subscription with no name."))?,
                     &mut subscriptions,
                     "Subscription",
                     subscription.variable_definitions,
