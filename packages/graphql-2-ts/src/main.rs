@@ -92,9 +92,6 @@ async fn main() -> eyre::Result<()> {
         std::process::exit(1);
     });
 
-    let mut out = std::fs::File::create("generated.ts")?;
-    let schema_out = std::fs::File::create("schema.json")?;
-
     let mut buffer = Buffer {
         imports: String::new(),
         util_types: String::new(),
@@ -120,8 +117,6 @@ async fn main() -> eyre::Result<()> {
     let res: IntrospectionResponse = res.json().await?;
 
     let type_index = TypeIndex::try_new(&res.data.schema)?;
-
-    serde_json::to_writer_pretty(schema_out, &res)?;
 
     writeln!(
         buffer.imports,
@@ -307,7 +302,7 @@ async fn main() -> eyre::Result<()> {
         }
     }
 
-    write!(out, "{}", buffer)?;
+    write!(std::fs::File::create("generated.ts")?, "{}", buffer)?;
 
     Ok(())
 }

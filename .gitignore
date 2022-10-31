@@ -11,3 +11,5 @@ node_modules/
 !.yarn/versions
 
 g2t-config.yml
+
+generated.ts
