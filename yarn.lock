@@ -1095,6 +1095,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"graphql@npm:^16.6.0":
+  version: 16.6.0
+  resolution: "graphql@npm:16.6.0"
+  checksum: bf1d9e3c1938ce3c1a81e909bd3ead1ae4707c577f91cff1ca2eca474bfbc7873d5d7b942e1e9777ff5a8304421dba57a4b76d7a29eb19de8711cb70e3c2415e
+  languageName: node
+  linkType: hard
+
 "has-flag@npm:^3.0.0":
   version: 3.0.0
   resolution: "has-flag@npm:3.0.0"
@@ -1668,6 +1675,8 @@ __metadata:
 "root-workspace-0b6124@workspace:.":
   version: 0.0.0-use.local
   resolution: "root-workspace-0b6124@workspace:."
+  dependencies:
+    typescript: ^4.8.4
   languageName: unknown
   linkType: soft
 
@@ -1845,6 +1854,7 @@ __metadata:
     "@types/react": ^18.0.22
     "@types/react-dom": ^18.0.7
     "@vitejs/plugin-react": ^2.2.0
+    graphql: ^16.6.0
     graphql-2-ts: "workspace:*"
     react: ^18.2.0
     react-dom: ^18.2.0
@@ -1860,7 +1870,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:^4.6.4":
+"typescript@npm:^4.6.4, typescript@npm:^4.8.4":
   version: 4.8.4
   resolution: "typescript@npm:4.8.4"
   bin:
@@ -1870,7 +1880,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@^4.6.4#~builtin<compat/typescript>":
+"typescript@patch:typescript@^4.6.4#~builtin<compat/typescript>, typescript@patch:typescript@^4.8.4#~builtin<compat/typescript>":
   version: 4.8.4
   resolution: "typescript@patch:typescript@npm%3A4.8.4#~builtin<compat/typescript>::version=4.8.4&hash=701156"
   bin:
