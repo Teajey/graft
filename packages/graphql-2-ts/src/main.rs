@@ -3,7 +3,7 @@ mod introspection_response;
 mod transform;
 mod util;
 
-use std::fmt::Write as FmtWrite;
+use std::fmt::{Display, Write as FmtWrite};
 use std::io::Write;
 
 use convert_case::{Case, Casing};
@@ -37,6 +37,50 @@ fn possibly_write_description<W: FmtWrite>(out: &mut W, description: Option<Stri
     Ok(())
 }
 
+struct Buffer {
+    pub imports: String,
+    pub util_types: String,
+    pub scalars: String,
+    pub enums: String,
+    pub objects: String,
+    pub input_objects: String,
+    pub selection_sets: String,
+    pub args: String,
+    pub queries: String,
+    pub mutations: String,
+    pub subscriptions: String,
+}
+
+impl Display for Buffer {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut buffer_buffer = String::new();
+
+        writeln!(buffer_buffer, "{}", self.imports)?;
+        writeln!(buffer_buffer, "// Utility types")?;
+        writeln!(buffer_buffer, "{}", self.util_types)?;
+        writeln!(buffer_buffer, "// Scalars")?;
+        writeln!(buffer_buffer, "{}", self.scalars)?;
+        writeln!(buffer_buffer, "// Enums")?;
+        writeln!(buffer_buffer, "{}", self.enums)?;
+        writeln!(buffer_buffer, "// Objects")?;
+        writeln!(buffer_buffer, "{}", self.objects)?;
+        writeln!(buffer_buffer, "// Input Objects")?;
+        writeln!(buffer_buffer, "{}", self.input_objects)?;
+        writeln!(buffer_buffer, "// Selection Sets")?;
+        writeln!(buffer_buffer, "{}", self.selection_sets)?;
+        writeln!(buffer_buffer, "// Args")?;
+        writeln!(buffer_buffer, "{}", self.args)?;
+        writeln!(buffer_buffer, "// Queries")?;
+        writeln!(buffer_buffer, "{}", self.queries)?;
+        writeln!(buffer_buffer, "// Mutations")?;
+        writeln!(buffer_buffer, "{}", self.mutations)?;
+        writeln!(buffer_buffer, "// Subscriptions")?;
+        write!(buffer_buffer, "{}", self.subscriptions)?;
+
+        write!(f, "{}", buffer_buffer)
+    }
+}
+
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
     if let Some(working_dir) = std::env::args().nth(1) {
@@ -51,17 +95,19 @@ async fn main() -> eyre::Result<()> {
     let mut out = std::fs::File::create("generated.ts")?;
     let schema_out = std::fs::File::create("schema.json")?;
 
-    let mut imports = String::new();
-    let mut util_types = String::new();
-    let mut scalars = String::new();
-    let mut enums = String::new();
-    let mut objects = String::new();
-    let mut input_objects = String::new();
-    let mut selection_sets = String::new();
-    let mut args = String::new();
-    let mut queries = String::new();
-    let mut mutations = String::new();
-    let mut subscriptions = String::new();
+    let mut buffer = Buffer {
+        imports: String::new(),
+        util_types: String::new(),
+        scalars: String::new(),
+        enums: String::new(),
+        objects: String::new(),
+        input_objects: String::new(),
+        selection_sets: String::new(),
+        args: String::new(),
+        queries: String::new(),
+        mutations: String::new(),
+        subscriptions: String::new(),
+    };
 
     let body = IntrospectionQuery::build_query(introspection_query::Variables {});
 
@@ -78,13 +124,13 @@ async fn main() -> eyre::Result<()> {
     serde_json::to_writer_pretty(schema_out, &res)?;
 
     writeln!(
-        imports,
+        buffer.imports,
         r#"import {{ parse, TypedQueryDocumentNode }} from "graphql";"#
     )?;
 
-    writeln!(util_types, "export type Nullable<T> = T | null;")?;
+    writeln!(buffer.util_types, "export type Nullable<T> = T | null;")?;
     writeln!(
-        util_types,
+        buffer.util_types,
         "export type NewType<T, U> = T & {{ readonly __newtype: U }};"
     )?;
 
@@ -105,7 +151,7 @@ async fn main() -> eyre::Result<()> {
                     query
                         .name
                         .ok_or_else(|| eyre!("Encountered a query with no name."))?,
-                    &mut queries,
+                    &mut buffer.queries,
                     "Query",
                     query.variable_definitions,
                     query.selection_set,
@@ -116,7 +162,7 @@ async fn main() -> eyre::Result<()> {
                     mutation
                         .name
                         .ok_or_else(|| eyre!("Encountered a mutation with no name."))?,
-                    &mut mutations,
+                    &mut buffer.mutations,
                     "Mutation",
                     mutation.variable_definitions,
                     mutation.selection_set,
@@ -127,7 +173,7 @@ async fn main() -> eyre::Result<()> {
                     subscription
                         .name
                         .ok_or_else(|| eyre!("Encountered a subscription with no name."))?,
-                    &mut subscriptions,
+                    &mut buffer.subscriptions,
                     "Subscription",
                     subscription.variable_definitions,
                     subscription.selection_set,
@@ -155,37 +201,40 @@ async fn main() -> eyre::Result<()> {
                 as TypedQueryDocumentNode<{selection_set_name}, {args_name}>;",
             )?;
 
-            writeln!(args, "export type {args_name} = {{")?;
+            writeln!(buffer.args, "export type {args_name} = {{")?;
             for def in variable_definitions {
                 let ts_type = try_type_ref_from_arg(&type_index, &def.var_type)?;
                 if let TypeRef::NonNull { .. } = ts_type {
-                    writeln!(args, "  {}: {},", def.name, ts_type)?;
+                    writeln!(buffer.args, "  {}: {},", def.name, ts_type)?;
                 } else {
-                    writeln!(args, "  {}?: {},", def.name, ts_type)?;
+                    writeln!(buffer.args, "  {}?: {},", def.name, ts_type)?;
                 }
             }
-            writeln!(args, "}}")?;
+            writeln!(buffer.args, "}}")?;
 
             let operation_fields = if let Type::Object { fields, .. } = operation_type {
                 fields
             } else {
                 return Err(eyre!("Top-level operation must be an object"));
             };
-            write!(selection_sets, "export type {selection_set_name} = {{ ",)?;
+            write!(
+                buffer.selection_sets,
+                "export type {selection_set_name} = {{ ",
+            )?;
             recursively_typescriptify_selected_object_fields(
                 selection_set,
-                &mut selection_sets,
+                &mut buffer.selection_sets,
                 operation_fields,
                 &type_index,
             )?;
-            writeln!(selection_sets, "}};")?;
+            writeln!(buffer.selection_sets, "}};")?;
         }
     }
 
     for t in res.data.schema.types {
         match t {
             Type::Scalar { name, description } => {
-                possibly_write_description(&mut scalars, description)?;
+                possibly_write_description(&mut buffer.scalars, description)?;
                 let scalar_type = match name.as_str() {
                     "ID" => r#"NewType<string, "ID">"#,
                     "String" => "string",
@@ -194,7 +243,7 @@ async fn main() -> eyre::Result<()> {
                     "Boolean" => "boolean",
                     _ => "unknown",
                 };
-                writeln!(scalars, "export type {name}Scalar = {scalar_type};")?;
+                writeln!(buffer.scalars, "export type {name}Scalar = {scalar_type};")?;
             }
             Type::Enum {
                 name,
@@ -204,18 +253,18 @@ async fn main() -> eyre::Result<()> {
                 if name.starts_with('_') {
                     continue;
                 }
-                possibly_write_description(&mut enums, description)?;
-                writeln!(enums, "export enum {name} {{")?;
+                possibly_write_description(&mut buffer.enums, description)?;
+                writeln!(buffer.enums, "export enum {name} {{")?;
                 for v in enum_values {
-                    possibly_write_description(&mut enums, v.description)?;
+                    possibly_write_description(&mut buffer.enums, v.description)?;
                     writeln!(
-                        enums,
+                        buffer.enums,
                         "  {} = \"{}\",",
                         v.name.to_case(Case::Pascal),
                         v.name
                     )?;
                 }
-                writeln!(enums, "}}")?;
+                writeln!(buffer.enums, "}}")?;
             }
             Type::Object {
                 name,
@@ -226,13 +275,13 @@ async fn main() -> eyre::Result<()> {
                 if name.starts_with('_') {
                     continue;
                 }
-                possibly_write_description(&mut objects, description)?;
-                writeln!(objects, "export type {name} = {{")?;
+                possibly_write_description(&mut buffer.objects, description)?;
+                writeln!(buffer.objects, "export type {name} = {{")?;
                 for f in fields {
-                    possibly_write_description(&mut objects, f.description)?;
-                    writeln!(objects, "  {}: {},", f.name, f.of_type)?;
+                    possibly_write_description(&mut buffer.objects, f.description)?;
+                    writeln!(buffer.objects, "  {}: {},", f.name, f.of_type)?;
                 }
-                writeln!(objects, "}}")?;
+                writeln!(buffer.objects, "}}")?;
             }
             Type::InputObject {
                 name,
@@ -242,43 +291,23 @@ async fn main() -> eyre::Result<()> {
                 if name.starts_with('_') {
                     continue;
                 }
-                possibly_write_description(&mut objects, description)?;
-                writeln!(input_objects, "export type {name} = {{")?;
+                possibly_write_description(&mut buffer.objects, description)?;
+                writeln!(buffer.input_objects, "export type {name} = {{")?;
                 for f in input_fields {
-                    possibly_write_description(&mut input_objects, f.description)?;
+                    possibly_write_description(&mut buffer.input_objects, f.description)?;
                     if let TypeRef::NonNull { .. } = f.of_type {
-                        writeln!(input_objects, "  {}: {},", f.name, f.of_type)?;
+                        writeln!(buffer.input_objects, "  {}: {},", f.name, f.of_type)?;
                     } else {
-                        writeln!(input_objects, "  {}?: {},", f.name, f.of_type)?;
+                        writeln!(buffer.input_objects, "  {}?: {},", f.name, f.of_type)?;
                     }
                 }
-                writeln!(input_objects, "}}")?;
+                writeln!(buffer.input_objects, "}}")?;
             }
             _ => (),
         }
     }
 
-    writeln!(out, "{}", imports)?;
-    writeln!(out, "// Utility types")?;
-    writeln!(out, "{}", util_types)?;
-    writeln!(out, "// Scalars")?;
-    writeln!(out, "{}", scalars)?;
-    writeln!(out, "// Enums")?;
-    writeln!(out, "{}", enums)?;
-    writeln!(out, "// Objects")?;
-    writeln!(out, "{}", objects)?;
-    writeln!(out, "// Input Objects")?;
-    writeln!(out, "{}", input_objects)?;
-    writeln!(out, "// Selection Sets")?;
-    writeln!(out, "{}", selection_sets)?;
-    writeln!(out, "// Args")?;
-    writeln!(out, "{}", args)?;
-    writeln!(out, "// Queries")?;
-    writeln!(out, "{}", queries)?;
-    writeln!(out, "// Mutations")?;
-    writeln!(out, "{}", mutations)?;
-    writeln!(out, "// Subscriptions")?;
-    writeln!(out, "{}", subscriptions)?;
+    write!(out, "{}", buffer)?;
 
     Ok(())
 }
