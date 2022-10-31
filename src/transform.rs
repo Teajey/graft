@@ -84,7 +84,7 @@ impl TypescriptableGraphQLType for TypeRef {
 pub fn recursively_typescriptify_selected_object_fields<'a>(
     selection_set: SelectionSet<'a, &'a str>,
     buffer: &mut String,
-    selectable_fields: &Vec<Field>,
+    selectable_fields: &[Field],
     type_index: &TypeIndex,
 ) -> Result<()> {
     for selection in selection_set.items {
@@ -93,7 +93,7 @@ pub fn recursively_typescriptify_selected_object_fields<'a>(
                 position,
                 alias,
                 name,
-                arguments,
+                arguments: _,
                 directives,
                 selection_set,
             }) => {
@@ -105,11 +105,13 @@ pub fn recursively_typescriptify_selected_object_fields<'a>(
 
                 write!(buffer, "{}: ", field_name)?;
 
+                let mut nullable = true;
                 recursively_typescriptify_selected_field(
                     selection_set,
                     buffer,
                     &selected_field.of_type,
                     type_index,
+                    &mut nullable,
                 )?;
 
                 write!(buffer, ", ")?;
@@ -127,30 +129,52 @@ fn recursively_typescriptify_selected_field<'a>(
     buffer: &mut String,
     type_ref: &TypeRef,
     type_index: &TypeIndex,
+    nullable: &mut bool,
 ) -> Result<()> {
     let selected_field_type = type_index.type_from_ref(type_ref);
+    let mut local_buffer = String::new();
+
     match selected_field_type {
         Type::Object { fields, .. } => {
-            write!(buffer, "{{ ")?;
+            write!(local_buffer, "{{ ")?;
             recursively_typescriptify_selected_object_fields(
                 selection_set,
-                buffer,
+                &mut local_buffer,
                 &fields,
                 type_index,
             )?;
-            write!(buffer, "}} ")?;
+            write!(local_buffer, "}}")?;
         }
         Type::NonNull { of_type } => {
-            recursively_typescriptify_selected_field(selection_set, buffer, &of_type, type_index)?;
+            *nullable = false;
+            recursively_typescriptify_selected_field(
+                selection_set,
+                &mut local_buffer,
+                &of_type,
+                type_index,
+                nullable,
+            )?;
         }
         Type::List { of_type } => {
-            recursively_typescriptify_selected_field(selection_set, buffer, &of_type, type_index)?;
-            write!(buffer, "[]")?;
+            recursively_typescriptify_selected_field(
+                selection_set,
+                &mut local_buffer,
+                &of_type,
+                type_index,
+                nullable,
+            )?;
+            write!(local_buffer, "[]")?;
         }
         leaf_field_type => {
-            write!(buffer, "{leaf_field_type}")?;
+            write!(local_buffer, "{leaf_field_type}")?;
         }
     };
+
+    if *nullable {
+        write!(buffer, "Nullable<{}>", local_buffer)?;
+    } else {
+        write!(buffer, "{}", local_buffer)?;
+    }
 
     Ok(())
 }

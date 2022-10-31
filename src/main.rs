@@ -9,7 +9,7 @@ use std::io::Write;
 use convert_case::{Case, Casing};
 use eyre::{eyre, Result};
 use graphql_client::GraphQLQuery;
-use graphql_parser::query::{Definition, Field, OperationDefinition, Selection};
+use graphql_parser::query::{Definition, OperationDefinition};
 use transform::recursively_typescriptify_selected_object_fields;
 
 use crate::introspection_response::{IntrospectionResponse, Type};
