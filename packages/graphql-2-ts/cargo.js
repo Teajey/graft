@@ -5,6 +5,7 @@ import path from "path";
 import { spawn } from "child_process";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
+import { argv, cwd } from "node:process";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -21,14 +22,18 @@ if (fs.existsSync(cargoDir)) {
   process.exit(1);
 }
 
-console.log(`Compiling rust dependency. This may take a moment...`);
+const [, , mode = "run"] = argv;
 
-let proc = spawn("cargo", ["build", __dirname, "--release"]);
+if (mode === "build") {
+  console.log(`Compiling rust dependency. This may take a moment...`);
+}
+
+let proc = spawn("cargo", [mode, __dirname, "--release", "--", cwd()]);
 
 proc.stdout.on("data", (data) => console.log(data.toString()));
 
 proc.stderr.on("data", (data) => console.error(data.toString()));
 
-proc.on("cargo build returned an error:", (error) => {
+proc.on("cargo returned an error:", (error) => {
   console.error(`error: ${error.message}`);
 });

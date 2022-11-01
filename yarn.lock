@@ -1091,7 +1091,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "graphql-2-ts@workspace:packages/graphql-2-ts"
   bin:
-    graphql-2-ts: start.js
+    graphql-2-ts: cargo.js
   languageName: unknown
   linkType: soft
 

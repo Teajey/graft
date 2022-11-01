@@ -6,11 +6,11 @@
   "keywords": [],
   "license": "ISC",
   "homepage": "",
-  "bin": "start.js",
+  "bin": "cargo.js",
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "postinstall": "node ./post-install.js"
+    "postinstall": "node ./cargo.js build"
   },
   "files": [
     "post-install.js",
