@@ -2,7 +2,7 @@
 
 import fs from "fs";
 import path from "path";
-import { exec } from "child_process";
+import { spawn } from "child_process";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 
@@ -21,12 +21,14 @@ if (fs.existsSync(cargoDir)) {
   process.exit(1);
 }
 
-console.log(`Compiling graphql-2-ts 0.1.0 ...`);
-exec(`cargo build ${__dirname} --release`, (error, stdout, stderr) => {
-  console.log(stdout);
-  if (error || stderr) {
-    console.error(error || stderr);
-  } else {
-    console.log("install finished!");
-  }
+console.log(`Compiling rust dependency. This may take a moment...`);
+
+let proc = spawn("cargo", ["build", __dirname, "--release"]);
+
+proc.stdout.on("data", (data) => console.log(data.toString()));
+
+proc.stderr.on("data", (data) => console.error(data.toString()));
+
+proc.on("cargo build returned an error:", (error) => {
+  console.error(`error: ${error.message}`);
 });

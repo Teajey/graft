@@ -8,9 +8,6 @@
   "homepage": "",
   "bin": "start.js",
   "type": "module",
-  "directories": {
-    "test": "tests"
-  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "postinstall": "node ./post-install.js"
@@ -18,9 +15,11 @@
   "files": [
     "post-install.js",
     "start.js",
-    "uninstall.js",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "Cargo.lock",
+    "Cargo.toml",
+    "src"
   ],
   "packageManager": "yarn@3.2.4"
 }
