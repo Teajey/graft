@@ -2,7 +2,7 @@
 
 import { exec } from "child_process";
 import { fileURLToPath } from "url";
-import path, { dirname } from "path";
+import { dirname } from "path";
 import { cwd } from "node:process";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -15,14 +15,11 @@ const controller =
 const { signal } = controller;
 
 exec(
-  path.join(__dirname, `target/release/graphql-2-ts ${cwd()}`),
+  `cargo run ${__dirname} --release --quiet -- ${cwd()}`,
   { signal },
-  (error, stdout, stderr) => {
+  (_, stdout, stderr) => {
     stdout && console.log(stdout);
     stderr && console.error(stderr);
-    if (error !== null) {
-      console.log(`exec error: ${error}`);
-    }
   }
 );
 
