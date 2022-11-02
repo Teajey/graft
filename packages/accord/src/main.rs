@@ -83,8 +83,8 @@ impl Display for Buffer {
 
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
-    if let Some(working_dir) = std::env::args().nth(1) {
-        std::env::set_current_dir(working_dir)?;
+    if let Some(working_dir) = std::env::args().last() {
+        std::env::set_current_dir(&working_dir)?;
     }
 
     let config = config::load().unwrap_or_else(|err| {

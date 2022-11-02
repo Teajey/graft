@@ -6,8 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview",
-    "accord": "@teajey/accord"
+    "preview": "vite preview"
   },
   "dependencies": {
     "graphql": "^16.6.0",
