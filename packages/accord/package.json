@@ -11,7 +11,9 @@
   ],
   "license": "ISC",
   "homepage": "https://github.com/Teajey/accord",
-  "bin": "cargo.js",
+  "bin": {
+    "accord": "cargo.js"
+  },
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",

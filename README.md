@@ -21,7 +21,7 @@ yarn add -D @teajey/accord
 But for now
 
 ```
-yarn add -D accord@https://github.com/Teajey/accord#workspace=@teajey/accord
+yarn add -D @teajey/accord@https://github.com/Teajey/accord#workspace=@teajey/accord
 ```
 
 Note: Rust's `cargo` build tool must be installed.
