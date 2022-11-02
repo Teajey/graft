@@ -15,7 +15,7 @@ yarn add -D @teajey/accord
 But for now
 
 ```
-yarn add -D https://github.com/Teajey/accord
+yarn add -D accord@https://github.com/Teajey/accord#workspace=@teajey/accord
 ```
 
 ## Configuration
