@@ -202,16 +202,23 @@ async fn main() -> eyre::Result<()> {
                 as TypedQueryDocumentNode<{selection_set_name}, {args_name}>;",
             )?;
 
-            writeln!(buffer.args, "export type {args_name} = {{")?;
-            for def in variable_definitions {
-                let ts_type = try_type_ref_from_arg(&type_index, &def.var_type)?;
-                if let TypeRef::NonNull { .. } = ts_type {
-                    writeln!(buffer.args, "  {}: {},", def.name, ts_type)?;
-                } else {
-                    writeln!(buffer.args, "  {}?: {},", def.name, ts_type)?;
+            if variable_definitions.is_empty() {
+                writeln!(
+                    buffer.args,
+                    "export type {args_name} = Record<string, never>;"
+                )?;
+            } else {
+                writeln!(buffer.args, "export type {args_name} = {{")?;
+                for def in variable_definitions {
+                    let ts_type = try_type_ref_from_arg(&type_index, &def.var_type)?;
+                    if let TypeRef::NonNull { .. } = ts_type {
+                        writeln!(buffer.args, "  {}: {},", def.name, ts_type)?;
+                    } else {
+                        writeln!(buffer.args, "  {}?: {},", def.name, ts_type)?;
+                    }
                 }
+                writeln!(buffer.args, "}}")?;
             }
-            writeln!(buffer.args, "}}")?;
 
             let operation_fields = if let Type::Object { fields, .. } = operation_type {
                 fields
