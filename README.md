@@ -18,6 +18,8 @@ But for now
 yarn add -D accord@https://github.com/Teajey/accord#workspace=@teajey/accord
 ```
 
+Note: Rust's `cargo` build tool must be installed.
+
 ## Configuration
 
 Example config
