@@ -31,4 +31,5 @@ proc.stderr.on("data", (data) => console.error(data.toString()));
 
 proc.on("error", (error) => {
   console.error(`cargo returned an error: ${error.message}`);
+  process.exit(1);
 });
