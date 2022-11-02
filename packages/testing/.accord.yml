@@ -1,0 +1,3 @@
+schema: https://localhost:9443/trivia/graphql
+no_ssl: true
+document: document.graphql

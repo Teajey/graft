@@ -1,8 +1,6 @@
 #!/usr/bin/env node
 
-import fs from "fs";
-import path from "path";
-import { spawn } from "child_process";
+import { spawn, spawnSync } from "child_process";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 import { argv, cwd } from "node:process";
@@ -10,14 +8,11 @@ import { argv, cwd } from "node:process";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const cargoDir = path.dirname("$HOME" + ".cargo");
+let { status } = spawnSync("cargo", ["-h"]);
 
-// check if directory exists
-if (fs.existsSync(cargoDir)) {
-  //   console.log("Cargo found.");
-} else {
+if (status !== 0) {
   console.error(
-    "`cargo` does not appear to be installed ($HOME/.cargo not found). This package requires Rust: https://www.rust-lang.org/"
+    "`cargo -h` returned a non-zero exit status, which probably means Rust isn't properly installed. This package requires Rust: https://www.rust-lang.org/"
   );
   process.exit(1);
 }
@@ -34,6 +29,6 @@ proc.stdout.on("data", (data) => console.log(data.toString()));
 
 proc.stderr.on("data", (data) => console.error(data.toString()));
 
-proc.on("cargo returned an error:", (error) => {
-  console.error(`error: ${error.message}`);
+proc.on("error", (error) => {
+  console.error(`cargo returned an error: ${error.message}`);
 });

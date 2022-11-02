@@ -11,7 +11,7 @@ pub struct AppConfig {
 
 pub fn load() -> Result<AppConfig, config::ConfigError> {
     config::Config::builder()
-        .add_source(config::File::with_name("g2t-config"))
+        .add_source(config::File::with_name(".accord"))
         .build()?
         .try_deserialize::<AppConfig>()
 }

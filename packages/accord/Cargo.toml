@@ -1,5 +1,5 @@
 [package]
-name = "graphql-2-ts"
+name = "teajey-accord"
 version = "0.1.0"
 edition = "2021"
 description = "Generate Typescript according to a GraphQL schema."

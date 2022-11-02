@@ -408,6 +408,14 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@teajey/accord@workspace:*, @teajey/accord@workspace:packages/accord":
+  version: 0.0.0-use.local
+  resolution: "@teajey/accord@workspace:packages/accord"
+  bin:
+    accord: cargo.js
+  languageName: unknown
+  linkType: soft
+
 "@tootallnate/once@npm:2":
   version: 2.0.0
   resolution: "@tootallnate/once@npm:2.0.0"
@@ -1086,14 +1094,6 @@ __metadata:
   checksum: 3f109d70ae123951905d85032ebeae3c2a5a7a997430df00ea30df0e3a6c60cf6689b109654d6fdacd28810a053348c4d14642da1d075049e6be1ba5216218da
   languageName: node
   linkType: hard
-
-"graphql-2-ts@workspace:*, graphql-2-ts@workspace:packages/graphql-2-ts":
-  version: 0.0.0-use.local
-  resolution: "graphql-2-ts@workspace:packages/graphql-2-ts"
-  bin:
-    graphql-2-ts: cargo.js
-  languageName: unknown
-  linkType: soft
 
 "graphql@npm:^16.6.0":
   version: 16.6.0
@@ -1851,11 +1851,11 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "testing@workspace:packages/testing"
   dependencies:
+    "@teajey/accord": "workspace:*"
     "@types/react": ^18.0.22
     "@types/react-dom": ^18.0.7
     "@vitejs/plugin-react": ^2.2.0
     graphql: ^16.6.0
-    graphql-2-ts: "workspace:*"
     react: ^18.2.0
     react-dom: ^18.2.0
     typescript: ^4.6.4

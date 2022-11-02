@@ -1,4 +1,4 @@
 [workspace]
 members = [
-  "packages/graphql-2-ts"
+  "packages/accord"
 ]

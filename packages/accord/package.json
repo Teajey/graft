@@ -1,11 +1,16 @@
 {
-  "name": "graphql-2-ts",
+  "name": "@teajey/accord",
   "version": "0.1.0",
   "description": "Generate Typescript according to a GraphQL schema.",
   "author": "Teajey <21069848+Teajey@users.noreply.github.com>",
-  "keywords": [],
+  "keywords": [
+    "GraphQL",
+    "Typescript",
+    "Rust",
+    "codegen"
+  ],
   "license": "ISC",
-  "homepage": "",
+  "homepage": "https://github.com/Teajey/accord",
   "bin": "cargo.js",
   "type": "module",
   "scripts": {
