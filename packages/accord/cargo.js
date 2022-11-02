@@ -3,10 +3,14 @@
 import { spawn, spawnSync } from "child_process";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
-import { argv, cwd } from "node:process";
+import { argv, cwd, chdir } from "node:process";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+const scriptDir = __dirname;
+const targetDir = cwd();
+chdir(scriptDir);
 
 let { status } = spawnSync("cargo", ["-h"]);
 
@@ -23,7 +27,7 @@ if (mode === "build") {
   console.log(`Compiling rust dependency. This may take a moment...`);
 }
 
-let proc = spawn("cargo", [mode, __dirname, "--release", "--", cwd()]);
+let proc = spawn("cargo", [mode, scriptDir, "--release", "--", targetDir]);
 
 proc.stdout.on("data", (data) => console.log(data.toString()));
 

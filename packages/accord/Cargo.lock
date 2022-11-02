@@ -223,22 +223,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "graphql-2-ts"
-version = "0.1.0"
-dependencies = [
- "config",
- "convert_case",
- "eyre",
- "graphql-parser",
- "graphql_client",
- "reqwest",
- "serde",
- "serde_json",
- "tokio",
- "url",
-]
-
-[[package]]
 name = "graphql-introspection-query"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -823,6 +807,22 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-ident",
+]
+
+[[package]]
+name = "teajey-accord"
+version = "0.1.0"
+dependencies = [
+ "config",
+ "convert_case",
+ "eyre",
+ "graphql-parser",
+ "graphql_client",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "tokio",
+ "url",
 ]
 
 [[package]]
