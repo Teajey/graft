@@ -8,7 +8,7 @@
 
 Generate GraphQL client Typescript **_bLaZiNgLy_** fast with Rust!
 
-Inspired by [graphql-code-generator](https://github.com/dotansimha/graphql-code-generator); I just don't think it's usage of Typescript is good enough, so naturally I had to make a whole other version in Rust.
+Inspired by [graphql-code-generator](https://github.com/dotansimha/graphql-code-generator); I just don't think it's usage of Typescript is up to scratch, so naturally I had to make a whole other version in Rust.
 
 ## Installation
 
