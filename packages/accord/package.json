@@ -11,17 +11,14 @@
   ],
   "license": "ISC",
   "homepage": "https://github.com/Teajey/accord",
-  "bin": {
-    "accord": "cargo.js"
-  },
+  "bin": "cargo.js",
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "postinstall": "node ./cargo.js build"
   },
   "files": [
-    "post-install.js",
-    "start.js",
+    "cargo.js",
     "README.md",
     "LICENSE",
     "Cargo.lock",
