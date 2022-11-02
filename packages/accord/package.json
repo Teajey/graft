@@ -9,7 +9,7 @@
     "Rust",
     "codegen"
   ],
-  "license": "ISC",
+  "license": "MIT",
   "homepage": "https://github.com/Teajey/accord",
   "bin": "cargo.js",
   "type": "module",
