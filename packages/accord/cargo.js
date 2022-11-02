@@ -27,7 +27,7 @@ if (mode === "build") {
   console.log(`Compiling rust dependency. This may take a moment...`);
 }
 
-let proc = spawn("cargo", [mode, scriptDir, "--release", "--", targetDir]);
+let proc = spawn("cargo", [mode, "--release", scriptDir, "--", targetDir]);
 
 proc.stdout.on("data", (data) => console.log(data.toString()));
 
