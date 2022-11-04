@@ -1,10 +1,127 @@
 use std::fmt::Write;
 
+use convert_case::{Case, Casing};
 use eyre::{eyre, Result};
-use graphql_parser::query::{Field as SelectedField, Selection, SelectionSet};
+use graphql_parser::query::{
+    Definition, Field as SelectedField, OperationDefinition, Selection, SelectionSet,
+};
 
 use crate::introspection_response::{Field, Type, TypeRef};
 use crate::util::{Arg, MaybeNamed, TypeIndex};
+use crate::Buffer;
+
+pub fn typescriptify_definition<'a>(
+    definition: Definition<'a, &'a str>,
+    buffer: &mut Buffer,
+    type_index: &TypeIndex,
+) -> Result<()> {
+    if let Definition::Operation(operation_definition) = definition {
+        let operation_bundle = match operation_definition {
+            OperationDefinition::SelectionSet(set) => {
+                return Err(eyre!(
+                    "Top-level SelectionSets are not supported.\nThis selection set should be a query, mutation, or subscription:\n{}",
+                    set
+                ));
+            }
+            OperationDefinition::Query(query) => (
+                query.to_string(),
+                query
+                    .name
+                    .ok_or_else(|| eyre!("Encountered a query with no name."))?,
+                &mut buffer.queries,
+                "Query",
+                query.variable_definitions,
+                query.selection_set,
+                &type_index.query,
+            ),
+            OperationDefinition::Mutation(mutation) => (
+                mutation.to_string(),
+                mutation
+                    .name
+                    .ok_or_else(|| eyre!("Encountered a mutation with no name."))?,
+                &mut buffer.mutations,
+                "Mutation",
+                mutation.variable_definitions,
+                mutation.selection_set,
+                type_index
+                    .mutation
+                    .as_ref()
+                    .ok_or_else(|| eyre!("Mutation type does not exist in TypeIndex"))?,
+            ),
+            OperationDefinition::Subscription(subscription) => (
+                subscription.to_string(),
+                subscription
+                    .name
+                    .ok_or_else(|| eyre!("Encountered a subscription with no name."))?,
+                &mut buffer.subscriptions,
+                "Subscription",
+                subscription.variable_definitions,
+                subscription.selection_set,
+                type_index
+                    .subscription
+                    .as_ref()
+                    .ok_or_else(|| eyre!("Subscription type does not exist in TypeIndex"))?,
+            ),
+        };
+        let (
+            operation_ast,
+            operation_name,
+            operation_buffer,
+            operation_type_name,
+            variable_definitions,
+            selection_set,
+            operation_type,
+        ) = operation_bundle;
+        let operation_name = operation_name.to_case(Case::Pascal);
+
+        let document_name = format!("{operation_name}{operation_type_name}Document");
+        let args_name = format!("{operation_name}{operation_type_name}Args");
+        let selection_set_name = format!("{operation_name}{operation_type_name}SelectionSet");
+
+        writeln!(
+            operation_buffer,
+            "export const {document_name} = parse(`{operation_ast}`) \
+            as TypedQueryDocumentNode<{selection_set_name}, {args_name}>;",
+        )?;
+
+        if variable_definitions.is_empty() {
+            writeln!(
+                buffer.args,
+                "export type {args_name} = Record<string, never>;"
+            )?;
+        } else {
+            writeln!(buffer.args, "export type {args_name} = {{")?;
+            for def in variable_definitions {
+                let ts_type = try_type_ref_from_arg(&type_index, &def.var_type)?;
+                if let TypeRef::NonNull { .. } = ts_type {
+                    writeln!(buffer.args, "  {}: {},", def.name, ts_type)?;
+                } else {
+                    writeln!(buffer.args, "  {}?: {},", def.name, ts_type)?;
+                }
+            }
+            writeln!(buffer.args, "}}")?;
+        }
+
+        let operation_fields = if let Type::Object { fields, .. } = operation_type {
+            fields
+        } else {
+            return Err(eyre!("Top-level operation must be an object"));
+        };
+        write!(
+            buffer.selection_sets,
+            "export type {selection_set_name} = {{ ",
+        )?;
+        recursively_typescriptify_selected_object_fields(
+            selection_set,
+            &mut buffer.selection_sets,
+            operation_fields,
+            &type_index,
+        )?;
+        writeln!(buffer.selection_sets, "}};")?;
+    }
+
+    Ok(())
+}
 
 pub trait TypescriptableGraphQLType {
     const NULL_WRAPPER_TYPE: &'static str = "Nullable";
