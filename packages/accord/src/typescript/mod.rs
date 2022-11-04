@@ -26,17 +26,16 @@ pub(in crate::typescript) fn possibly_write_description<W: Write>(
     Ok(())
 }
 
-// TODO: `Type` should probably be `&Type`
-pub struct TypeIndex {
-    map: HashMap<String, Type>,
-    pub query: Type,
-    pub mutation: Option<Type>,
-    pub subscription: Option<Type>,
+pub struct TypeIndex<'a> {
+    map: HashMap<String, &'a Type>,
+    pub query: &'a Type,
+    pub mutation: Option<&'a Type>,
+    pub subscription: Option<&'a Type>,
 }
 
-impl TypeIndex {
+impl<'a> TypeIndex<'a> {
     pub fn get(&self, k: &str) -> Option<&Type> {
-        self.map.get(k)
+        self.map.get(k).copied()
     }
 
     pub fn type_from_ref(&self, type_ref: &TypeRef) -> Type {
@@ -52,7 +51,7 @@ impl TypeIndex {
             | TypeRef::Interface { name } 
             | TypeRef::Object { name } 
             | TypeRef::Union { name } 
-            | TypeRef::Scalar { name } => self.map.get(name).unwrap_or_else(|| {
+            | TypeRef::Scalar { name } => self.map.get(name).copied().unwrap_or_else(|| {
                 panic!(
                     "TypeIndex couldn't find the Type referred to by TypeRef::{:?}\nKeys available in TypeMap: {:#?}",
                     type_ref,
@@ -62,10 +61,10 @@ impl TypeIndex {
         }
     }
 
-    pub fn try_new(schema: &Schema) -> Result<Self> {
+    pub fn try_new(schema: &'a Schema) -> Result<Self> {
         let mut map = schema.types.iter().fold(HashMap::new(), |mut map, t| {
             if let Some(name) = t.maybe_name() {
-                map.insert(name.to_owned(), (*t).clone());
+                map.insert(name.to_owned(), t);
             } else {
                 eprintln!("WARN: TypeIndex tried to index an unnamed type.");
             }
@@ -91,13 +90,13 @@ impl TypeIndex {
     }
 }
 
-pub struct WithIndex<'a, 'b, T> {
+pub struct WithIndex<'a, 'b, 'c, T> {
     target: &'a T,
-    type_index: &'b TypeIndex,
+    type_index: &'b TypeIndex<'c>,
 }
 
 pub trait WithIndexable: Sized {
-    fn with_index<'a, 'b>(&'a self, type_index: &'b TypeIndex) -> WithIndex<'a, 'b, Self> {
+    fn with_index<'a, 'b, 'c>(&'a self, type_index: &'b TypeIndex<'c>) -> WithIndex<'a, 'b, 'c, Self> {
         WithIndex { target: self, type_index }
     }
 }

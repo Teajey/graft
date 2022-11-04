@@ -14,7 +14,9 @@ use graphql_parser::query::{Field as SelectedField, Selection, SelectionSet};
 
 impl<'a> WithIndexable for Definition<'a, &'a str> {}
 
-impl<'a, 'b, 'c> TypescriptableWithBuffer<'a> for WithIndex<'a, 'b, Definition<'c, &'c str>> {
+impl<'a, 'b, 'c, 'd> TypescriptableWithBuffer<'a>
+    for WithIndex<'a, 'b, 'c, Definition<'d, &'d str>>
+{
     fn as_typescript_on(&'a self, buffer: &mut Buffer) -> Result<()> {
         let definition = self.target;
         let type_index = self.type_index;
