@@ -1,18 +1,16 @@
 mod config;
 mod introspection_response;
-mod transform;
+mod typescript;
 mod util;
 
 use std::fmt::{Display, Write as FmtWrite};
 use std::io::Write;
 
-use convert_case::{Case, Casing};
-use eyre::{eyre, Result};
 use graphql_client::GraphQLQuery;
-use transform::typescriptify_definition;
+use typescript::WithIndexable;
 
-use crate::introspection_response::{IntrospectionResponse, Type, TypeRef};
-use crate::util::TypeIndex;
+use crate::introspection_response::IntrospectionResponse;
+use crate::typescript::{TypeIndex, TypescriptableWithBuffer};
 
 #[derive(GraphQLQuery)]
 #[graphql(
@@ -22,18 +20,6 @@ use crate::util::TypeIndex;
     variable_derives = "Deserialize"
 )]
 struct IntrospectionQuery;
-
-fn possibly_write_description<W: FmtWrite>(out: &mut W, description: Option<String>) -> Result<()> {
-    if let Some(description) = description {
-        if description.contains('\n') {
-            writeln!(out, "/**\n * {}\n */", description.replace('\n', "\n * "))?;
-        } else {
-            writeln!(out, "/** {} */", description)?;
-        }
-    };
-
-    Ok(())
-}
 
 pub struct Buffer {
     pub imports: String,
@@ -130,96 +116,12 @@ async fn main() -> eyre::Result<()> {
     let document = std::fs::read_to_string(config.document)?;
     let document = graphql_parser::parse_query::<&str>(&document)?;
 
-    for def in document.definitions {
-        typescriptify_definition(def, &mut buffer, &type_index)?;
+    for def in &document.definitions {
+        def.with_index(&type_index).as_typescript_on(&mut buffer)?;
     }
 
     for t in res.data.schema.types {
-        match t {
-            Type::Scalar { name, description } => {
-                possibly_write_description(&mut buffer.scalars, description)?;
-                let scalar_type = match name.as_str() {
-                    "ID" => r#"NewType<string, "ID">"#,
-                    "String" => "string",
-                    "Int" => "number",
-                    "Float" => "number",
-                    "Boolean" => "boolean",
-                    _ => "unknown",
-                };
-                writeln!(buffer.scalars, "export type {name}Scalar = {scalar_type};")?;
-            }
-            Type::Enum {
-                name,
-                description,
-                enum_values,
-            } => {
-                if name.starts_with('_') {
-                    continue;
-                }
-                possibly_write_description(&mut buffer.enums, description)?;
-                writeln!(buffer.enums, "export enum {name} {{")?;
-                for v in enum_values {
-                    possibly_write_description(&mut buffer.enums, v.description)?;
-                    writeln!(
-                        buffer.enums,
-                        "  {} = \"{}\",",
-                        v.name.to_case(Case::Pascal),
-                        v.name
-                    )?;
-                }
-                writeln!(buffer.enums, "}}")?;
-            }
-            Type::Object {
-                name,
-                description,
-                fields,
-                interfaces,
-            } => {
-                if name.starts_with('_') {
-                    continue;
-                }
-                possibly_write_description(&mut buffer.objects, description)?;
-                writeln!(buffer.objects, "export type {name} = {{")?;
-                for f in fields {
-                    possibly_write_description(&mut buffer.objects, f.description)?;
-                    writeln!(buffer.objects, "  {}: {},", f.name, f.of_type)?;
-                }
-                writeln!(buffer.objects, "}}")?;
-            }
-            Type::InputObject {
-                name,
-                description,
-                input_fields,
-            } => {
-                if name.starts_with('_') {
-                    continue;
-                }
-                possibly_write_description(&mut buffer.objects, description)?;
-                writeln!(buffer.input_objects, "export type {name} = {{")?;
-                for f in input_fields {
-                    possibly_write_description(&mut buffer.input_objects, f.description)?;
-                    if let TypeRef::NonNull { .. } = f.of_type {
-                        writeln!(buffer.input_objects, "  {}: {},", f.name, f.of_type)?;
-                    } else {
-                        writeln!(buffer.input_objects, "  {}?: {},", f.name, f.of_type)?;
-                    }
-                }
-                writeln!(buffer.input_objects, "}}")?;
-            }
-            Type::Union {
-                name,
-                description,
-                possible_types,
-            } => todo!(),
-            Type::Interface {
-                name,
-                description,
-                fields,
-                possible_types,
-            } => todo!(),
-            Type::List { .. } => return Err(eyre!("Top-level lists not supported.")),
-            Type::NonNull { .. } => return Err(eyre!("Top-level non-nulls not supported.")),
-        }
+        t.as_typescript_on(&mut buffer)?;
     }
 
     write!(std::fs::File::create("generated.ts")?, "{}", buffer)?;

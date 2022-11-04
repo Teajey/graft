@@ -1,8 +1,8 @@
-use std::fmt::Display;
-
+use eyre::{eyre, Result};
 use serde::{Deserialize, Serialize};
 
-use crate::transform::TypescriptableGraphQLType;
+use crate::typescript::TypeIndex;
+use crate::util::Arg;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -57,10 +57,31 @@ pub enum TypeRef {
     },
 }
 
-impl Display for TypeRef {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let ts = self.as_typescript().map_err(|_| std::fmt::Error)?;
-        write!(f, "{}", ts)
+impl TypeRef {
+    pub fn try_from_arg<'a>(type_index: &TypeIndex, arg: &Arg<'a>) -> Result<TypeRef> {
+        match arg {
+            Arg::NamedType(var_type_name) => type_index
+                .get(var_type_name)
+                .ok_or_else(|| {
+                    eyre!(
+                        "Found a query argument type not defined in the schema: {}",
+                        var_type_name
+                    )
+                })
+                .map(|t| t.clone().into()),
+            Arg::NonNullType(var_type) => {
+                let type_ref = Self::try_from_arg(type_index, var_type)?;
+                Ok(TypeRef::NonNull {
+                    of_type: Box::new(type_ref),
+                })
+            }
+            Arg::ListType(var_type) => {
+                let type_ref = Self::try_from_arg(type_index, var_type)?;
+                Ok(TypeRef::List {
+                    of_type: Box::new(type_ref),
+                })
+            }
+        }
     }
 }
 
@@ -108,12 +129,6 @@ pub enum Type {
     NonNull { of_type: TypeRef },
     #[serde(rename_all = "camelCase")]
     List { of_type: TypeRef },
-}
-
-impl Display for Type {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", TypeRef::from(self.to_owned()))
-    }
 }
 
 impl From<Type> for TypeRef {
