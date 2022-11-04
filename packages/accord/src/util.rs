@@ -1,6 +1,6 @@
 use ::graphql_parser::query::Type as GraphQLParserType;
 
-use crate::introspection_response::{Type, TypeRef};
+use crate::introspection::{Type, TypeRef};
 
 pub type Arg<'a> = GraphQLParserType<'a, &'a str>;
 

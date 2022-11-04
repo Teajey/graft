@@ -1,5 +1,5 @@
 mod config;
-mod introspection_response;
+mod introspection;
 mod typescript;
 mod util;
 
@@ -9,7 +9,7 @@ use std::io::Write;
 use graphql_client::GraphQLQuery;
 use typescript::WithIndexable;
 
-use crate::introspection_response::IntrospectionResponse;
+use crate::introspection::IntrospectionResponse;
 use crate::typescript::{TypeIndex, TypescriptableWithBuffer};
 
 #[derive(GraphQLQuery)]

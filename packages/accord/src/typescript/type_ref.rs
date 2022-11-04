@@ -1,7 +1,7 @@
 use eyre::{eyre, Result};
 
 use super::Typescriptable;
-use crate::introspection_response::TypeRef;
+use crate::introspection::TypeRef;
 use crate::util::MaybeNamed;
 
 impl Typescriptable for TypeRef {

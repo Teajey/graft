@@ -7,7 +7,7 @@ use std::fmt::Write;
 
 use eyre::{eyre, Result};
 
-use crate::introspection_response::{Schema, Type, TypeRef};
+use crate::introspection::{Schema, Type, TypeRef};
 use crate::util::MaybeNamed;
 use crate::Buffer;
 
