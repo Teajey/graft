@@ -6,20 +6,9 @@ mod util;
 use std::fmt::{Display, Write as FmtWrite};
 use std::io::Write;
 
-use graphql_client::GraphQLQuery;
 use typescript::WithIndexable;
 
-use crate::introspection::IntrospectionResponse;
 use crate::typescript::{TypeIndex, TypescriptableWithBuffer};
-
-#[derive(GraphQLQuery)]
-#[graphql(
-    schema_path = "src/graphql/introspection_schema.graphql",
-    query_path = "src/graphql/introspection_query.graphql",
-    response_derives = "Serialize",
-    variable_derives = "Deserialize"
-)]
-struct IntrospectionQuery;
 
 pub struct Buffer {
     pub imports: String,
@@ -90,15 +79,7 @@ async fn main() -> eyre::Result<()> {
         subscriptions: String::new(),
     };
 
-    let body = IntrospectionQuery::build_query(introspection_query::Variables {});
-
-    let client = reqwest::Client::builder()
-        .danger_accept_invalid_certs(config.no_ssl.unwrap_or(false))
-        .build()?;
-
-    let res = client.post(config.schema).json(&body).send().await?;
-
-    let res: IntrospectionResponse = res.json().await?;
+    let res = introspection::Response::fetch(&config).await?;
 
     let type_index = TypeIndex::try_new(&res.data.schema)?;
 

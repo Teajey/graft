@@ -1,6 +1,8 @@
 use eyre::{eyre, Result};
+use graphql_client::GraphQLQuery;
 use serde::{Deserialize, Serialize};
 
+use crate::config::AppConfig;
 use crate::typescript::TypeIndex;
 use crate::util::Arg;
 
@@ -225,7 +227,34 @@ pub struct Data {
     pub schema: Schema,
 }
 
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "src/graphql/introspection_schema.graphql",
+    query_path = "src/graphql/introspection_query.graphql",
+    response_derives = "Serialize",
+    variable_derives = "Deserialize"
+)]
+struct IntrospectionQuery;
+
 #[derive(Serialize, Deserialize, Debug)]
-pub struct IntrospectionResponse {
+pub struct Response {
     pub data: Data,
+}
+
+impl Response {
+    pub async fn fetch(config: &AppConfig) -> Result<Self> {
+        let body = IntrospectionQuery::build_query(introspection_query::Variables {});
+
+        let client = reqwest::Client::builder()
+            .danger_accept_invalid_certs(config.no_ssl.unwrap_or(false))
+            .build()?;
+
+        let res = client
+            .post(config.schema.clone())
+            .json(&body)
+            .send()
+            .await?;
+
+        Ok(res.json().await?)
+    }
 }
