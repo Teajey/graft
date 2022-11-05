@@ -100,20 +100,20 @@ pub enum Type {
         name: String,
         description: Option<String>,
         fields: Vec<Field>,
-        interfaces: Vec<Type>,
+        interfaces: Vec<TypeRef>,
     },
     #[serde(rename_all = "camelCase")]
     Interface {
         name: String,
         description: Option<String>,
         fields: Vec<Field>,
-        possible_types: Option<Box<Type>>,
+        possible_types: Vec<TypeRef>,
     },
     #[serde(rename_all = "camelCase")]
     Union {
         name: String,
         description: Option<String>,
-        possible_types: Option<Box<Type>>,
+        possible_types: Vec<TypeRef>,
     },
     #[serde(rename_all = "camelCase")]
     Enum {

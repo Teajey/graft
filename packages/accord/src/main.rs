@@ -98,14 +98,17 @@ async fn main() -> eyre::Result<()> {
         "export type NewType<T, U> = T & {{ readonly __newtype: U }};"
     )?;
 
-    let document = std::fs::read_to_string(path_with_possible_prefix(
-        cli.config_location.as_deref(),
-        &config.document,
-    ))?;
-    let document = graphql_parser::parse_query::<&str>(&document)?;
+    let document_path = path_with_possible_prefix(cli.config_location.as_deref(), &config.document);
 
-    for def in &document.definitions {
-        def.with_index(&type_index).as_typescript_on(&mut buffer)?;
+    if document_path.exists() {
+        let document = std::fs::read_to_string(document_path)?;
+        if !document.is_empty() {
+            let document = graphql_parser::parse_query::<&str>(&document)?;
+
+            for def in &document.definitions {
+                def.with_index(&type_index).as_typescript_on(&mut buffer)?;
+            }
+        }
     }
 
     for t in res.data.schema.types {
