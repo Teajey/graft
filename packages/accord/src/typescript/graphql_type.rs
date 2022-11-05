@@ -5,6 +5,7 @@ use eyre::{eyre, Result};
 
 use super::{possibly_write_description, Typescriptable, TypescriptableWithBuffer};
 use crate::introspection::{Type, TypeRef};
+use crate::util::MaybeNamed;
 use crate::Buffer;
 
 impl<'a> TypescriptableWithBuffer<'a> for Type {
@@ -57,6 +58,8 @@ impl<'a> TypescriptableWithBuffer<'a> for Type {
                 for interface in interfaces {
                     if let TypeRef::Interface { name } = interface {
                         write!(buffer.objects, "{name}Interface & ")?;
+                    } else {
+                        return Err(eyre!("Found a non-interface listed as an interface."));
                     }
                 }
                 writeln!(buffer.objects, "{{")?;
@@ -105,7 +108,22 @@ impl<'a> TypescriptableWithBuffer<'a> for Type {
                 name,
                 description,
                 possible_types,
-            } => todo!(),
+            } => {
+                possibly_write_description(&mut buffer.interfaces, description.as_ref())?;
+                let possible_types = possible_types
+                    .iter()
+                    .map(|t| {
+                        t.maybe_name()
+                            .ok_or_else(|| eyre!("Non-named type cannot be a Union."))
+                    })
+                    .collect::<Result<Vec<_>>>()?
+                    .join(" | ");
+                writeln!(
+                    buffer.unions,
+                    "export type {name}Union = {};",
+                    possible_types
+                )?;
+            }
             Type::Interface {
                 name,
                 description,
