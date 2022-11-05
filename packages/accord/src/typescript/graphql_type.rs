@@ -53,7 +53,13 @@ impl<'a> TypescriptableWithBuffer<'a> for Type {
                     return Ok(());
                 }
                 possibly_write_description(&mut buffer.objects, description.as_ref())?;
-                writeln!(buffer.objects, "export type {name} = {{")?;
+                write!(buffer.objects, "export type {name} = ")?;
+                for interface in interfaces {
+                    if let TypeRef::Interface { name } = interface {
+                        write!(buffer.objects, "{name}Interface & ")?;
+                    }
+                }
+                writeln!(buffer.objects, "{{")?;
                 for f in fields {
                     possibly_write_description(&mut buffer.objects, f.description.as_ref())?;
                     writeln!(
@@ -104,8 +110,21 @@ impl<'a> TypescriptableWithBuffer<'a> for Type {
                 name,
                 description,
                 fields,
-                possible_types,
-            } => todo!(),
+                possible_types: _,
+            } => {
+                possibly_write_description(&mut buffer.interfaces, description.as_ref())?;
+                writeln!(buffer.interfaces, "export type {name}Interface = {{")?;
+                for f in fields {
+                    possibly_write_description(&mut buffer.interfaces, f.description.as_ref())?;
+                    writeln!(
+                        buffer.interfaces,
+                        "  {}: {},",
+                        f.name,
+                        f.of_type.as_typescript()?
+                    )?;
+                }
+                writeln!(buffer.interfaces, "}}")?;
+            }
             Type::List { .. } => return Err(eyre!("Top-level lists not supported.")),
             Type::NonNull { .. } => return Err(eyre!("Top-level non-nulls not supported.")),
         }

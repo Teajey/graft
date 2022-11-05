@@ -19,6 +19,7 @@ pub struct Buffer {
     pub enums: String,
     pub objects: String,
     pub input_objects: String,
+    pub interfaces: String,
     pub selection_sets: String,
     pub args: String,
     pub queries: String,
@@ -41,6 +42,8 @@ impl Display for Buffer {
         writeln!(buffer_buffer, "{}", self.objects)?;
         writeln!(buffer_buffer, "// Input Objects")?;
         writeln!(buffer_buffer, "{}", self.input_objects)?;
+        writeln!(buffer_buffer, "// Interfaces")?;
+        writeln!(buffer_buffer, "{}", self.interfaces)?;
         writeln!(buffer_buffer, "// Selection Sets")?;
         writeln!(buffer_buffer, "{}", self.selection_sets)?;
         writeln!(buffer_buffer, "// Args")?;
@@ -76,6 +79,7 @@ async fn main() -> eyre::Result<()> {
         enums: String::new(),
         objects: String::new(),
         input_objects: String::new(),
+        interfaces: String::new(),
         selection_sets: String::new(),
         args: String::new(),
         queries: String::new(),
