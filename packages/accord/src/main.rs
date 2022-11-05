@@ -8,6 +8,7 @@ use std::fmt::{Display, Write as FmtWrite};
 use std::io::Write;
 
 use clap::Parser;
+use eyre::Result;
 
 use crate::typescript::{TypeIndex, TypescriptableWithBuffer, WithIndexable};
 use crate::util::path_with_possible_prefix;
@@ -66,8 +67,8 @@ impl Display for Buffer {
 async fn main() -> eyre::Result<()> {
     let cli = cli::Base::parse();
 
-    if let Some(working_dir) = cli.working_directory {
-        std::env::set_current_dir(&working_dir)?;
+    if let Some(working_dir) = &cli.working_directory {
+        std::env::set_current_dir(working_dir)?;
     }
 
     let config = config::load(cli.config_location.as_deref()).unwrap_or_else(|err| {
@@ -75,6 +76,14 @@ async fn main() -> eyre::Result<()> {
         std::process::exit(1);
     });
 
+    let ts = generate_typescript(cli, config).await?;
+
+    write!(std::fs::File::create("generated.ts")?, "{ts}")?;
+
+    Ok(())
+}
+
+async fn generate_typescript(cli: cli::Base, config: config::AppConfig) -> Result<String> {
     let mut buffer = Buffer {
         imports: String::new(),
         util_types: String::new(),
@@ -123,7 +132,35 @@ async fn main() -> eyre::Result<()> {
         t.as_typescript_on(&mut buffer)?;
     }
 
-    write!(std::fs::File::create("generated.ts")?, "{}", buffer)?;
+    Ok(buffer.to_string())
+}
 
-    Ok(())
+#[cfg(test)]
+mod test {
+    use std::str::FromStr;
+
+    use eyre::Result;
+    use url::Url;
+
+    use crate::{cli, config, generate_typescript};
+
+    #[tokio::test]
+    async fn typescript_output_matches_snapshot() -> Result<()> {
+        let cli = cli::Base {
+            working_directory: None,
+            config_location: None,
+        };
+
+        let config = config::AppConfig {
+            schema: Url::from_str("https://swapi-graphql.netlify.app/.netlify/functions/index")?,
+            no_ssl: None,
+            document: "../testing/document.graphql".to_owned(),
+        };
+
+        let typescript = generate_typescript(cli, config).await?;
+
+        insta::assert_snapshot!(typescript);
+
+        Ok(())
+    }
 }

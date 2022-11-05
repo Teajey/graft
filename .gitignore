@@ -13,3 +13,5 @@ node_modules/
 g2t-config.yml
 
 generated.ts
+
+*.snap.new
