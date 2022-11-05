@@ -44,7 +44,14 @@ if (mode === "build") {
   console.log(`Compiling rust dependency. This may take a moment...`);
 }
 
-let proc = spawn("cargo", [mode, "--release", scriptDir, "--", targetDir]);
+let proc = spawn("cargo", [
+  mode,
+  "--release",
+  "--manifest-path",
+  `${scriptDir}/Cargo.toml`,
+  "--",
+  targetDir,
+]);
 
 if (verbose >= 2) {
   proc.stdout.on("data", (data) => console.log(data.toString()));

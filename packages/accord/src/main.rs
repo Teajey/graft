@@ -1,3 +1,4 @@
+mod cli;
 mod config;
 mod introspection;
 mod typescript;
@@ -6,9 +7,10 @@ mod util;
 use std::fmt::{Display, Write as FmtWrite};
 use std::io::Write;
 
-use typescript::WithIndexable;
+use clap::Parser;
 
-use crate::typescript::{TypeIndex, TypescriptableWithBuffer};
+use crate::typescript::{TypeIndex, TypescriptableWithBuffer, WithIndexable};
+use crate::util::path_with_possible_prefix;
 
 pub struct Buffer {
     pub imports: String,
@@ -56,11 +58,13 @@ impl Display for Buffer {
 
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
-    if let Some(working_dir) = std::env::args().last() {
+    let cli = cli::Base::parse();
+
+    if let Some(working_dir) = cli.working_directory {
         std::env::set_current_dir(&working_dir)?;
     }
 
-    let config = config::load().unwrap_or_else(|err| {
+    let config = config::load(cli.config_location.as_deref()).unwrap_or_else(|err| {
         eprintln!("Failed to load config: {}", err);
         std::process::exit(1);
     });
@@ -94,7 +98,10 @@ async fn main() -> eyre::Result<()> {
         "export type NewType<T, U> = T & {{ readonly __newtype: U }};"
     )?;
 
-    let document = std::fs::read_to_string(config.document)?;
+    let document = std::fs::read_to_string(path_with_possible_prefix(
+        cli.config_location.as_deref(),
+        &config.document,
+    ))?;
     let document = graphql_parser::parse_query::<&str>(&document)?;
 
     for def in &document.definitions {

@@ -1,3 +1,5 @@
+use std::path::{Path, PathBuf};
+
 use ::graphql_parser::query::Type as GraphQLParserType;
 
 use crate::introspection::{Type, TypeRef};
@@ -34,4 +36,10 @@ impl MaybeNamed for Type {
             Type::NonNull { .. } | Type::List { .. } => None,
         }
     }
+}
+
+pub fn path_with_possible_prefix(prefix: Option<&str>, path: &str) -> PathBuf {
+    prefix
+        .map(|p| Path::new(p).join(path))
+        .unwrap_or_else(|| PathBuf::from(path))
 }
