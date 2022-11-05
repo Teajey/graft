@@ -1,0 +1,77 @@
+query BasicQuery {
+  person(personID: 4) {
+    name
+  }
+}
+
+query NestedFields {
+  person(personID: 4) {
+    name
+    gender
+    homeworld {
+      name
+    }
+    starshipConnection {
+      edges {
+        node {
+          id
+          manufacturers
+        }
+      }
+    }
+  }
+}
+
+query AllStarships {
+  allStarships(first: 7) {
+    edges {
+      node {
+        id
+        name
+        model
+        costInCredits
+        pilotConnection {
+          edges {
+            node {
+              name
+              homeworld {
+                name
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# query AllStarships {
+#   allStarships(first: 7) {
+#     edges {
+#       node {
+#         ...starshipFragment
+#       }
+#     }
+#   }
+# }
+
+# fragment starshipFragment on Starship {
+#   id
+#   name
+#   model
+#   costInCredits
+#   pilotConnection {
+#     edges {
+#       node {
+#         ...pilotFragment
+#       }
+#     }
+#   }
+# }
+
+# fragment pilotFragment on Person {
+#   name
+#   homeworld {
+#     name
+#   }
+# }

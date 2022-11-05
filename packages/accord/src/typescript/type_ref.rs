@@ -10,15 +10,15 @@ impl Typescriptable for TypeRef {
     }
 }
 
-fn recursive_typescriptify(type_ref: &TypeRef, wrap_me: &mut bool) -> Result<String> {
+fn recursive_typescriptify(type_ref: &TypeRef, nullable: &mut bool) -> Result<String> {
     let type_ref_string = match type_ref {
         TypeRef::Scalar { name } => format!("{name}Scalar"),
         TypeRef::NonNull { of_type } => {
-            *wrap_me = false;
-            recursive_typescriptify(of_type, wrap_me)?
+            *nullable = false;
+            recursive_typescriptify(of_type, nullable)?
         }
         TypeRef::List { of_type } => {
-            let string = recursive_typescriptify(of_type, wrap_me)?;
+            let string = recursive_typescriptify(of_type, nullable)?;
             format!("{string}[]")
         }
         type_ref => {
@@ -29,11 +29,11 @@ fn recursive_typescriptify(type_ref: &TypeRef, wrap_me: &mut bool) -> Result<Str
         }
     };
 
-    let string = if *wrap_me {
+    let type_ref_string = if *nullable {
         format!("Nullable<{type_ref_string}>")
     } else {
         type_ref_string
     };
 
-    Ok(string)
+    Ok(type_ref_string)
 }
