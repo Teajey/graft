@@ -4,9 +4,9 @@ use convert_case::{Case, Casing};
 use eyre::{eyre, Result};
 
 use super::{possibly_write_description, Typescriptable, TypescriptableWithBuffer};
+use crate::common::gen::Buffer;
 use crate::introspection::{Type, TypeRef};
 use crate::util::MaybeNamed;
-use crate::Buffer;
 
 impl<'a> TypescriptableWithBuffer<'a> for Type {
     fn as_typescript_on(&self, buffer: &mut Buffer) -> Result<()> {

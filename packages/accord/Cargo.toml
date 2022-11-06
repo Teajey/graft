@@ -6,6 +6,9 @@ description = "Generate Typescript according to a GraphQL schema."
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[lib]
+crate-type = ["cdylib", "rlib"]
+
 [dependencies]
 clap = { version = "4.0.19", features = ["derive"] }
 config = { version = "0.13.2", features = ["yaml"], default-features = false }
@@ -15,9 +18,13 @@ graphql-parser = "0.4.0"
 graphql_client = { version = "0.11.0", features = ["reqwest"] }
 reqwest = "0.11.12"
 serde = { version = "1.0.145", features = ["derive"] }
+serde-wasm-bindgen = "0.4.5"
 serde_json = "1.0.86"
-tokio = { version = "1.21.2", features = ["tokio-macros", "macros", "rt-multi-thread"] }
+serde_yaml = "0.9.14"
+tokio = { version = "1.21.2", features = ["macros", "rt-multi-thread"] }
 url = { version = "2.3.1", features = ["serde"] }
+wasm-bindgen = "0.2.83"
+wasm-bindgen-futures = "0.4.33"
 
 [dev-dependencies]
 insta = "1.21.0"

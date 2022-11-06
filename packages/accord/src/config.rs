@@ -1,16 +1,8 @@
 use config::{Config, ConfigError};
 use eyre::Result;
-use serde::Deserialize;
-use url::Url;
 
+pub use crate::common::config::AppConfig;
 use crate::util::path_with_possible_prefix;
-
-#[derive(Deserialize)]
-pub struct AppConfig {
-    pub schema: Url,
-    pub no_ssl: Option<bool>,
-    pub document: String,
-}
 
 pub fn load(dir: Option<&str>) -> Result<AppConfig, ConfigError> {
     let config_name = ".accord";

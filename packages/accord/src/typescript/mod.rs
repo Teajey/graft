@@ -9,7 +9,7 @@ use eyre::{eyre, Result};
 
 use crate::introspection::{Schema, Type, TypeRef};
 use crate::util::MaybeNamed;
-use crate::Buffer;
+use crate::common::gen::Buffer;
 
 pub(in crate::typescript) fn possibly_write_description<W: Write>(
     out: &mut W,
@@ -109,6 +109,6 @@ pub trait Typescriptable {
     }
 }
 
-pub trait TypescriptableWithBuffer<'a> {
+pub(crate) trait TypescriptableWithBuffer<'a> {
     fn as_typescript_on(&'a self, buffer: &mut Buffer) -> Result<()>;
 }
