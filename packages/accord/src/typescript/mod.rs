@@ -103,6 +103,10 @@ pub trait WithIndexable: Sized {
 
 pub trait Typescriptable {
     fn as_typescript(&self) -> Result<String>;
+    
+    fn as_typescript_non_nullable(&self) -> Result<String> {
+        unimplemented!()
+    }
 }
 
 pub trait TypescriptableWithBuffer<'a> {

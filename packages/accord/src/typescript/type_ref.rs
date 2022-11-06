@@ -8,6 +8,10 @@ impl Typescriptable for TypeRef {
     fn as_typescript(&self) -> Result<String> {
         recursive_typescriptify(self, &mut true)
     }
+
+    fn as_typescript_non_nullable(&self) -> Result<String> {
+        recursive_typescriptify(self, &mut false)
+    }
 }
 
 fn recursive_typescriptify(type_ref: &TypeRef, nullable: &mut bool) -> Result<String> {

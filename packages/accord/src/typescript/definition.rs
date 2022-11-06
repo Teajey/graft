@@ -222,7 +222,7 @@ fn recursively_typescriptify_selected_field<'a>(
             write!(
                 local_buffer,
                 "{}",
-                TypeRef::from(leaf_field_type).as_typescript()?
+                TypeRef::from(leaf_field_type).as_typescript_non_nullable()?
             )?;
         }
     };

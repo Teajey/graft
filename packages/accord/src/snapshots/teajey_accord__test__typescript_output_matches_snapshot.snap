@@ -975,9 +975,9 @@ export type NodeInterface = {
 // Unions
 
 // Selection Sets
-export type BasicQueryQuerySelectionSet = { person: Nullable<{ name: Nullable<Nullable<StringScalar>>, }>, };
-export type NestedFieldsQuerySelectionSet = { person: Nullable<{ name: Nullable<Nullable<StringScalar>>, gender: Nullable<Nullable<StringScalar>>, homeworld: Nullable<{ name: Nullable<Nullable<StringScalar>>, }>, starshipConnection: Nullable<{ edges: Nullable<Nullable<{ node: Nullable<{ id: Nullable<IDScalar>, manufacturers: Nullable<Nullable<Nullable<StringScalar>>[]>, }>, }>[]>, }>, }>, };
-export type AllStarshipsQuerySelectionSet = { allStarships: Nullable<{ edges: Nullable<Nullable<{ node: Nullable<{ id: Nullable<IDScalar>, name: Nullable<Nullable<StringScalar>>, model: Nullable<Nullable<StringScalar>>, costInCredits: Nullable<Nullable<FloatScalar>>, pilotConnection: Nullable<{ edges: Nullable<Nullable<{ node: Nullable<{ name: Nullable<Nullable<StringScalar>>, homeworld: Nullable<{ name: Nullable<Nullable<StringScalar>>, }>, }>, }>[]>, }>, }>, }>[]>, }>, };
+export type BasicQueryQuerySelectionSet = { person: Nullable<{ name: Nullable<StringScalar>, }>, };
+export type NestedFieldsQuerySelectionSet = { person: Nullable<{ name: Nullable<StringScalar>, gender: Nullable<StringScalar>, homeworld: Nullable<{ name: Nullable<StringScalar>, }>, starshipConnection: Nullable<{ edges: Nullable<Nullable<{ node: Nullable<{ id: IDScalar, manufacturers: Nullable<Nullable<StringScalar>[]>, }>, }>[]>, }>, }>, };
+export type AllStarshipsQuerySelectionSet = { allStarships: Nullable<{ edges: Nullable<Nullable<{ node: Nullable<{ id: IDScalar, name: Nullable<StringScalar>, model: Nullable<StringScalar>, costInCredits: Nullable<FloatScalar>, pilotConnection: Nullable<{ edges: Nullable<Nullable<{ node: Nullable<{ name: Nullable<StringScalar>, homeworld: Nullable<{ name: Nullable<StringScalar>, }>, }>, }>[]>, }>, }>, }>[]>, }>, };
 
 // Args
 export type BasicQueryQueryArgs = Record<string, never>;
