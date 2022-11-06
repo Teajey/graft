@@ -16,8 +16,7 @@ impl<'a> TypescriptableWithBuffer<'a> for Type {
                 let scalar_type = match name.as_str() {
                     "ID" => r#"NewType<string, "ID">"#,
                     "String" => "string",
-                    "Int" => "number",
-                    "Float" => "number",
+                    "Int" | "Float" => "number",
                     "Boolean" => "boolean",
                     _ => "unknown",
                 };
