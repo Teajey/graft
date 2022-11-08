@@ -13,7 +13,7 @@ Inspired by [`graphql-code-generator`](https://github.com/dotansimha/graphql-cod
 ## (Planned) Features
 
 - [x] Generate basic GraphQL types
-- [ ] Everything that `graphql-code-generator`
+- [ ] Everything that `graphql-code-generator` can do
 - [ ] User can arbitrarily extend the generated types with a `*.config.js`-like file instead of plugins
 
 ## Build
