@@ -38,6 +38,12 @@ But for now
 yarn add -D @teajey/accord@https://github.com/Teajey/accord#workspace=@teajey/accord
 ```
 
+Yarn (or your package manager of choice) may hang for a while as the Rust is compiled; i.e.:
+
+```
+➤ YN0007: │ @teajey/accord@https://github.com/Teajey/accord.git#workspace=%40teajey%2Faccord&commit=b7aa83a082f10be8df25f3ac48d622c3b575c9cf must be built because it never has been before or the last one failed
+```
+
 ## Configuration
 
 Example config
