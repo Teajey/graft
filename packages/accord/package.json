@@ -17,13 +17,16 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "wasm-pack build --target nodejs -- --features node",
     "build:install": "wasm-pack build --target nodejs $(node ./dirName.js) -- --features node",
-    "postinstall": "sh -c \"if [ ! -f pkg/teajey_accord.js ]; then yarn build:install; fi\""
+    "postinstall": "sh -c \"if [ ! -f pkg/teajey_accord.js ]; then yarn build; fi\""
   },
   "files": [
     "pkg",
     "README.md",
     "LICENSE",
-    "fetchJson.js"
+    "fetchJson.js",
+    "Cargo.toml",
+    "src",
+    "Cargo.lock"
   ],
   "packageManager": "yarn@3.2.4",
   "dependencies": {
