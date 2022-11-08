@@ -13,7 +13,8 @@ Inspired by [`graphql-code-generator`](https://github.com/dotansimha/graphql-cod
 ## (Planned) Features
 
 - [x] Generate basic GraphQL types
-- [ ] Everything that `graphql-code-generator` can do
+- [ ] ~Everything that `graphql-code-generator` can do~ Eh, maybe just the stuff that I need
+- [ ] Option to generate a GraphQL AST file of the schema
 - [ ] User can arbitrarily extend the generated types with a `*.config.js`-like file instead of plugins
 
 ## Build
@@ -34,14 +35,22 @@ yarn build
 
 Hopefully soon
 
-```
+```sh
+# NPM package
 yarn add -D @teajey/accord
+
+# Rust binary
+cargo install teajey-accord
 ```
 
 But for now
 
-```
+```sh
+# NPM package
 yarn add -D @teajey/accord@https://github.com/Teajey/accord#workspace=@teajey/accord
+
+# Rust binary
+cargo install teajey-accord --git https://github.com/Teajey/accord
 ```
 
 Yarn (or your package manager of choice) may hang for a while as the Rust is compiled; i.e.:
