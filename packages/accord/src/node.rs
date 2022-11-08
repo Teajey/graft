@@ -17,6 +17,9 @@ extern "C" {
 
     #[wasm_bindgen(js_namespace = console)]
     pub fn log(arg: &str);
+
+    #[wasm_bindgen(js_name = "process.stdout.write")]
+    pub fn process_stdout_write(arg: &str);
 }
 
 #[wasm_bindgen(module = "fs")]
@@ -31,6 +34,11 @@ extern "C" {
 #[macro_export]
 macro_rules! console_log {
     ($($t:tt)*) => (node::log(&format_args!($($t)*).to_string()))
+}
+
+#[macro_export]
+macro_rules! node_stdout {
+    ($($t:tt)*) => (node::process_stdout_write(&format_args!($($t)*).to_string()))
 }
 
 pub fn argv() -> Vec<JsValue> {

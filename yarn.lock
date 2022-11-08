@@ -408,18 +408,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@teajey/accord@https://github.com/Teajey/accord#workspace=@teajey/accord":
-  version: 0.1.0
-  resolution: "@teajey/accord@https://github.com/Teajey/accord.git#workspace=%40teajey%2Faccord&commit=3ddd7ea8f355b09b3f5dd52d91286ba296a29327"
-  dependencies:
-    node-fetch: ^3.2.10
-  bin:
-    accord: pkg/teajey_accord.js
-  checksum: 40eb8566dfda43a30f60973c9cebb6cd7ac22238454357be00c9f352a5e1204bf57bf3d4cd1dcd767748598c139c368ac95432e1b0e760f971701d8194c3616d
-  languageName: node
-  linkType: hard
-
-"@teajey/accord@workspace:packages/accord":
+"@teajey/accord@workspace:*, @teajey/accord@workspace:packages/accord":
   version: 0.0.0-use.local
   resolution: "@teajey/accord@workspace:packages/accord"
   dependencies:
@@ -1953,7 +1942,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "testing@workspace:packages/testing"
   dependencies:
-    "@teajey/accord": "https://github.com/Teajey/accord#workspace=@teajey/accord"
+    "@teajey/accord": "workspace:*"
     "@types/react": ^18.0.22
     "@types/react-dom": ^18.0.7
     "@vitejs/plugin-react": ^2.2.0

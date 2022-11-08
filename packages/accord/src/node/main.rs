@@ -3,7 +3,7 @@ use wasm_bindgen::prelude::*;
 
 use crate::gen::generate_typescript_with_document;
 use crate::util::path_with_possible_prefix;
-use crate::{cli, config, console_log, node};
+use crate::{cli, config, node, node_stdout};
 
 fn read_to_string(path: &str) -> Result<String, JsValue> {
     let file_str: Vec<u8> = serde_wasm_bindgen::from_value(node::read_file(path)?.into())?;
@@ -54,7 +54,7 @@ pub async fn node_main() -> Result<(), JsValue> {
 
     match cli_result {
         Err(err) => {
-            console_log!("{err}");
+            node_stdout!("{err}");
         }
         Ok(cli) => {
             let path = path_with_possible_prefix(cli.config_location.as_deref(), ".accord.yml");
