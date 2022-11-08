@@ -277,6 +277,7 @@ impl Response {
 
         let res = node::fetch_json(
             config.schema.as_str(),
+            config.no_ssl.unwrap_or(false),
             serde_wasm_bindgen::to_value(&options)
                 .map_err(|err| eyre!("Couldn't deserialize json into JsValue: {err}"))?,
         )

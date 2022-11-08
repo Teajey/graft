@@ -48,5 +48,5 @@ pub fn argv() -> Vec<JsValue> {
 #[wasm_bindgen(module = "/fetchJson.js")]
 extern "C" {
     #[wasm_bindgen(js_name = "fetchJson", catch)]
-    pub async fn fetch_json(url: &str, options: JsValue) -> Result<JsValue, JsValue>;
+    pub async fn fetch_json(url: &str, no_ssl: bool, options: JsValue) -> Result<JsValue, JsValue>;
 }
