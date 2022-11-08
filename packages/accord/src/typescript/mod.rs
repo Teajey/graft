@@ -9,7 +9,7 @@ use eyre::{eyre, Result};
 
 use crate::introspection::{Schema, Type, TypeRef};
 use crate::util::MaybeNamed;
-use crate::common::gen::Buffer;
+use crate::gen::Buffer;
 
 pub(in crate::typescript) fn possibly_write_description<W: Write>(
     out: &mut W,

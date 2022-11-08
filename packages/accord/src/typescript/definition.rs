@@ -6,7 +6,7 @@ use graphql_parser::query::{Definition, OperationDefinition};
 
 use super::{TypeIndex, Typescriptable, TypescriptableWithBuffer, WithIndex, WithIndexable};
 use crate::{
-    common::gen::Buffer,
+    gen::Buffer,
     introspection::{Field, Type, TypeRef},
 };
 

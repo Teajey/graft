@@ -315,7 +315,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7fc16d75d169fddb720d8f1c7aed6413e329e1584079b9734ff07266a193f5bc"
 dependencies = [
  "graphql_query_derive",
- "reqwest",
  "serde",
  "serde_json",
 ]
@@ -966,6 +965,7 @@ dependencies = [
  "graphql-parser",
  "graphql_client",
  "insta",
+ "js-sys",
  "reqwest",
  "serde",
  "serde-wasm-bindgen",

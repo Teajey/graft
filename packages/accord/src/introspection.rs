@@ -241,7 +241,11 @@ pub struct Response {
     pub data: Data,
 }
 
+#[cfg(all(feature = "node", feature = "native"))]
+compile_error!(r#"The "node" OR the "native" should be feature should be selected."#);
+
 impl Response {
+    #[cfg(feature = "native")]
     pub async fn fetch(config: &AppConfig) -> Result<Self> {
         let body = IntrospectionQuery::build_query(introspection_query::Variables {});
 
@@ -256,5 +260,35 @@ impl Response {
             .await?;
 
         Ok(res.json().await?)
+    }
+    #[cfg(feature = "node")]
+    pub async fn fetch(config: &AppConfig) -> Result<Self> {
+        use crate::node;
+
+        let body = IntrospectionQuery::build_query(introspection_query::Variables {});
+
+        let body_str = serde_json::to_string(&body)?;
+
+        let options = serde_json::json!({
+            "method": "POST",
+            "body": body_str,
+            "headers": {
+                "Accept": "application/json",
+                "Content-Type": "application/json"
+            }
+        });
+
+        let res = node::fetch_json(
+            config.schema.as_str(),
+            serde_wasm_bindgen::to_value(&options)
+                .map_err(|err| eyre!("Couldn't deserialize json into JsValue: {err}"))?,
+        )
+        .await
+        .map_err(|err| eyre!("Fetch failed: {err:?}"))?;
+
+        let res: Response = serde_wasm_bindgen::from_value(res)
+            .map_err(|err| eyre!("Failed to deserialize introspection response: {err}"))?;
+
+        Ok(res)
     }
 }

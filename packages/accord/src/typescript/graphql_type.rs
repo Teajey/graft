@@ -4,7 +4,7 @@ use convert_case::{Case, Casing};
 use eyre::{eyre, Result};
 
 use super::{possibly_write_description, Typescriptable, TypescriptableWithBuffer};
-use crate::common::gen::Buffer;
+use crate::gen::Buffer;
 use crate::introspection::{Type, TypeRef};
 use crate::util::MaybeNamed;
 

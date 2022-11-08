@@ -11,22 +11,23 @@
   ],
   "license": "MIT",
   "homepage": "https://github.com/Teajey/accord",
-  "bin": "cargo.js",
+  "bin": "pkg/teajey_accord.js",
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "postinstall": "node ./cargo.js --mode build"
+    "build": "wasm-pack build --target nodejs -- --features node"
   },
   "files": [
-    "cargo.js",
+    "pkg",
     "README.md",
     "LICENSE",
-    "Cargo.lock",
-    "Cargo.toml",
-    "src"
+    "fetchJson.js"
   ],
   "packageManager": "yarn@3.2.4",
   "dependencies": {
-    "yargs": "^17.6.0"
+    "node-fetch": "^3.2.10"
+  },
+  "devDependencies": {
+    "wasm-pack": "^0.10.3"
   }
 }

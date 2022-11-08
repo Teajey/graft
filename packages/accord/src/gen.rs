@@ -1,58 +1,107 @@
+use std::fmt::{Display, Write as FmtWrite};
+
 use eyre::Result;
+use graphql_parser::query::Document;
 
-use crate::common::gen::generate_typescript_with_document;
-use crate::util::path_with_possible_prefix;
-use crate::{cli, config};
+use crate::config;
+use crate::typescript::{TypeIndex, TypescriptableWithBuffer, WithIndexable};
+use crate::{cli, introspection};
 
-pub async fn generate_typescript(cli: cli::Base, config: config::AppConfig) -> Result<String> {
-    let ts = if let Some(document_path) = &config.document_path {
-        let document_path =
-            path_with_possible_prefix(cli.config_location.as_deref(), document_path);
-
-        if !document_path.exists() {
-            generate_typescript_with_document(cli, config, None).await?
-        } else {
-            let document_str = std::fs::read_to_string(document_path)?;
-            if document_str.is_empty() {
-                generate_typescript_with_document(cli, config, None).await?
-            } else {
-                let document = graphql_parser::parse_query::<&str>(&document_str)?;
-                generate_typescript_with_document(cli, config, Some(document)).await?
-            }
-        }
-    } else {
-        generate_typescript_with_document(cli, config, None).await?
-    };
-
-    Ok(ts)
+pub struct Buffer {
+    pub imports: String,
+    pub util_types: String,
+    pub scalars: String,
+    pub enums: String,
+    pub objects: String,
+    pub input_objects: String,
+    pub interfaces: String,
+    pub unions: String,
+    pub selection_sets: String,
+    pub args: String,
+    pub queries: String,
+    pub mutations: String,
+    pub subscriptions: String,
 }
 
-#[cfg(test)]
-mod test {
-    use std::str::FromStr;
+impl Display for Buffer {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut buffer_buffer = String::new();
 
-    use eyre::Result;
-    use url::Url;
+        writeln!(buffer_buffer, "{}", self.imports)?;
+        writeln!(buffer_buffer, "// Utility types")?;
+        writeln!(buffer_buffer, "{}", self.util_types)?;
+        writeln!(buffer_buffer, "// Scalars")?;
+        writeln!(buffer_buffer, "{}", self.scalars)?;
+        writeln!(buffer_buffer, "// Enums")?;
+        writeln!(buffer_buffer, "{}", self.enums)?;
+        writeln!(buffer_buffer, "// Objects")?;
+        writeln!(buffer_buffer, "{}", self.objects)?;
+        writeln!(buffer_buffer, "// Input Objects")?;
+        writeln!(buffer_buffer, "{}", self.input_objects)?;
+        writeln!(buffer_buffer, "// Interfaces")?;
+        writeln!(buffer_buffer, "{}", self.interfaces)?;
+        writeln!(buffer_buffer, "// Unions")?;
+        writeln!(buffer_buffer, "{}", self.unions)?;
+        writeln!(buffer_buffer, "// Selection Sets")?;
+        writeln!(buffer_buffer, "{}", self.selection_sets)?;
+        writeln!(buffer_buffer, "// Args")?;
+        writeln!(buffer_buffer, "{}", self.args)?;
+        writeln!(buffer_buffer, "// Queries")?;
+        writeln!(buffer_buffer, "{}", self.queries)?;
+        writeln!(buffer_buffer, "// Mutations")?;
+        writeln!(buffer_buffer, "{}", self.mutations)?;
+        writeln!(buffer_buffer, "// Subscriptions")?;
+        write!(buffer_buffer, "{}", self.subscriptions)?;
 
-    use crate::{cli, config, gen::generate_typescript};
-
-    #[tokio::test]
-    async fn typescript_output_matches_snapshot() -> Result<()> {
-        let cli = cli::Base {
-            working_directory: None,
-            config_location: None,
-        };
-
-        let config = config::AppConfig {
-            schema: Url::from_str("https://swapi-graphql.netlify.app/.netlify/functions/index")?,
-            no_ssl: None,
-            document_path: Some("../testing/document.graphql".to_owned()),
-        };
-
-        let typescript = generate_typescript(cli, config).await?;
-
-        insta::assert_snapshot!(typescript);
-
-        Ok(())
+        write!(f, "{}", buffer_buffer)
     }
+}
+
+pub async fn generate_typescript_with_document<'a>(
+    cli: cli::Base,
+    config: config::AppConfig,
+    document: Option<Document<'a, &'a str>>,
+) -> Result<String> {
+    let mut buffer = Buffer {
+        imports: String::new(),
+        util_types: String::new(),
+        scalars: String::new(),
+        enums: String::new(),
+        objects: String::new(),
+        input_objects: String::new(),
+        interfaces: String::new(),
+        unions: String::new(),
+        selection_sets: String::new(),
+        args: String::new(),
+        queries: String::new(),
+        mutations: String::new(),
+        subscriptions: String::new(),
+    };
+
+    let res = introspection::Response::fetch(&config).await?;
+
+    let type_index = TypeIndex::try_new(&res.data.schema)?;
+
+    writeln!(
+        buffer.imports,
+        r#"import {{ parse, TypedQueryDocumentNode }} from "graphql";"#
+    )?;
+
+    writeln!(buffer.util_types, "export type Nullable<T> = T | null;")?;
+    writeln!(
+        buffer.util_types,
+        "export type NewType<T, U> = T & {{ readonly __newtype: U }};"
+    )?;
+
+    if let Some(document) = document {
+        for def in &document.definitions {
+            def.with_index(&type_index).as_typescript_on(&mut buffer)?;
+        }
+    }
+
+    for t in res.data.schema.types {
+        t.as_typescript_on(&mut buffer)?;
+    }
+
+    Ok(buffer.to_string())
 }
