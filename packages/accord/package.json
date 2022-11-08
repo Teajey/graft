@@ -15,7 +15,8 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "wasm-pack build --target nodejs -- --features node"
+    "build": "wasm-pack build --target nodejs -- --features node",
+    "postinstall": "test ! -f pkg/teajey_accord.js && yarn build"
   },
   "files": [
     "pkg",

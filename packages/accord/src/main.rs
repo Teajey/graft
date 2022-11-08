@@ -9,6 +9,12 @@ mod node;
 mod typescript;
 mod util;
 
+#[cfg(any(
+    all(feature = "node", feature = "native"),
+    not(any(feature = "node", feature = "native"))
+))]
+compile_error!(r#"The "node" OR the "native" feature should be selected."#);
+
 #[cfg(feature = "node")]
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<(), wasm_bindgen::JsValue> {

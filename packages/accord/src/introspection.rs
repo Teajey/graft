@@ -241,9 +241,6 @@ pub struct Response {
     pub data: Data,
 }
 
-#[cfg(all(feature = "node", feature = "native"))]
-compile_error!(r#"The "node" OR the "native" should be feature should be selected."#);
-
 impl Response {
     #[cfg(feature = "native")]
     pub async fn fetch(config: &AppConfig) -> Result<Self> {
