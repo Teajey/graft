@@ -1,5 +1,5 @@
 ---
-source: packages/accord/src/main.rs
+source: packages/accord/src/native/gen.rs
 expression: typescript
 ---
 import { parse, TypedQueryDocumentNode } from "graphql";
