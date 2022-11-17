@@ -247,7 +247,7 @@ impl Response {
         let body = IntrospectionQuery::build_query(introspection_query::Variables {});
 
         let client = reqwest::Client::builder()
-            .danger_accept_invalid_certs(config.no_ssl.unwrap_or(false))
+            .danger_accept_invalid_certs(config.no_ssl)
             .build()?;
 
         let res = client
@@ -277,7 +277,7 @@ impl Response {
 
         let res = node::fetch_json(
             config.schema.as_str(),
-            config.no_ssl.unwrap_or(false),
+            config.no_ssl,
             serde_wasm_bindgen::to_value(&options)
                 .map_err(|err| eyre!("Couldn't deserialize json into JsValue: {err}"))?,
         )

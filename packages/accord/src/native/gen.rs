@@ -29,10 +29,7 @@ pub async fn generate_typescript(cli: cli::Base, config: config::AppConfig) -> R
 
 #[cfg(test)]
 mod test {
-    use std::str::FromStr;
-
     use eyre::Result;
-    use url::Url;
 
     use crate::{cli, config, native::gen::generate_typescript};
 
@@ -43,11 +40,13 @@ mod test {
             config_location: None,
         };
 
-        let config = config::AppConfig {
-            schema: Url::from_str("https://swapi-graphql.netlify.app/.netlify/functions/index")?,
+        let config = config::RawAppConfig {
+            schema: "https://swapi-graphql.netlify.app/.netlify/functions/index".to_owned(),
             no_ssl: None,
-            document_path: Some("../testing/document.graphql".to_owned()),
+            document: Some("../testing/document.graphql".to_owned()),
         };
+
+        let config = config::AppConfig::try_from(config)?;
 
         let typescript = generate_typescript(cli, config).await?;
 

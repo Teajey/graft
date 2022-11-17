@@ -1,10 +1,10 @@
 use config::{Config, ConfigError};
 use eyre::Result;
 
-pub use crate::config::AppConfig;
+pub use crate::config::RawAppConfig;
 use crate::util::path_with_possible_prefix;
 
-pub fn load(dir: Option<&str>) -> Result<AppConfig, ConfigError> {
+pub fn load(dir: Option<&str>) -> Result<RawAppConfig, ConfigError> {
     let config_name = ".accord";
 
     let path = path_with_possible_prefix(dir, config_name);
@@ -14,5 +14,5 @@ pub fn load(dir: Option<&str>) -> Result<AppConfig, ConfigError> {
             ConfigError::Message("Config path wasn't valid unicode.".to_owned())
         })?))
         .build()?
-        .try_deserialize::<AppConfig>()
+        .try_deserialize::<RawAppConfig>()
 }

@@ -65,8 +65,12 @@ pub async fn node_main() -> Result<(), JsValue> {
 
             let config_str = read_to_string(path)?;
 
-            let config: config::AppConfig = serde_yaml::from_str(&config_str)
+            let config: config::RawAppConfig = serde_yaml::from_str(&config_str)
                 .map_err(|err| JsValue::from_str(&format!("Failed to parse config_str: {err}")))?;
+
+            let config: config::AppConfig = config.try_into().map_err(|err| {
+                JsValue::from_str(&format!("Failed to generate consumable config: {err}"))
+            })?;
 
             let ts = generate_typescript(cli, config).await?;
 

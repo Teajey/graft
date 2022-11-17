@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "gen": "ACCORD_DOMAIN='swapi-graphql.netlify.app' yarn accord"
   },
   "dependencies": {
     "graphql": "^16.6.0",

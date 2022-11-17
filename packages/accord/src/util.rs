@@ -43,3 +43,15 @@ pub fn path_with_possible_prefix(prefix: Option<&str>, path: &str) -> PathBuf {
         .map(|p| Path::new(p).join(path))
         .unwrap_or_else(|| PathBuf::from(path))
 }
+
+pub mod env {
+    use std::env::VarError;
+
+    pub fn var(key: &str) -> Result<String, VarError> {
+        #[cfg(feature = "native")]
+        let value = std::env::var(key);
+        #[cfg(feature = "node")]
+        let value = crate::node::env::var(key);
+        value
+    }
+}

@@ -44,6 +44,8 @@ async fn main() -> Result<()> {
         std::process::exit(1);
     });
 
+    let config = config::AppConfig::try_from(config)?;
+
     let ts = generate_typescript(cli, config).await?;
 
     write!(std::fs::File::create("generated.ts")?, "{ts}")?;
