@@ -26,52 +26,29 @@ query AllStarships {
   allStarships(first: 7) {
     edges {
       node {
-        id
-        name
-        model
-        costInCredits
-        pilotConnection {
-          edges {
-            node {
-              name
-              homeworld {
-                name
-              }
-            }
-          }
-        }
+        ...starshipFragment
       }
     }
   }
 }
 
-# query AllStarships {
-#   allStarships(first: 7) {
-#     edges {
-#       node {
-#         ...starshipFragment
-#       }
-#     }
-#   }
-# }
+fragment starshipFragment on Starship {
+  id
+  name
+  model
+  costInCredits
+  pilotConnection {
+    edges {
+      node {
+        ...pilotFragment
+      }
+    }
+  }
+}
 
-# fragment starshipFragment on Starship {
-#   id
-#   name
-#   model
-#   costInCredits
-#   pilotConnection {
-#     edges {
-#       node {
-#         ...pilotFragment
-#       }
-#     }
-#   }
-# }
-
-# fragment pilotFragment on Person {
-#   name
-#   homeworld {
-#     name
-#   }
-# }
+fragment pilotFragment on Person {
+  name
+  homeworld {
+    name
+  }
+}

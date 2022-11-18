@@ -36,7 +36,7 @@ extern "C" {
 
 #[macro_export]
 macro_rules! console_log {
-    ($($t:tt)*) => ($crate::node::log(&format_args!($($t)*).to_string()))
+    ($($t:tt)*) => (node::log(&format_args!($($t)*).to_string()))
 }
 
 #[macro_export]
@@ -53,10 +53,6 @@ extern "C" {
     #[wasm_bindgen(js_name = "fetchJson", catch)]
     pub async fn fetch_json(url: &str, no_ssl: bool, options: JsValue) -> Result<JsValue, JsValue>;
 }
-
-// fn process_env() -> JsValue {
-//     process.env()
-// }
 
 pub mod env {
     use super::process;

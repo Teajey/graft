@@ -21,6 +21,7 @@ pub struct Buffer {
     pub queries: String,
     pub mutations: String,
     pub subscriptions: String,
+    pub fragments: String,
 }
 
 impl Display for Buffer {
@@ -51,7 +52,9 @@ impl Display for Buffer {
         writeln!(buffer_buffer, "// Mutations")?;
         writeln!(buffer_buffer, "{}", self.mutations)?;
         writeln!(buffer_buffer, "// Subscriptions")?;
-        write!(buffer_buffer, "{}", self.subscriptions)?;
+        writeln!(buffer_buffer, "{}", self.subscriptions)?;
+        writeln!(buffer_buffer, "// Fragments")?;
+        write!(buffer_buffer, "{}", self.fragments)?;
 
         write!(f, "{}", buffer_buffer)
     }
@@ -76,6 +79,7 @@ pub async fn generate_typescript_with_document<'a>(
         queries: String::new(),
         mutations: String::new(),
         subscriptions: String::new(),
+        fragments: String::new(),
     };
 
     let res = introspection::Response::fetch(&config).await?;

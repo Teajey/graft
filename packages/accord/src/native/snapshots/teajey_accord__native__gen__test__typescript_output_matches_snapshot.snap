@@ -977,7 +977,7 @@ export type NodeInterface = {
 // Selection Sets
 export type BasicQueryQuerySelectionSet = { person: Nullable<{ name: Nullable<StringScalar>, }>, };
 export type NestedFieldsQuerySelectionSet = { person: Nullable<{ name: Nullable<StringScalar>, gender: Nullable<StringScalar>, homeworld: Nullable<{ name: Nullable<StringScalar>, }>, starshipConnection: Nullable<{ edges: Nullable<Nullable<{ node: Nullable<{ id: IDScalar, manufacturers: Nullable<Nullable<StringScalar>[]>, }>, }>[]>, }>, }>, };
-export type AllStarshipsQuerySelectionSet = { allStarships: Nullable<{ edges: Nullable<Nullable<{ node: Nullable<{ id: IDScalar, name: Nullable<StringScalar>, model: Nullable<StringScalar>, costInCredits: Nullable<FloatScalar>, pilotConnection: Nullable<{ edges: Nullable<Nullable<{ node: Nullable<{ name: Nullable<StringScalar>, homeworld: Nullable<{ name: Nullable<StringScalar>, }>, }>, }>[]>, }>, }>, }>[]>, }>, };
+export type AllStarshipsQuerySelectionSet = { allStarships: Nullable<{ edges: Nullable<Nullable<{ node: Nullable<{ } & StarshipFragmentFragment>, }>[]>, }>, };
 
 // Args
 export type BasicQueryQueryArgs = Record<string, never>;
@@ -1013,20 +1013,7 @@ export const AllStarshipsQueryDocument = parse(`query AllStarships {
   allStarships(first: 7) {
     edges {
       node {
-        id
-        name
-        model
-        costInCredits
-        pilotConnection {
-          edges {
-            node {
-              name
-              homeworld {
-                name
-              }
-            }
-          }
-        }
+        ...starshipFragment
       }
     }
   }
@@ -1036,4 +1023,8 @@ export const AllStarshipsQueryDocument = parse(`query AllStarships {
 // Mutations
 
 // Subscriptions
+
+// Fragments
+export type StarshipFragmentFragment = { id: IDScalar, name: Nullable<StringScalar>, model: Nullable<StringScalar>, costInCredits: Nullable<FloatScalar>, pilotConnection: Nullable<{ edges: Nullable<Nullable<{ node: Nullable<{ } & PilotFragmentFragment>, }>[]>, }>, };
+export type PilotFragmentFragment = { name: Nullable<StringScalar>, homeworld: Nullable<{ name: Nullable<StringScalar>, }>, };
 

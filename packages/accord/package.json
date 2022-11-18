@@ -14,7 +14,7 @@
   "bin": "pkg/teajey_accord.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "cargo test --features native",
     "build": "wasm-pack build --target nodejs -- --features node",
     "postinstall": "sh -c \"if [ ! -f pkg/teajey_accord.js ]; then yarn build; fi\""
   },
