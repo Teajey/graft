@@ -1,0 +1,1030 @@
+---
+source: packages/accord/src/gen.rs
+expression: typescript
+---
+import { parse, TypedQueryDocumentNode } from "graphql";
+
+// Utility types
+export type Nullable<T> = T | null;
+export type NewType<T, U> = T & { readonly __newtype: U };
+
+// Scalars
+/** The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text. */
+export type StringScalar = string;
+/** The `Int` scalar type represents non-fractional signed whole numeric values. Int can represent values between -(2^31) and 2^31 - 1. */
+export type IntScalar = number;
+/** The `Boolean` scalar type represents `true` or `false`. */
+export type BooleanScalar = boolean;
+/** The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID. */
+export type IDScalar = NewType<string, "ID">;
+/** The `Float` scalar type represents signed double-precision fractional values as specified by [IEEE 754](https://en.wikipedia.org/wiki/IEEE_floating_point). */
+export type FloatScalar = number;
+
+// Enums
+
+// Objects
+export type Root = {
+  allFilms: Nullable<FilmsConnection>,
+  film: Nullable<Film>,
+  allPeople: Nullable<PeopleConnection>,
+  person: Nullable<Person>,
+  allPlanets: Nullable<PlanetsConnection>,
+  planet: Nullable<Planet>,
+  allSpecies: Nullable<SpeciesConnection>,
+  species: Nullable<Species>,
+  allStarships: Nullable<StarshipsConnection>,
+  starship: Nullable<Starship>,
+  allVehicles: Nullable<VehiclesConnection>,
+  vehicle: Nullable<Vehicle>,
+/** Fetches an object given its ID */
+  node: Nullable<NodeInterface>,
+}
+/** A connection to a list of items. */
+export type FilmsConnection = {
+/** Information to aid in pagination. */
+  pageInfo: PageInfo,
+/** A list of edges. */
+  edges: Nullable<Nullable<FilmsEdge>[]>,
+/**
+ * A count of the total number of objects in this connection, ignoring pagination.
+ * This allows a client to fetch the first five objects by passing "5" as the
+ * argument to "first", then fetch the total count so it could display "5 of 83",
+ * for example.
+ */
+  totalCount: Nullable<IntScalar>,
+/**
+ * A list of all of the objects returned in the connection. This is a convenience
+ * field provided for quickly exploring the API; rather than querying for
+ * "{ edges { node } }" when no edge data is needed, this field can be be used
+ * instead. Note that when clients like Relay need to fetch the "cursor" field on
+ * the edge to enable efficient pagination, this shortcut cannot be used, and the
+ * full "{ edges { node } }" version should be used instead.
+ */
+  films: Nullable<Nullable<Film>[]>,
+}
+/** Information about pagination in a connection. */
+export type PageInfo = {
+/** When paginating forwards, are there more items? */
+  hasNextPage: BooleanScalar,
+/** When paginating backwards, are there more items? */
+  hasPreviousPage: BooleanScalar,
+/** When paginating backwards, the cursor to continue. */
+  startCursor: Nullable<StringScalar>,
+/** When paginating forwards, the cursor to continue. */
+  endCursor: Nullable<StringScalar>,
+}
+/** An edge in a connection. */
+export type FilmsEdge = {
+/** The item at the end of the edge */
+  node: Nullable<Film>,
+/** A cursor for use in pagination */
+  cursor: StringScalar,
+}
+/** A single film. */
+export type Film = NodeInterface & {
+/** The title of this film. */
+  title: Nullable<StringScalar>,
+/** The episode number of this film. */
+  episodeID: Nullable<IntScalar>,
+/** The opening paragraphs at the beginning of this film. */
+  openingCrawl: Nullable<StringScalar>,
+/** The name of the director of this film. */
+  director: Nullable<StringScalar>,
+/** The name(s) of the producer(s) of this film. */
+  producers: Nullable<Nullable<StringScalar>[]>,
+/** The ISO 8601 date format of film release at original creator country. */
+  releaseDate: Nullable<StringScalar>,
+  speciesConnection: Nullable<FilmSpeciesConnection>,
+  starshipConnection: Nullable<FilmStarshipsConnection>,
+  vehicleConnection: Nullable<FilmVehiclesConnection>,
+  characterConnection: Nullable<FilmCharactersConnection>,
+  planetConnection: Nullable<FilmPlanetsConnection>,
+/** The ISO 8601 date format of the time that this resource was created. */
+  created: Nullable<StringScalar>,
+/** The ISO 8601 date format of the time that this resource was edited. */
+  edited: Nullable<StringScalar>,
+/** The ID of an object */
+  id: IDScalar,
+}
+/** A connection to a list of items. */
+export type FilmSpeciesConnection = {
+/** Information to aid in pagination. */
+  pageInfo: PageInfo,
+/** A list of edges. */
+  edges: Nullable<Nullable<FilmSpeciesEdge>[]>,
+/**
+ * A count of the total number of objects in this connection, ignoring pagination.
+ * This allows a client to fetch the first five objects by passing "5" as the
+ * argument to "first", then fetch the total count so it could display "5 of 83",
+ * for example.
+ */
+  totalCount: Nullable<IntScalar>,
+/**
+ * A list of all of the objects returned in the connection. This is a convenience
+ * field provided for quickly exploring the API; rather than querying for
+ * "{ edges { node } }" when no edge data is needed, this field can be be used
+ * instead. Note that when clients like Relay need to fetch the "cursor" field on
+ * the edge to enable efficient pagination, this shortcut cannot be used, and the
+ * full "{ edges { node } }" version should be used instead.
+ */
+  species: Nullable<Nullable<Species>[]>,
+}
+/** An edge in a connection. */
+export type FilmSpeciesEdge = {
+/** The item at the end of the edge */
+  node: Nullable<Species>,
+/** A cursor for use in pagination */
+  cursor: StringScalar,
+}
+/** A type of person or character within the Star Wars Universe. */
+export type Species = NodeInterface & {
+/** The name of this species. */
+  name: Nullable<StringScalar>,
+/** The classification of this species, such as "mammal" or "reptile". */
+  classification: Nullable<StringScalar>,
+/** The designation of this species, such as "sentient". */
+  designation: Nullable<StringScalar>,
+/** The average height of this species in centimeters. */
+  averageHeight: Nullable<FloatScalar>,
+/** The average lifespan of this species in years, null if unknown. */
+  averageLifespan: Nullable<IntScalar>,
+/**
+ * Common eye colors for this species, null if this species does not typically
+ * have eyes.
+ */
+  eyeColors: Nullable<Nullable<StringScalar>[]>,
+/**
+ * Common hair colors for this species, null if this species does not typically
+ * have hair.
+ */
+  hairColors: Nullable<Nullable<StringScalar>[]>,
+/**
+ * Common skin colors for this species, null if this species does not typically
+ * have skin.
+ */
+  skinColors: Nullable<Nullable<StringScalar>[]>,
+/** The language commonly spoken by this species. */
+  language: Nullable<StringScalar>,
+/** A planet that this species originates from. */
+  homeworld: Nullable<Planet>,
+  personConnection: Nullable<SpeciesPeopleConnection>,
+  filmConnection: Nullable<SpeciesFilmsConnection>,
+/** The ISO 8601 date format of the time that this resource was created. */
+  created: Nullable<StringScalar>,
+/** The ISO 8601 date format of the time that this resource was edited. */
+  edited: Nullable<StringScalar>,
+/** The ID of an object */
+  id: IDScalar,
+}
+/**
+ * A large mass, planet or planetoid in the Star Wars Universe, at the time of
+ * 0 ABY.
+ */
+export type Planet = NodeInterface & {
+/** The name of this planet. */
+  name: Nullable<StringScalar>,
+/** The diameter of this planet in kilometers. */
+  diameter: Nullable<IntScalar>,
+/**
+ * The number of standard hours it takes for this planet to complete a single
+ * rotation on its axis.
+ */
+  rotationPeriod: Nullable<IntScalar>,
+/**
+ * The number of standard days it takes for this planet to complete a single orbit
+ * of its local star.
+ */
+  orbitalPeriod: Nullable<IntScalar>,
+/**
+ * A number denoting the gravity of this planet, where "1" is normal or 1 standard
+ * G. "2" is twice or 2 standard Gs. "0.5" is half or 0.5 standard Gs.
+ */
+  gravity: Nullable<StringScalar>,
+/** The average population of sentient beings inhabiting this planet. */
+  population: Nullable<FloatScalar>,
+/** The climates of this planet. */
+  climates: Nullable<Nullable<StringScalar>[]>,
+/** The terrains of this planet. */
+  terrains: Nullable<Nullable<StringScalar>[]>,
+/**
+ * The percentage of the planet surface that is naturally occurring water or bodies
+ * of water.
+ */
+  surfaceWater: Nullable<FloatScalar>,
+  residentConnection: Nullable<PlanetResidentsConnection>,
+  filmConnection: Nullable<PlanetFilmsConnection>,
+/** The ISO 8601 date format of the time that this resource was created. */
+  created: Nullable<StringScalar>,
+/** The ISO 8601 date format of the time that this resource was edited. */
+  edited: Nullable<StringScalar>,
+/** The ID of an object */
+  id: IDScalar,
+}
+/** A connection to a list of items. */
+export type PlanetResidentsConnection = {
+/** Information to aid in pagination. */
+  pageInfo: PageInfo,
+/** A list of edges. */
+  edges: Nullable<Nullable<PlanetResidentsEdge>[]>,
+/**
+ * A count of the total number of objects in this connection, ignoring pagination.
+ * This allows a client to fetch the first five objects by passing "5" as the
+ * argument to "first", then fetch the total count so it could display "5 of 83",
+ * for example.
+ */
+  totalCount: Nullable<IntScalar>,
+/**
+ * A list of all of the objects returned in the connection. This is a convenience
+ * field provided for quickly exploring the API; rather than querying for
+ * "{ edges { node } }" when no edge data is needed, this field can be be used
+ * instead. Note that when clients like Relay need to fetch the "cursor" field on
+ * the edge to enable efficient pagination, this shortcut cannot be used, and the
+ * full "{ edges { node } }" version should be used instead.
+ */
+  residents: Nullable<Nullable<Person>[]>,
+}
+/** An edge in a connection. */
+export type PlanetResidentsEdge = {
+/** The item at the end of the edge */
+  node: Nullable<Person>,
+/** A cursor for use in pagination */
+  cursor: StringScalar,
+}
+/** An individual person or character within the Star Wars universe. */
+export type Person = NodeInterface & {
+/** The name of this person. */
+  name: Nullable<StringScalar>,
+/**
+ * The birth year of the person, using the in-universe standard of BBY or ABY -
+ * Before the Battle of Yavin or After the Battle of Yavin. The Battle of Yavin is
+ * a battle that occurs at the end of Star Wars episode IV: A New Hope.
+ */
+  birthYear: Nullable<StringScalar>,
+/**
+ * The eye color of this person. Will be "unknown" if not known or "n/a" if the
+ * person does not have an eye.
+ */
+  eyeColor: Nullable<StringScalar>,
+/**
+ * The gender of this person. Either "Male", "Female" or "unknown",
+ * "n/a" if the person does not have a gender.
+ */
+  gender: Nullable<StringScalar>,
+/**
+ * The hair color of this person. Will be "unknown" if not known or "n/a" if the
+ * person does not have hair.
+ */
+  hairColor: Nullable<StringScalar>,
+/** The height of the person in centimeters. */
+  height: Nullable<IntScalar>,
+/** The mass of the person in kilograms. */
+  mass: Nullable<FloatScalar>,
+/** The skin color of this person. */
+  skinColor: Nullable<StringScalar>,
+/** A planet that this person was born on or inhabits. */
+  homeworld: Nullable<Planet>,
+  filmConnection: Nullable<PersonFilmsConnection>,
+/** The species that this person belongs to, or null if unknown. */
+  species: Nullable<Species>,
+  starshipConnection: Nullable<PersonStarshipsConnection>,
+  vehicleConnection: Nullable<PersonVehiclesConnection>,
+/** The ISO 8601 date format of the time that this resource was created. */
+  created: Nullable<StringScalar>,
+/** The ISO 8601 date format of the time that this resource was edited. */
+  edited: Nullable<StringScalar>,
+/** The ID of an object */
+  id: IDScalar,
+}
+/** A connection to a list of items. */
+export type PersonFilmsConnection = {
+/** Information to aid in pagination. */
+  pageInfo: PageInfo,
+/** A list of edges. */
+  edges: Nullable<Nullable<PersonFilmsEdge>[]>,
+/**
+ * A count of the total number of objects in this connection, ignoring pagination.
+ * This allows a client to fetch the first five objects by passing "5" as the
+ * argument to "first", then fetch the total count so it could display "5 of 83",
+ * for example.
+ */
+  totalCount: Nullable<IntScalar>,
+/**
+ * A list of all of the objects returned in the connection. This is a convenience
+ * field provided for quickly exploring the API; rather than querying for
+ * "{ edges { node } }" when no edge data is needed, this field can be be used
+ * instead. Note that when clients like Relay need to fetch the "cursor" field on
+ * the edge to enable efficient pagination, this shortcut cannot be used, and the
+ * full "{ edges { node } }" version should be used instead.
+ */
+  films: Nullable<Nullable<Film>[]>,
+}
+/** An edge in a connection. */
+export type PersonFilmsEdge = {
+/** The item at the end of the edge */
+  node: Nullable<Film>,
+/** A cursor for use in pagination */
+  cursor: StringScalar,
+}
+/** A connection to a list of items. */
+export type PersonStarshipsConnection = {
+/** Information to aid in pagination. */
+  pageInfo: PageInfo,
+/** A list of edges. */
+  edges: Nullable<Nullable<PersonStarshipsEdge>[]>,
+/**
+ * A count of the total number of objects in this connection, ignoring pagination.
+ * This allows a client to fetch the first five objects by passing "5" as the
+ * argument to "first", then fetch the total count so it could display "5 of 83",
+ * for example.
+ */
+  totalCount: Nullable<IntScalar>,
+/**
+ * A list of all of the objects returned in the connection. This is a convenience
+ * field provided for quickly exploring the API; rather than querying for
+ * "{ edges { node } }" when no edge data is needed, this field can be be used
+ * instead. Note that when clients like Relay need to fetch the "cursor" field on
+ * the edge to enable efficient pagination, this shortcut cannot be used, and the
+ * full "{ edges { node } }" version should be used instead.
+ */
+  starships: Nullable<Nullable<Starship>[]>,
+}
+/** An edge in a connection. */
+export type PersonStarshipsEdge = {
+/** The item at the end of the edge */
+  node: Nullable<Starship>,
+/** A cursor for use in pagination */
+  cursor: StringScalar,
+}
+/** A single transport craft that has hyperdrive capability. */
+export type Starship = NodeInterface & {
+/** The name of this starship. The common name, such as "Death Star". */
+  name: Nullable<StringScalar>,
+/**
+ * The model or official name of this starship. Such as "T-65 X-wing" or "DS-1
+ * Orbital Battle Station".
+ */
+  model: Nullable<StringScalar>,
+/**
+ * The class of this starship, such as "Starfighter" or "Deep Space Mobile
+ * Battlestation"
+ */
+  starshipClass: Nullable<StringScalar>,
+/** The manufacturers of this starship. */
+  manufacturers: Nullable<Nullable<StringScalar>[]>,
+/** The cost of this starship new, in galactic credits. */
+  costInCredits: Nullable<FloatScalar>,
+/** The length of this starship in meters. */
+  length: Nullable<FloatScalar>,
+/** The number of personnel needed to run or pilot this starship. */
+  crew: Nullable<StringScalar>,
+/** The number of non-essential people this starship can transport. */
+  passengers: Nullable<StringScalar>,
+/**
+ * The maximum speed of this starship in atmosphere. null if this starship is
+ * incapable of atmosphering flight.
+ */
+  maxAtmospheringSpeed: Nullable<IntScalar>,
+/** The class of this starships hyperdrive. */
+  hyperdriveRating: Nullable<FloatScalar>,
+/**
+ * The Maximum number of Megalights this starship can travel in a standard hour.
+ * A "Megalight" is a standard unit of distance and has never been defined before
+ * within the Star Wars universe. This figure is only really useful for measuring
+ * the difference in speed of starships. We can assume it is similar to AU, the
+ * distance between our Sun (Sol) and Earth.
+ */
+  MGLT: Nullable<IntScalar>,
+/** The maximum number of kilograms that this starship can transport. */
+  cargoCapacity: Nullable<FloatScalar>,
+/**
+ * The maximum length of time that this starship can provide consumables for its
+ * entire crew without having to resupply.
+ */
+  consumables: Nullable<StringScalar>,
+  pilotConnection: Nullable<StarshipPilotsConnection>,
+  filmConnection: Nullable<StarshipFilmsConnection>,
+/** The ISO 8601 date format of the time that this resource was created. */
+  created: Nullable<StringScalar>,
+/** The ISO 8601 date format of the time that this resource was edited. */
+  edited: Nullable<StringScalar>,
+/** The ID of an object */
+  id: IDScalar,
+}
+/** A connection to a list of items. */
+export type StarshipPilotsConnection = {
+/** Information to aid in pagination. */
+  pageInfo: PageInfo,
+/** A list of edges. */
+  edges: Nullable<Nullable<StarshipPilotsEdge>[]>,
+/**
+ * A count of the total number of objects in this connection, ignoring pagination.
+ * This allows a client to fetch the first five objects by passing "5" as the
+ * argument to "first", then fetch the total count so it could display "5 of 83",
+ * for example.
+ */
+  totalCount: Nullable<IntScalar>,
+/**
+ * A list of all of the objects returned in the connection. This is a convenience
+ * field provided for quickly exploring the API; rather than querying for
+ * "{ edges { node } }" when no edge data is needed, this field can be be used
+ * instead. Note that when clients like Relay need to fetch the "cursor" field on
+ * the edge to enable efficient pagination, this shortcut cannot be used, and the
+ * full "{ edges { node } }" version should be used instead.
+ */
+  pilots: Nullable<Nullable<Person>[]>,
+}
+/** An edge in a connection. */
+export type StarshipPilotsEdge = {
+/** The item at the end of the edge */
+  node: Nullable<Person>,
+/** A cursor for use in pagination */
+  cursor: StringScalar,
+}
+/** A connection to a list of items. */
+export type StarshipFilmsConnection = {
+/** Information to aid in pagination. */
+  pageInfo: PageInfo,
+/** A list of edges. */
+  edges: Nullable<Nullable<StarshipFilmsEdge>[]>,
+/**
+ * A count of the total number of objects in this connection, ignoring pagination.
+ * This allows a client to fetch the first five objects by passing "5" as the
+ * argument to "first", then fetch the total count so it could display "5 of 83",
+ * for example.
+ */
+  totalCount: Nullable<IntScalar>,
+/**
+ * A list of all of the objects returned in the connection. This is a convenience
+ * field provided for quickly exploring the API; rather than querying for
+ * "{ edges { node } }" when no edge data is needed, this field can be be used
+ * instead. Note that when clients like Relay need to fetch the "cursor" field on
+ * the edge to enable efficient pagination, this shortcut cannot be used, and the
+ * full "{ edges { node } }" version should be used instead.
+ */
+  films: Nullable<Nullable<Film>[]>,
+}
+/** An edge in a connection. */
+export type StarshipFilmsEdge = {
+/** The item at the end of the edge */
+  node: Nullable<Film>,
+/** A cursor for use in pagination */
+  cursor: StringScalar,
+}
+/** A connection to a list of items. */
+export type PersonVehiclesConnection = {
+/** Information to aid in pagination. */
+  pageInfo: PageInfo,
+/** A list of edges. */
+  edges: Nullable<Nullable<PersonVehiclesEdge>[]>,
+/**
+ * A count of the total number of objects in this connection, ignoring pagination.
+ * This allows a client to fetch the first five objects by passing "5" as the
+ * argument to "first", then fetch the total count so it could display "5 of 83",
+ * for example.
+ */
+  totalCount: Nullable<IntScalar>,
+/**
+ * A list of all of the objects returned in the connection. This is a convenience
+ * field provided for quickly exploring the API; rather than querying for
+ * "{ edges { node } }" when no edge data is needed, this field can be be used
+ * instead. Note that when clients like Relay need to fetch the "cursor" field on
+ * the edge to enable efficient pagination, this shortcut cannot be used, and the
+ * full "{ edges { node } }" version should be used instead.
+ */
+  vehicles: Nullable<Nullable<Vehicle>[]>,
+}
+/** An edge in a connection. */
+export type PersonVehiclesEdge = {
+/** The item at the end of the edge */
+  node: Nullable<Vehicle>,
+/** A cursor for use in pagination */
+  cursor: StringScalar,
+}
+/** A single transport craft that does not have hyperdrive capability */
+export type Vehicle = NodeInterface & {
+/**
+ * The name of this vehicle. The common name, such as "Sand Crawler" or "Speeder
+ * bike".
+ */
+  name: Nullable<StringScalar>,
+/**
+ * The model or official name of this vehicle. Such as "All-Terrain Attack
+ * Transport".
+ */
+  model: Nullable<StringScalar>,
+/** The class of this vehicle, such as "Wheeled" or "Repulsorcraft". */
+  vehicleClass: Nullable<StringScalar>,
+/** The manufacturers of this vehicle. */
+  manufacturers: Nullable<Nullable<StringScalar>[]>,
+/** The cost of this vehicle new, in Galactic Credits. */
+  costInCredits: Nullable<FloatScalar>,
+/** The length of this vehicle in meters. */
+  length: Nullable<FloatScalar>,
+/** The number of personnel needed to run or pilot this vehicle. */
+  crew: Nullable<StringScalar>,
+/** The number of non-essential people this vehicle can transport. */
+  passengers: Nullable<StringScalar>,
+/** The maximum speed of this vehicle in atmosphere. */
+  maxAtmospheringSpeed: Nullable<IntScalar>,
+/** The maximum number of kilograms that this vehicle can transport. */
+  cargoCapacity: Nullable<FloatScalar>,
+/**
+ * The maximum length of time that this vehicle can provide consumables for its
+ * entire crew without having to resupply.
+ */
+  consumables: Nullable<StringScalar>,
+  pilotConnection: Nullable<VehiclePilotsConnection>,
+  filmConnection: Nullable<VehicleFilmsConnection>,
+/** The ISO 8601 date format of the time that this resource was created. */
+  created: Nullable<StringScalar>,
+/** The ISO 8601 date format of the time that this resource was edited. */
+  edited: Nullable<StringScalar>,
+/** The ID of an object */
+  id: IDScalar,
+}
+/** A connection to a list of items. */
+export type VehiclePilotsConnection = {
+/** Information to aid in pagination. */
+  pageInfo: PageInfo,
+/** A list of edges. */
+  edges: Nullable<Nullable<VehiclePilotsEdge>[]>,
+/**
+ * A count of the total number of objects in this connection, ignoring pagination.
+ * This allows a client to fetch the first five objects by passing "5" as the
+ * argument to "first", then fetch the total count so it could display "5 of 83",
+ * for example.
+ */
+  totalCount: Nullable<IntScalar>,
+/**
+ * A list of all of the objects returned in the connection. This is a convenience
+ * field provided for quickly exploring the API; rather than querying for
+ * "{ edges { node } }" when no edge data is needed, this field can be be used
+ * instead. Note that when clients like Relay need to fetch the "cursor" field on
+ * the edge to enable efficient pagination, this shortcut cannot be used, and the
+ * full "{ edges { node } }" version should be used instead.
+ */
+  pilots: Nullable<Nullable<Person>[]>,
+}
+/** An edge in a connection. */
+export type VehiclePilotsEdge = {
+/** The item at the end of the edge */
+  node: Nullable<Person>,
+/** A cursor for use in pagination */
+  cursor: StringScalar,
+}
+/** A connection to a list of items. */
+export type VehicleFilmsConnection = {
+/** Information to aid in pagination. */
+  pageInfo: PageInfo,
+/** A list of edges. */
+  edges: Nullable<Nullable<VehicleFilmsEdge>[]>,
+/**
+ * A count of the total number of objects in this connection, ignoring pagination.
+ * This allows a client to fetch the first five objects by passing "5" as the
+ * argument to "first", then fetch the total count so it could display "5 of 83",
+ * for example.
+ */
+  totalCount: Nullable<IntScalar>,
+/**
+ * A list of all of the objects returned in the connection. This is a convenience
+ * field provided for quickly exploring the API; rather than querying for
+ * "{ edges { node } }" when no edge data is needed, this field can be be used
+ * instead. Note that when clients like Relay need to fetch the "cursor" field on
+ * the edge to enable efficient pagination, this shortcut cannot be used, and the
+ * full "{ edges { node } }" version should be used instead.
+ */
+  films: Nullable<Nullable<Film>[]>,
+}
+/** An edge in a connection. */
+export type VehicleFilmsEdge = {
+/** The item at the end of the edge */
+  node: Nullable<Film>,
+/** A cursor for use in pagination */
+  cursor: StringScalar,
+}
+/** A connection to a list of items. */
+export type PlanetFilmsConnection = {
+/** Information to aid in pagination. */
+  pageInfo: PageInfo,
+/** A list of edges. */
+  edges: Nullable<Nullable<PlanetFilmsEdge>[]>,
+/**
+ * A count of the total number of objects in this connection, ignoring pagination.
+ * This allows a client to fetch the first five objects by passing "5" as the
+ * argument to "first", then fetch the total count so it could display "5 of 83",
+ * for example.
+ */
+  totalCount: Nullable<IntScalar>,
+/**
+ * A list of all of the objects returned in the connection. This is a convenience
+ * field provided for quickly exploring the API; rather than querying for
+ * "{ edges { node } }" when no edge data is needed, this field can be be used
+ * instead. Note that when clients like Relay need to fetch the "cursor" field on
+ * the edge to enable efficient pagination, this shortcut cannot be used, and the
+ * full "{ edges { node } }" version should be used instead.
+ */
+  films: Nullable<Nullable<Film>[]>,
+}
+/** An edge in a connection. */
+export type PlanetFilmsEdge = {
+/** The item at the end of the edge */
+  node: Nullable<Film>,
+/** A cursor for use in pagination */
+  cursor: StringScalar,
+}
+/** A connection to a list of items. */
+export type SpeciesPeopleConnection = {
+/** Information to aid in pagination. */
+  pageInfo: PageInfo,
+/** A list of edges. */
+  edges: Nullable<Nullable<SpeciesPeopleEdge>[]>,
+/**
+ * A count of the total number of objects in this connection, ignoring pagination.
+ * This allows a client to fetch the first five objects by passing "5" as the
+ * argument to "first", then fetch the total count so it could display "5 of 83",
+ * for example.
+ */
+  totalCount: Nullable<IntScalar>,
+/**
+ * A list of all of the objects returned in the connection. This is a convenience
+ * field provided for quickly exploring the API; rather than querying for
+ * "{ edges { node } }" when no edge data is needed, this field can be be used
+ * instead. Note that when clients like Relay need to fetch the "cursor" field on
+ * the edge to enable efficient pagination, this shortcut cannot be used, and the
+ * full "{ edges { node } }" version should be used instead.
+ */
+  people: Nullable<Nullable<Person>[]>,
+}
+/** An edge in a connection. */
+export type SpeciesPeopleEdge = {
+/** The item at the end of the edge */
+  node: Nullable<Person>,
+/** A cursor for use in pagination */
+  cursor: StringScalar,
+}
+/** A connection to a list of items. */
+export type SpeciesFilmsConnection = {
+/** Information to aid in pagination. */
+  pageInfo: PageInfo,
+/** A list of edges. */
+  edges: Nullable<Nullable<SpeciesFilmsEdge>[]>,
+/**
+ * A count of the total number of objects in this connection, ignoring pagination.
+ * This allows a client to fetch the first five objects by passing "5" as the
+ * argument to "first", then fetch the total count so it could display "5 of 83",
+ * for example.
+ */
+  totalCount: Nullable<IntScalar>,
+/**
+ * A list of all of the objects returned in the connection. This is a convenience
+ * field provided for quickly exploring the API; rather than querying for
+ * "{ edges { node } }" when no edge data is needed, this field can be be used
+ * instead. Note that when clients like Relay need to fetch the "cursor" field on
+ * the edge to enable efficient pagination, this shortcut cannot be used, and the
+ * full "{ edges { node } }" version should be used instead.
+ */
+  films: Nullable<Nullable<Film>[]>,
+}
+/** An edge in a connection. */
+export type SpeciesFilmsEdge = {
+/** The item at the end of the edge */
+  node: Nullable<Film>,
+/** A cursor for use in pagination */
+  cursor: StringScalar,
+}
+/** A connection to a list of items. */
+export type FilmStarshipsConnection = {
+/** Information to aid in pagination. */
+  pageInfo: PageInfo,
+/** A list of edges. */
+  edges: Nullable<Nullable<FilmStarshipsEdge>[]>,
+/**
+ * A count of the total number of objects in this connection, ignoring pagination.
+ * This allows a client to fetch the first five objects by passing "5" as the
+ * argument to "first", then fetch the total count so it could display "5 of 83",
+ * for example.
+ */
+  totalCount: Nullable<IntScalar>,
+/**
+ * A list of all of the objects returned in the connection. This is a convenience
+ * field provided for quickly exploring the API; rather than querying for
+ * "{ edges { node } }" when no edge data is needed, this field can be be used
+ * instead. Note that when clients like Relay need to fetch the "cursor" field on
+ * the edge to enable efficient pagination, this shortcut cannot be used, and the
+ * full "{ edges { node } }" version should be used instead.
+ */
+  starships: Nullable<Nullable<Starship>[]>,
+}
+/** An edge in a connection. */
+export type FilmStarshipsEdge = {
+/** The item at the end of the edge */
+  node: Nullable<Starship>,
+/** A cursor for use in pagination */
+  cursor: StringScalar,
+}
+/** A connection to a list of items. */
+export type FilmVehiclesConnection = {
+/** Information to aid in pagination. */
+  pageInfo: PageInfo,
+/** A list of edges. */
+  edges: Nullable<Nullable<FilmVehiclesEdge>[]>,
+/**
+ * A count of the total number of objects in this connection, ignoring pagination.
+ * This allows a client to fetch the first five objects by passing "5" as the
+ * argument to "first", then fetch the total count so it could display "5 of 83",
+ * for example.
+ */
+  totalCount: Nullable<IntScalar>,
+/**
+ * A list of all of the objects returned in the connection. This is a convenience
+ * field provided for quickly exploring the API; rather than querying for
+ * "{ edges { node } }" when no edge data is needed, this field can be be used
+ * instead. Note that when clients like Relay need to fetch the "cursor" field on
+ * the edge to enable efficient pagination, this shortcut cannot be used, and the
+ * full "{ edges { node } }" version should be used instead.
+ */
+  vehicles: Nullable<Nullable<Vehicle>[]>,
+}
+/** An edge in a connection. */
+export type FilmVehiclesEdge = {
+/** The item at the end of the edge */
+  node: Nullable<Vehicle>,
+/** A cursor for use in pagination */
+  cursor: StringScalar,
+}
+/** A connection to a list of items. */
+export type FilmCharactersConnection = {
+/** Information to aid in pagination. */
+  pageInfo: PageInfo,
+/** A list of edges. */
+  edges: Nullable<Nullable<FilmCharactersEdge>[]>,
+/**
+ * A count of the total number of objects in this connection, ignoring pagination.
+ * This allows a client to fetch the first five objects by passing "5" as the
+ * argument to "first", then fetch the total count so it could display "5 of 83",
+ * for example.
+ */
+  totalCount: Nullable<IntScalar>,
+/**
+ * A list of all of the objects returned in the connection. This is a convenience
+ * field provided for quickly exploring the API; rather than querying for
+ * "{ edges { node } }" when no edge data is needed, this field can be be used
+ * instead. Note that when clients like Relay need to fetch the "cursor" field on
+ * the edge to enable efficient pagination, this shortcut cannot be used, and the
+ * full "{ edges { node } }" version should be used instead.
+ */
+  characters: Nullable<Nullable<Person>[]>,
+}
+/** An edge in a connection. */
+export type FilmCharactersEdge = {
+/** The item at the end of the edge */
+  node: Nullable<Person>,
+/** A cursor for use in pagination */
+  cursor: StringScalar,
+}
+/** A connection to a list of items. */
+export type FilmPlanetsConnection = {
+/** Information to aid in pagination. */
+  pageInfo: PageInfo,
+/** A list of edges. */
+  edges: Nullable<Nullable<FilmPlanetsEdge>[]>,
+/**
+ * A count of the total number of objects in this connection, ignoring pagination.
+ * This allows a client to fetch the first five objects by passing "5" as the
+ * argument to "first", then fetch the total count so it could display "5 of 83",
+ * for example.
+ */
+  totalCount: Nullable<IntScalar>,
+/**
+ * A list of all of the objects returned in the connection. This is a convenience
+ * field provided for quickly exploring the API; rather than querying for
+ * "{ edges { node } }" when no edge data is needed, this field can be be used
+ * instead. Note that when clients like Relay need to fetch the "cursor" field on
+ * the edge to enable efficient pagination, this shortcut cannot be used, and the
+ * full "{ edges { node } }" version should be used instead.
+ */
+  planets: Nullable<Nullable<Planet>[]>,
+}
+/** An edge in a connection. */
+export type FilmPlanetsEdge = {
+/** The item at the end of the edge */
+  node: Nullable<Planet>,
+/** A cursor for use in pagination */
+  cursor: StringScalar,
+}
+/** A connection to a list of items. */
+export type PeopleConnection = {
+/** Information to aid in pagination. */
+  pageInfo: PageInfo,
+/** A list of edges. */
+  edges: Nullable<Nullable<PeopleEdge>[]>,
+/**
+ * A count of the total number of objects in this connection, ignoring pagination.
+ * This allows a client to fetch the first five objects by passing "5" as the
+ * argument to "first", then fetch the total count so it could display "5 of 83",
+ * for example.
+ */
+  totalCount: Nullable<IntScalar>,
+/**
+ * A list of all of the objects returned in the connection. This is a convenience
+ * field provided for quickly exploring the API; rather than querying for
+ * "{ edges { node } }" when no edge data is needed, this field can be be used
+ * instead. Note that when clients like Relay need to fetch the "cursor" field on
+ * the edge to enable efficient pagination, this shortcut cannot be used, and the
+ * full "{ edges { node } }" version should be used instead.
+ */
+  people: Nullable<Nullable<Person>[]>,
+}
+/** An edge in a connection. */
+export type PeopleEdge = {
+/** The item at the end of the edge */
+  node: Nullable<Person>,
+/** A cursor for use in pagination */
+  cursor: StringScalar,
+}
+/** A connection to a list of items. */
+export type PlanetsConnection = {
+/** Information to aid in pagination. */
+  pageInfo: PageInfo,
+/** A list of edges. */
+  edges: Nullable<Nullable<PlanetsEdge>[]>,
+/**
+ * A count of the total number of objects in this connection, ignoring pagination.
+ * This allows a client to fetch the first five objects by passing "5" as the
+ * argument to "first", then fetch the total count so it could display "5 of 83",
+ * for example.
+ */
+  totalCount: Nullable<IntScalar>,
+/**
+ * A list of all of the objects returned in the connection. This is a convenience
+ * field provided for quickly exploring the API; rather than querying for
+ * "{ edges { node } }" when no edge data is needed, this field can be be used
+ * instead. Note that when clients like Relay need to fetch the "cursor" field on
+ * the edge to enable efficient pagination, this shortcut cannot be used, and the
+ * full "{ edges { node } }" version should be used instead.
+ */
+  planets: Nullable<Nullable<Planet>[]>,
+}
+/** An edge in a connection. */
+export type PlanetsEdge = {
+/** The item at the end of the edge */
+  node: Nullable<Planet>,
+/** A cursor for use in pagination */
+  cursor: StringScalar,
+}
+/** A connection to a list of items. */
+export type SpeciesConnection = {
+/** Information to aid in pagination. */
+  pageInfo: PageInfo,
+/** A list of edges. */
+  edges: Nullable<Nullable<SpeciesEdge>[]>,
+/**
+ * A count of the total number of objects in this connection, ignoring pagination.
+ * This allows a client to fetch the first five objects by passing "5" as the
+ * argument to "first", then fetch the total count so it could display "5 of 83",
+ * for example.
+ */
+  totalCount: Nullable<IntScalar>,
+/**
+ * A list of all of the objects returned in the connection. This is a convenience
+ * field provided for quickly exploring the API; rather than querying for
+ * "{ edges { node } }" when no edge data is needed, this field can be be used
+ * instead. Note that when clients like Relay need to fetch the "cursor" field on
+ * the edge to enable efficient pagination, this shortcut cannot be used, and the
+ * full "{ edges { node } }" version should be used instead.
+ */
+  species: Nullable<Nullable<Species>[]>,
+}
+/** An edge in a connection. */
+export type SpeciesEdge = {
+/** The item at the end of the edge */
+  node: Nullable<Species>,
+/** A cursor for use in pagination */
+  cursor: StringScalar,
+}
+/** A connection to a list of items. */
+export type StarshipsConnection = {
+/** Information to aid in pagination. */
+  pageInfo: PageInfo,
+/** A list of edges. */
+  edges: Nullable<Nullable<StarshipsEdge>[]>,
+/**
+ * A count of the total number of objects in this connection, ignoring pagination.
+ * This allows a client to fetch the first five objects by passing "5" as the
+ * argument to "first", then fetch the total count so it could display "5 of 83",
+ * for example.
+ */
+  totalCount: Nullable<IntScalar>,
+/**
+ * A list of all of the objects returned in the connection. This is a convenience
+ * field provided for quickly exploring the API; rather than querying for
+ * "{ edges { node } }" when no edge data is needed, this field can be be used
+ * instead. Note that when clients like Relay need to fetch the "cursor" field on
+ * the edge to enable efficient pagination, this shortcut cannot be used, and the
+ * full "{ edges { node } }" version should be used instead.
+ */
+  starships: Nullable<Nullable<Starship>[]>,
+}
+/** An edge in a connection. */
+export type StarshipsEdge = {
+/** The item at the end of the edge */
+  node: Nullable<Starship>,
+/** A cursor for use in pagination */
+  cursor: StringScalar,
+}
+/** A connection to a list of items. */
+export type VehiclesConnection = {
+/** Information to aid in pagination. */
+  pageInfo: PageInfo,
+/** A list of edges. */
+  edges: Nullable<Nullable<VehiclesEdge>[]>,
+/**
+ * A count of the total number of objects in this connection, ignoring pagination.
+ * This allows a client to fetch the first five objects by passing "5" as the
+ * argument to "first", then fetch the total count so it could display "5 of 83",
+ * for example.
+ */
+  totalCount: Nullable<IntScalar>,
+/**
+ * A list of all of the objects returned in the connection. This is a convenience
+ * field provided for quickly exploring the API; rather than querying for
+ * "{ edges { node } }" when no edge data is needed, this field can be be used
+ * instead. Note that when clients like Relay need to fetch the "cursor" field on
+ * the edge to enable efficient pagination, this shortcut cannot be used, and the
+ * full "{ edges { node } }" version should be used instead.
+ */
+  vehicles: Nullable<Nullable<Vehicle>[]>,
+}
+/** An edge in a connection. */
+export type VehiclesEdge = {
+/** The item at the end of the edge */
+  node: Nullable<Vehicle>,
+/** A cursor for use in pagination */
+  cursor: StringScalar,
+}
+
+// Input Objects
+
+// Interfaces
+/** An object with an ID */
+export type NodeInterface = {
+/** The id of the object. */
+  id: IDScalar,
+}
+
+// Unions
+
+// Selection Sets
+export type BasicQueryQuerySelectionSet = { person: Nullable<{ name: Nullable<StringScalar>, }>, };
+export type NestedFieldsQuerySelectionSet = { person: Nullable<{ name: Nullable<StringScalar>, gender: Nullable<StringScalar>, homeworld: Nullable<{ name: Nullable<StringScalar>, }>, starshipConnection: Nullable<{ edges: Nullable<Nullable<{ node: Nullable<{ id: IDScalar, manufacturers: Nullable<Nullable<StringScalar>[]>, }>, }>[]>, }>, }>, };
+export type AllStarshipsQuerySelectionSet = { allStarships: Nullable<{ edges: Nullable<Nullable<{ node: Nullable<{ } & StarshipFragmentFragment>, }>[]>, }>, };
+
+// Args
+export type BasicQueryQueryArgs = Record<string, never>;
+export type NestedFieldsQueryArgs = Record<string, never>;
+export type AllStarshipsQueryArgs = Record<string, never>;
+
+// Queries
+export const BasicQueryQueryDocument = parse(`query BasicQuery {
+  person(personID: 4) {
+    name
+  }
+}
+`) as TypedQueryDocumentNode<BasicQueryQuerySelectionSet, BasicQueryQueryArgs>;
+export const NestedFieldsQueryDocument = parse(`query NestedFields {
+  person(personID: 4) {
+    name
+    gender
+    homeworld {
+      name
+    }
+    starshipConnection {
+      edges {
+        node {
+          id
+          manufacturers
+        }
+      }
+    }
+  }
+}
+`) as TypedQueryDocumentNode<NestedFieldsQuerySelectionSet, NestedFieldsQueryArgs>;
+export const AllStarshipsQueryDocument = parse(`query AllStarships {
+  allStarships(first: 7) {
+    edges {
+      node {
+        ...starshipFragment
+      }
+    }
+  }
+}
+`) as TypedQueryDocumentNode<AllStarshipsQuerySelectionSet, AllStarshipsQueryArgs>;
+
+// Mutations
+
+// Subscriptions
+
+// Fragments
+export type StarshipFragmentFragment = { id: IDScalar, name: Nullable<StringScalar>, model: Nullable<StringScalar>, costInCredits: Nullable<FloatScalar>, pilotConnection: Nullable<{ edges: Nullable<Nullable<{ node: Nullable<{ } & PilotFragmentFragment>, }>[]>, }>, };
+export type PilotFragmentFragment = { name: Nullable<StringScalar>, homeworld: Nullable<{ name: Nullable<StringScalar>, }>, };
+

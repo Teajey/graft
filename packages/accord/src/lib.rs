@@ -1,21 +1,24 @@
+#[cfg(target_arch = "wasm32")]
 mod cli;
+#[cfg(target_arch = "wasm32")]
 mod config;
+#[cfg(target_arch = "wasm32")]
 mod cross;
+#[cfg(target_arch = "wasm32")]
 mod gen;
+#[cfg(target_arch = "wasm32")]
 mod introspection;
+#[cfg(target_arch = "wasm32")]
 mod run;
+#[cfg(target_arch = "wasm32")]
 mod typescript;
+#[cfg(target_arch = "wasm32")]
 mod util;
 
-use eyre::Result;
-use wasm_bindgen::prelude::*;
-
-use run::run;
-
 #[cfg(target_arch = "wasm32")]
-#[wasm_bindgen(start)]
-pub async fn node_main() -> Result<(), JsValue> {
-    run()
+#[wasm_bindgen::prelude::wasm_bindgen(start)]
+pub async fn node_main() -> eyre::Result<(), wasm_bindgen::JsValue> {
+    run::run()
         .await
-        .map_err(|err| JsValue::from_str(&err.to_string()))
+        .map_err(|err| wasm_bindgen::JsValue::from_str(&err.to_string()))
 }

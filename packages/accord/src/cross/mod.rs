@@ -1,32 +1,29 @@
 #[cfg(target_arch = "wasm32")]
 mod node;
 
-use std::path::Path;
-
-use eyre::{eyre, Result};
-
-fn path_to_string<P: AsRef<Path>>(path: P) -> Result<String> {
+#[cfg(target_arch = "wasm32")]
+fn path_to_string<P: AsRef<std::path::Path>>(path: P) -> eyre::Result<String> {
     Ok(path
         .as_ref()
         .to_str()
-        .ok_or_else(|| eyre!("set_current_dir: Couldn't convert provided path to UTF-8"))?
+        .ok_or_else(|| eyre::eyre!("set_current_dir: Couldn't convert provided path to UTF-8"))?
         .to_owned())
 }
 
 pub mod env {
-    use std::{env::VarError, ffi::OsString, path::Path};
+    use std::{ffi::OsString, path::Path};
 
-    use eyre::{eyre, Result};
+    use eyre::Result;
 
     pub fn set_current_dir<P: AsRef<Path>>(path: P) -> Result<()> {
         #[cfg(not(target_arch = "wasm32"))]
         {
-            std::env::set_current_dir(path)
+            Ok(std::env::set_current_dir(path)?)
         }
         #[cfg(target_arch = "wasm32")]
         {
             super::node::process_chdir(&super::path_to_string(path)?)
-                .map_err(|err| eyre!("set_current_dir: {:?}", err))
+                .map_err(|err| eyre::eyre!("set_current_dir: {:?}", err))
         }
     }
 
@@ -39,7 +36,7 @@ pub mod env {
         {
             let env = super::node::process_env();
 
-            env.get(key).cloned().ok_or(VarError::NotPresent)
+            env.get(key).cloned().ok_or(std::env::VarError::NotPresent)
         }
     }
 
@@ -49,13 +46,13 @@ pub mod env {
             super::node::argv().into_iter().map(|arg| {
                 arg.as_string()
                     .ok_or(arg)
-                    .map_err(|arg| eyre!("Failed to stringify arg: {arg:?}"))
+                    .map_err(|arg| eyre::eyre!("Failed to stringify arg: {arg:?}"))
                     .map(OsString::from)
             })
         }
         #[cfg(not(target_arch = "wasm32"))]
         {
-            std::env::args_os()
+            std::env::args_os().map(Ok)
         }
     }
 }
@@ -63,15 +60,17 @@ pub mod env {
 pub mod fs {
     use std::path::Path;
 
-    use eyre::{eyre, Result};
+    use eyre::Result;
 
     pub fn read_to_string<P: AsRef<Path>>(path: P) -> Result<String> {
         #[cfg(not(target_arch = "wasm32"))]
         {
-            std::fs::read_to_string(path)
+            Ok(std::fs::read_to_string(path)?)
         }
         #[cfg(target_arch = "wasm32")]
         {
+            use eyre::eyre;
+
             match super::node::read_file(&super::path_to_string(path)?) {
                 Ok(buffer) => buffer
                     .as_string()
@@ -84,11 +83,13 @@ pub mod fs {
     pub fn write_to_file(path: &str, data: &str) -> Result<()> {
         #[cfg(target_arch = "wasm32")]
         {
-            super::node::write_file(path, data).map_err(|err| eyre!("{:?}", err))
+            super::node::write_file(path, data).map_err(|err| eyre::eyre!("{:?}", err))
         }
         #[cfg(not(target_arch = "wasm32"))]
         {
-            write!(std::fs::File::create(path)?, "{data}")?;
+            use std::io::Write;
+
+            Ok(write!(std::fs::File::create(path)?, "{data}")?)
         }
     }
 
@@ -106,7 +107,7 @@ pub mod fs {
 }
 
 pub mod net {
-    use eyre::{eyre, Result};
+    use eyre::Result;
     use serde::Serialize;
 
     pub async fn fetch_json<B: Serialize>(
@@ -116,6 +117,8 @@ pub mod net {
     ) -> Result<serde_json::Value> {
         #[cfg(target_arch = "wasm32")]
         {
+            use eyre::eyre;
+
             let body_str = serde_json::to_string(&body)?;
 
             let options = serde_json::json!({
@@ -137,6 +140,16 @@ pub mod net {
             .map_err(|err| eyre!("{:?}", err))?;
 
             serde_wasm_bindgen::from_value(res).map_err(|err| eyre!("{:?}", err))
+        }
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            let client = reqwest::Client::builder()
+                .danger_accept_invalid_certs(no_ssl)
+                .build()?;
+
+            let res = client.post(url).json(&body).send().await?;
+
+            Ok(res.json().await?)
         }
     }
 }

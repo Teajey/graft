@@ -64,18 +64,3 @@ extern "C" {
     #[wasm_bindgen(js_name = "fetchJson", catch)]
     pub async fn fetch_json(url: &str, no_ssl: bool, options: JsValue) -> Result<JsValue, JsValue>;
 }
-
-pub mod env {
-    use super::process;
-    use std::collections::HashMap;
-    use std::env::VarError;
-    use wasm_bindgen::JsValue;
-
-    pub fn var(key: &str) -> Result<String, VarError> {
-        let env: JsValue = process.env();
-        let env: HashMap<String, String> = serde_wasm_bindgen::from_value(env)
-            .expect("process.env must be HashMap<String, String>");
-
-        env.get(key).cloned().ok_or(VarError::NotPresent)
-    }
-}
