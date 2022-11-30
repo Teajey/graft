@@ -25,6 +25,12 @@ fn recursive_typescriptify(type_ref: &TypeRef, nullable: &mut bool) -> Result<St
             let string = recursive_typescriptify(of_type, nullable)?;
             format!("{string}[]")
         }
+        TypeRef::Union { name } => {
+            format!("{name}Union")
+        }
+        TypeRef::Interface { name } => {
+            format!("{name}Interface")
+        }
         type_ref => {
             let name = type_ref
                 .maybe_name()
