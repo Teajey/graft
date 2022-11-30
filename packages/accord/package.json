@@ -15,7 +15,7 @@
   "type": "module",
   "scripts": {
     "test": "cargo test --features native",
-    "build": "wasm-pack build --target nodejs -- --features node",
+    "build": "wasm-pack build --target nodejs",
     "postinstall": "sh -c \"if [ ! -f pkg/teajey_accord.js ]; then yarn build; fi\""
   },
   "files": [

@@ -1,5 +1,5 @@
 #[cfg(target_arch = "wasm32")]
-mod node;
+pub mod node;
 
 #[cfg(target_arch = "wasm32")]
 fn path_to_string<P: AsRef<std::path::Path>>(path: P) -> eyre::Result<String> {
@@ -43,12 +43,15 @@ pub mod env {
     pub fn argv() -> impl Iterator<Item = Result<OsString>> {
         #[cfg(target_arch = "wasm32")]
         {
-            super::node::argv().into_iter().map(|arg| {
-                arg.as_string()
-                    .ok_or(arg)
-                    .map_err(|arg| eyre::eyre!("Failed to stringify arg: {arg:?}"))
-                    .map(OsString::from)
-            })
+            super::node::argv()
+                .into_iter()
+                .map(|arg| {
+                    arg.as_string()
+                        .ok_or(arg)
+                        .map_err(|arg| eyre::eyre!("Failed to stringify arg: {arg:?}"))
+                        .map(OsString::from)
+                })
+                .skip(1)
         }
         #[cfg(not(target_arch = "wasm32"))]
         {

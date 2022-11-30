@@ -21,6 +21,13 @@ pub async fn run() -> Result<()> {
 
     let schema = introspection::Response::fetch(&config).await?.schema();
 
+    if config.emit_schema {
+        // FIXME: Doesn't really make sense to serialize the schema again when we already recieved it in serial form...
+        let schema_json =
+            serde_json::to_string_pretty(&schema).expect("recieved valid schema json");
+        cross::fs::write_to_file("schema.json", &schema_json)?;
+    }
+
     let ts = generate_typescript(cli, config, schema).await?;
 
     cross::fs::write_to_file("generated.ts", &ts)?;

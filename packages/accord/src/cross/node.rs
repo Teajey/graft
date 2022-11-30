@@ -47,7 +47,7 @@ extern "C" {
 
 #[macro_export]
 macro_rules! console_log {
-    ($($t:tt)*) => (node::log(&format_args!($($t)*).to_string()))
+    ($($t:tt)*) => ($crate::cross::node::log(&format_args!($($t)*).to_string()))
 }
 
 #[macro_export]
