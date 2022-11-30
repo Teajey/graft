@@ -3,9 +3,9 @@ use std::fmt::{Display, Write as FmtWrite};
 use eyre::Result;
 use graphql_parser::query::Document;
 
-use crate::config;
+use crate::cli;
+use crate::introspection::Schema;
 use crate::typescript::{TypeIndex, TypescriptableWithBuffer, WithIndexable};
-use crate::{cli, introspection};
 
 pub struct Buffer {
     pub imports: String,
@@ -62,7 +62,7 @@ impl Display for Buffer {
 
 pub async fn generate_typescript_with_document<'a>(
     cli: cli::Base,
-    config: config::AppConfig,
+    schema: Schema,
     document: Option<Document<'a, &'a str>>,
 ) -> Result<String> {
     let mut buffer = Buffer {
@@ -82,9 +82,7 @@ pub async fn generate_typescript_with_document<'a>(
         fragments: String::new(),
     };
 
-    let res = introspection::Response::fetch(&config).await?;
-
-    let type_index = TypeIndex::try_new(&res.data.schema)?;
+    let type_index = TypeIndex::try_new(&schema)?;
 
     writeln!(
         buffer.imports,
@@ -103,7 +101,7 @@ pub async fn generate_typescript_with_document<'a>(
         }
     }
 
-    for t in res.data.schema.types {
+    for t in schema.types {
         t.as_typescript_on(&mut buffer)?;
     }
 

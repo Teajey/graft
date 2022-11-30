@@ -289,4 +289,8 @@ impl Response {
 
         Ok(res)
     }
+
+    pub fn schema(self) -> Schema {
+        self.data.schema
+    }
 }

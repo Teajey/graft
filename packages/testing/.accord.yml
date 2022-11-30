@@ -1,3 +1,4 @@
 schema: https://{{ACCORD_DOMAIN}}/.netlify/functions/index
 no_ssl: true
 document: document.graphql
+emit_schema: true

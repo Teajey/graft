@@ -2,6 +2,7 @@ use clap::Parser;
 use wasm_bindgen::prelude::*;
 
 use crate::gen::generate_typescript_with_document;
+use crate::introspection;
 use crate::util::path_with_possible_prefix;
 use crate::{cli, config, node, node_stdout};
 
@@ -11,9 +12,13 @@ fn read_to_string(path: &str) -> Result<String, JsValue> {
         .map_err(|err| JsValue::from_str(&format!("file_str was not unicode: {err}")))
 }
 
-async fn generate_typescript(cli: cli::Base, config: config::AppConfig) -> Result<String, JsValue> {
+async fn generate_typescript(
+    cli: cli::Base,
+    config: config::AppConfig,
+    schema: introspection::Schema,
+) -> Result<String, JsValue> {
     let Some(document_path) = &config.document_path else {
-        return generate_typescript_with_document(cli, config, None)
+        return generate_typescript_with_document(cli, schema, None)
         .await
         .map_err(|err| JsValue::from_str(&err.to_string()));
     };
@@ -27,7 +32,7 @@ async fn generate_typescript(cli: cli::Base, config: config::AppConfig) -> Resul
     let document_str = read_to_string(document_path)?;
 
     if document_str.is_empty() {
-        return generate_typescript_with_document(cli, config, None)
+        return generate_typescript_with_document(cli, schema, None)
             .await
             .map_err(|err| JsValue::from_str(&err.to_string()));
     }
@@ -36,7 +41,7 @@ async fn generate_typescript(cli: cli::Base, config: config::AppConfig) -> Resul
         JsValue::from_str(&format!("Couldn't parse document as GraphQL AST: {err}"))
     })?;
 
-    generate_typescript_with_document(cli, config, Some(document))
+    generate_typescript_with_document(cli, schema, Some(document))
         .await
         .map_err(|err| JsValue::from_str(&err.to_string()))
 }
@@ -72,7 +77,19 @@ pub async fn node_main() -> Result<(), JsValue> {
                 JsValue::from_str(&format!("Failed to generate consumable config: {err}"))
             })?;
 
-            let ts = generate_typescript(cli, config).await?;
+            let schema = introspection::Response::fetch(&config)
+                .await
+                .map_err(|err| JsValue::from_str(&err.to_string()))?
+                .schema();
+
+            if config.emit_schema {
+                // FIXME: Doesn't really make sense to serialize the schema again when we already recieved it in serial form...
+                let schema_json =
+                    serde_json::to_string_pretty(&schema).expect("recieved valid schema json");
+                node::write_file("schema.json", &schema_json)?;
+            }
+
+            let ts = generate_typescript(cli, config, schema).await?;
 
             node::write_file("generated.ts", &ts)?;
         }

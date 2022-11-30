@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use eyre::eyre;
 use eyre::{Report, Result};
 use regex::Captures;
@@ -11,13 +13,15 @@ use crate::util;
 pub struct RawAppConfig {
     pub schema: String,
     pub no_ssl: Option<bool>,
-    pub document: Option<String>,
+    pub document: Option<PathBuf>,
+    pub emit_schema: Option<bool>,
 }
 
 pub struct AppConfig {
     pub schema: Url,
     pub no_ssl: bool,
     pub document_path: Option<String>,
+    pub emit_schema: bool,
 }
 
 impl TryFrom<RawAppConfig> for AppConfig {
@@ -44,10 +48,18 @@ impl TryFrom<RawAppConfig> for AppConfig {
 
         let schema = Url::try_from(schema.as_ref())?;
 
+        let document_path = match raw.document {
+            Some(document) => Some(document.into_os_string().into_string().map_err(
+                |os_string| eyre!("Failed to parse document path as UTF-8: {os_string:?}"),
+            )?),
+            None => None,
+        };
+
         Ok(AppConfig {
             schema,
             no_ssl: raw.no_ssl.unwrap_or(false),
-            document_path: raw.document,
+            document_path,
+            emit_schema: raw.emit_schema.unwrap_or(false),
         })
     }
 }
