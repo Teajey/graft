@@ -1,4 +1,4 @@
-pub mod main;
+use std::collections::HashMap;
 
 use wasm_bindgen::prelude::*;
 
@@ -21,8 +21,16 @@ extern "C" {
     #[wasm_bindgen(js_name = "process.stdout.write")]
     pub fn process_stdout_write(arg: &str);
 
+    #[wasm_bindgen(js_name = "process.chdir", catch)]
+    pub fn process_chdir(path: &str) -> Result<(), JsValue>;
+
     #[wasm_bindgen(method, getter)]
     pub fn env(this: &Process) -> JsValue;
+}
+
+pub fn process_env() -> HashMap<String, String> {
+    serde_wasm_bindgen::from_value(process.env())
+        .expect("process.env must be HashMap<String, String>")
 }
 
 #[wasm_bindgen(module = "fs")]
@@ -32,6 +40,9 @@ extern "C" {
 
     #[wasm_bindgen(js_name = writeFileSync, catch)]
     pub fn write_file(path: &str, data: &str) -> Result<(), JsValue>;
+
+    // #[wasm_bindgen(js_name = existsSync, catch)]
+    // pub fn path_try_exists(path: &str) -> Result<bool, JsValue>;
 }
 
 #[macro_export]

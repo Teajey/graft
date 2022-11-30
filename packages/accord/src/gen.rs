@@ -4,8 +4,11 @@ use eyre::Result;
 use graphql_parser::query::Document;
 
 use crate::cli;
+use crate::config;
+use crate::cross;
 use crate::introspection::Schema;
 use crate::typescript::{TypeIndex, TypescriptableWithBuffer, WithIndexable};
+use crate::util::path_with_possible_prefix;
 
 pub struct Buffer {
     pub imports: String,
@@ -106,4 +109,60 @@ pub async fn generate_typescript_with_document<'a>(
     }
 
     Ok(buffer.to_string())
+}
+
+pub async fn generate_typescript(
+    cli: cli::Base,
+    config: config::AppConfig,
+    schema: Schema,
+) -> Result<String> {
+    let Some(document_path) = &config.document_path else {
+        return generate_typescript_with_document(cli, schema, None)
+        .await;
+    };
+
+    let document_path = path_with_possible_prefix(cli.config_location.as_deref(), document_path);
+
+    let document_str = cross::fs::read_to_string(document_path)?;
+
+    let document = graphql_parser::parse_query::<&str>(&document_str)?;
+
+    generate_typescript_with_document(cli, schema, Some(document)).await
+}
+
+// Native test only for now...
+#[cfg(not(target_arch = "wasm32"))]
+#[cfg(test)]
+mod test {
+    use std::path::PathBuf;
+
+    use eyre::Result;
+
+    use crate::introspection;
+    use crate::{cli, config, gen::generate_typescript};
+
+    #[tokio::test]
+    async fn typescript_output_matches_snapshot() -> Result<()> {
+        let cli = cli::Base {
+            working_directory: None,
+            config_location: None,
+        };
+
+        let config = config::RawAppConfig {
+            schema: "https://swapi-graphql.netlify.app/.netlify/functions/index".to_owned(),
+            no_ssl: None,
+            document: Some(PathBuf::from("../testing/document.graphql")),
+            emit_schema: None,
+        };
+
+        let config = config::AppConfig::try_from(config)?;
+
+        let schema = introspection::Response::fetch(&config).await?.schema();
+
+        let typescript = generate_typescript(cli, config, schema).await?;
+
+        insta::assert_snapshot!(typescript);
+
+        Ok(())
+    }
 }

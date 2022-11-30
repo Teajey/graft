@@ -5,5 +5,5 @@
   },
   "typescript.enablePromptUseWorkspaceTsdk": true,
   "typescript.tsdk": ".yarn/sdks/typescript/lib",
-  "rust-analyzer.cargo.features": ["node"]
+  "rust-analyzer.cargo.target": "wasm32-unknown-unknown"
 }

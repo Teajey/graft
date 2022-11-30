@@ -7,7 +7,7 @@ use regex_macro::regex;
 use serde::Deserialize;
 use url::Url;
 
-use crate::util;
+use crate::{config, cross, util};
 
 #[derive(Deserialize)]
 pub struct RawAppConfig {
@@ -36,7 +36,7 @@ impl TryFrom<RawAppConfig> for AppConfig {
         let schema = envvar_interpolator.replace_all(&raw.schema, |captures: &Captures<'_>| {
             let envvar_key = captures.get(1).expect("first capture defined in envvar_interpolator");
             let envvar_key = envvar_key.as_str();
-            util::env::var(envvar_key).unwrap_or_else(|_| {
+            cross::env::var(envvar_key).unwrap_or_else(|_| {
                 eprintln!("Couldn't find environment variable with name \"{}\" while interpolating schema", envvar_key);
                 ENVVAR_NOT_FOUND.to_owned()
             })
@@ -61,5 +61,19 @@ impl TryFrom<RawAppConfig> for AppConfig {
             document_path,
             emit_schema: raw.emit_schema.unwrap_or(false),
         })
+    }
+}
+
+impl AppConfig {
+    pub fn load(dir: Option<&str>) -> Result<Self> {
+        let config_name = ".accord.yml";
+
+        let path = util::path_with_possible_prefix(dir, config_name);
+
+        let config_string = cross::fs::read_to_string(path)?;
+
+        let config: config::RawAppConfig = serde_yaml::from_str(&config_string)?;
+
+        config.try_into()
     }
 }

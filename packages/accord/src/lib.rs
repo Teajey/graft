@@ -1,17 +1,21 @@
-#[cfg(feature = "node")]
 mod cli;
-#[cfg(feature = "node")]
 mod config;
-#[cfg(feature = "node")]
+mod cross;
 mod gen;
-#[cfg(feature = "node")]
 mod introspection;
-#[cfg(feature = "node")]
-mod node;
-#[cfg(feature = "node")]
+mod run;
 mod typescript;
-#[cfg(feature = "node")]
 mod util;
 
-#[cfg(feature = "node")]
-pub use node::main::node_main;
+use eyre::Result;
+use wasm_bindgen::prelude::*;
+
+use run::run;
+
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen(start)]
+pub async fn node_main() -> Result<(), JsValue> {
+    run()
+        .await
+        .map_err(|err| JsValue::from_str(&err.to_string()))
+}
