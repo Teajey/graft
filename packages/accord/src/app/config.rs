@@ -10,7 +10,7 @@ use url::Url;
 use crate::{cross, util};
 
 #[derive(Deserialize)]
-pub struct RawAppConfig {
+pub struct RawConfig {
     pub schema: String,
     pub no_ssl: Option<bool>,
     pub document: Option<PathBuf>,
@@ -24,10 +24,10 @@ pub struct Config {
     pub emit_schema: bool,
 }
 
-impl TryFrom<RawAppConfig> for Config {
+impl TryFrom<RawConfig> for Config {
     type Error = Report;
 
-    fn try_from(raw: RawAppConfig) -> Result<Self> {
+    fn try_from(raw: RawConfig) -> Result<Self> {
         let envvar_interpolator = regex!(r#"\{\{(\w+)\}\}"#);
 
         // FIXME: This' pretty hacky, but I can't think of a better way to deal with `std::env::var`s `Result` inside `replace_all` right now
@@ -72,7 +72,7 @@ impl Config {
 
         let config_string = cross::fs::read_to_string(path)?;
 
-        let config: RawAppConfig = serde_yaml::from_str(&config_string)?;
+        let config: RawConfig = serde_yaml::from_str(&config_string)?;
 
         config.try_into()
     }
