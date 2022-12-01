@@ -96,14 +96,8 @@ pub mod fs {
         }
         #[cfg(target_arch = "wasm32")]
         {
-            use eyre::eyre;
-
-            match super::node::read_file(&super::path_to_string(path)?) {
-                Ok(buffer) => buffer
-                    .as_string()
-                    .ok_or_else(|| eyre!("Couldn't convert read_file buffer to string")),
-                Err(err) => Err(eyre!("{:?}", err)),
-            }
+            super::node::read_file_to_string(&super::path_to_string(path)?)
+                .map_err(|err| eyre::eyre!("{err:?}"))
         }
     }
 

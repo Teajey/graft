@@ -1,3 +1,5 @@
+const fs = require("fs");
+
 module.exports.fetchJson = async function (url, noSsl, options) {
   const { default: fetch } = await import("node-fetch");
   let optionsObj = Object.fromEntries(options);
@@ -11,4 +13,8 @@ module.exports.fetchJson = async function (url, noSsl, options) {
   }
   const resp = await fetch(url, optionsObj);
   return await resp.json();
+};
+
+module.exports.readFileToString = function (path) {
+  return fs.readFileSync(path, { encoding: "utf8" });
 };

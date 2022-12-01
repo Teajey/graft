@@ -41,9 +41,6 @@ pub fn process_env() -> HashMap<String, String> {
 
 #[wasm_bindgen(module = "fs")]
 extern "C" {
-    #[wasm_bindgen(js_name = readFileSync, catch)]
-    pub fn read_file(path: &str) -> Result<Buffer, JsValue>;
-
     #[wasm_bindgen(js_name = writeFileSync, catch)]
     pub fn write_file(path: &str, data: &str) -> Result<(), JsValue>;
 
@@ -70,8 +67,11 @@ pub fn argv() -> Vec<JsValue> {
     process.argv()
 }
 
-#[wasm_bindgen(module = "/fetchJson.js")]
+#[wasm_bindgen(module = "/node.js")]
 extern "C" {
     #[wasm_bindgen(js_name = "fetchJson", catch)]
     pub async fn fetch_json(url: &str, no_ssl: bool, options: JsValue) -> Result<JsValue, JsValue>;
+
+    #[wasm_bindgen(js_name = "readFileToString", catch)]
+    pub fn read_file_to_string(path: &str) -> Result<String, JsValue>;
 }
