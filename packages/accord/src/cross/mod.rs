@@ -1,6 +1,30 @@
 #[cfg(target_arch = "wasm32")]
 pub mod node;
 
+#[cfg(not(target_arch = "wasm32"))]
+#[macro_export]
+macro_rules! cross_println {
+    ($($t:tt)*) => (println!($($t)*))
+}
+
+#[cfg(target_arch = "wasm32")]
+#[macro_export]
+macro_rules! cross_println {
+    ($($t:tt)*) => ($crate::console_log!($($t)*))
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+#[macro_export]
+macro_rules! cross_eprintln {
+    ($($t:tt)*) => (eprintln!($($t)*))
+}
+
+#[cfg(target_arch = "wasm32")]
+#[macro_export]
+macro_rules! cross_eprintln {
+    ($($t:tt)*) => ($crate::console_error!($($t)*))
+}
+
 #[cfg(target_arch = "wasm32")]
 fn path_to_string<P: AsRef<std::path::Path>>(path: P) -> eyre::Result<String> {
     Ok(path

@@ -18,6 +18,9 @@ extern "C" {
     #[wasm_bindgen(js_namespace = console)]
     pub fn log(arg: &str);
 
+    #[wasm_bindgen(js_namespace = console)]
+    pub fn error(arg: &str);
+
     #[wasm_bindgen(js_name = "process.stdout.write")]
     pub fn process_stdout_write(arg: &str);
 
@@ -48,6 +51,11 @@ extern "C" {
 #[macro_export]
 macro_rules! console_log {
     ($($t:tt)*) => ($crate::cross::node::log(&format_args!($($t)*).to_string()))
+}
+
+#[macro_export]
+macro_rules! console_error {
+    ($($t:tt)*) => ($crate::cross::node::error(&format_args!($($t)*).to_string()))
 }
 
 #[macro_export]

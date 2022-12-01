@@ -1,7 +1,5 @@
 #[cfg(target_arch = "wasm32")]
-mod cli;
-#[cfg(target_arch = "wasm32")]
-mod config;
+mod app;
 #[cfg(target_arch = "wasm32")]
 mod cross;
 #[cfg(target_arch = "wasm32")]

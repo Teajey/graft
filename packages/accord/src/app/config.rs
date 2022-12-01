@@ -7,7 +7,7 @@ use regex_macro::regex;
 use serde::Deserialize;
 use url::Url;
 
-use crate::{config, cross, util};
+use crate::{cross, util};
 
 #[derive(Deserialize)]
 pub struct RawAppConfig {
@@ -17,14 +17,14 @@ pub struct RawAppConfig {
     pub emit_schema: Option<bool>,
 }
 
-pub struct AppConfig {
+pub struct Config {
     pub schema: Url,
     pub no_ssl: bool,
     pub document_path: Option<String>,
     pub emit_schema: bool,
 }
 
-impl TryFrom<RawAppConfig> for AppConfig {
+impl TryFrom<RawAppConfig> for Config {
     type Error = Report;
 
     fn try_from(raw: RawAppConfig) -> Result<Self> {
@@ -55,7 +55,7 @@ impl TryFrom<RawAppConfig> for AppConfig {
             None => None,
         };
 
-        Ok(AppConfig {
+        Ok(Config {
             schema,
             no_ssl: raw.no_ssl.unwrap_or(false),
             document_path,
@@ -64,7 +64,7 @@ impl TryFrom<RawAppConfig> for AppConfig {
     }
 }
 
-impl AppConfig {
+impl Config {
     pub fn load(dir: Option<&str>) -> Result<Self> {
         let config_name = ".accord.yml";
 
@@ -72,7 +72,7 @@ impl AppConfig {
 
         let config_string = cross::fs::read_to_string(path)?;
 
-        let config: config::RawAppConfig = serde_yaml::from_str(&config_string)?;
+        let config: RawAppConfig = serde_yaml::from_str(&config_string)?;
 
         config.try_into()
     }

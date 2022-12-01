@@ -3,8 +3,7 @@ use std::fmt::{Display, Write as FmtWrite};
 use eyre::Result;
 use graphql_parser::query::Document;
 
-use crate::cli;
-use crate::config;
+use crate::app::{self, cli};
 use crate::cross;
 use crate::introspection::Schema;
 use crate::typescript::{TypeIndex, TypescriptableWithBuffer, WithIndexable};
@@ -113,7 +112,7 @@ pub async fn generate_typescript_with_document<'a>(
 
 pub async fn generate_typescript(
     cli: cli::Base,
-    config: config::AppConfig,
+    config: app::Config,
     schema: Schema,
 ) -> Result<String> {
     let Some(document_path) = &config.document_path else {
@@ -134,28 +133,28 @@ pub async fn generate_typescript(
 #[cfg(not(target_arch = "wasm32"))]
 #[cfg(test)]
 mod test {
-    use std::path::PathBuf;
+    use std::str::FromStr;
 
     use eyre::Result;
+    use url::Url;
 
     use crate::introspection;
-    use crate::{cli, config, gen::generate_typescript};
+    use crate::{app, gen::generate_typescript};
 
     #[tokio::test]
     async fn typescript_output_matches_snapshot() -> Result<()> {
-        let cli = cli::Base {
+        let cli = app::cli::Base {
             working_directory: None,
             config_location: None,
+            verbose: 0,
         };
 
-        let config = config::RawAppConfig {
-            schema: "https://swapi-graphql.netlify.app/.netlify/functions/index".to_owned(),
-            no_ssl: None,
-            document: Some(PathBuf::from("../testing/document.graphql")),
-            emit_schema: None,
+        let config = app::Config {
+            schema: Url::from_str("https://swapi-graphql.netlify.app/.netlify/functions/index")?,
+            no_ssl: false,
+            document_path: Some("../testing/document.graphql".to_string()),
+            emit_schema: false,
         };
-
-        let config = config::AppConfig::try_from(config)?;
 
         let schema = introspection::Response::fetch(&config).await?.schema();
 

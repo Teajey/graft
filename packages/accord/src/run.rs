@@ -2,8 +2,11 @@ use clap::Parser;
 use eyre::Result;
 
 use crate::gen::generate_typescript;
-use crate::introspection;
-use crate::{cli, config::AppConfig, cross};
+use crate::{
+    app::{self, cli},
+    cross,
+};
+use crate::{introspection, print_info};
 
 pub async fn run() -> Result<()> {
     let argv: Result<Vec<_>> = cross::env::argv().collect();
@@ -14,21 +17,31 @@ pub async fn run() -> Result<()> {
         cross::env::set_current_dir(working_dir)?;
     }
 
-    let config = AppConfig::load(cli.config_location.as_deref()).unwrap_or_else(|err| {
+    let config = app::Config::load(cli.config_location.as_deref()).unwrap_or_else(|err| {
         eprintln!("Failed to load config: {}", err);
         std::process::exit(1);
     });
 
-    let schema = introspection::Response::fetch(&config).await?.schema();
+    let ctx = app::Context {
+        verbose: cli.verbose,
+        config,
+    };
+    print_info!(ctx, 1, "Context generated!");
 
-    if config.emit_schema {
+    print_info!(ctx, 1, "Fetching schema...");
+    let schema = introspection::Response::fetch(&ctx.config).await?.schema();
+    print_info!(ctx, 1, "Schema fetched!");
+
+    if ctx.config.emit_schema {
+        print_info!(ctx, 1, "Emitting schema json");
         // FIXME: Doesn't really make sense to serialize the schema again when we already recieved it in serial form...
         let schema_json =
             serde_json::to_string_pretty(&schema).expect("recieved valid schema json");
         cross::fs::write_to_file("schema.json", &schema_json)?;
     }
 
-    let ts = generate_typescript(cli, config, schema).await?;
+    print_info!(ctx, 1, "Generating typescript...");
+    let ts = generate_typescript(cli, ctx.config, schema).await?;
 
     cross::fs::write_to_file("generated.ts", &ts)?;
 
