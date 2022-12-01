@@ -10,11 +10,11 @@ use url::Url;
 use crate::{cross, util};
 
 #[derive(Deserialize)]
-pub struct RawConfig {
-    pub schema: String,
-    pub no_ssl: Option<bool>,
-    pub document: Option<PathBuf>,
-    pub emit_schema: Option<bool>,
+struct RawConfig {
+    schema: String,
+    no_ssl: Option<bool>,
+    document: Option<PathBuf>,
+    emit_schema: Option<bool>,
 }
 
 pub struct Config {
