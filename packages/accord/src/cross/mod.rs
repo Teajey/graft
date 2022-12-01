@@ -180,3 +180,17 @@ pub mod net {
         }
     }
 }
+
+pub mod process {
+    pub fn exit(code: i32) -> ! {
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            std::process::exit(code);
+        }
+        #[cfg(target_arch = "wasm32")]
+        {
+            super::node::process_exit(code);
+            unreachable!();
+        }
+    }
+}

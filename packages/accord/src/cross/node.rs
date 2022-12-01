@@ -27,6 +27,9 @@ extern "C" {
     #[wasm_bindgen(js_name = "process.chdir", catch)]
     pub fn process_chdir(path: &str) -> Result<(), JsValue>;
 
+    #[wasm_bindgen(js_name = "process.exit")]
+    pub fn process_exit(code: i32);
+
     #[wasm_bindgen(method, getter)]
     pub fn env(this: &Process) -> JsValue;
 }

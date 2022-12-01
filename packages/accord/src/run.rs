@@ -6,7 +6,7 @@ use crate::{
     app::{self, cli},
     cross,
 };
-use crate::{introspection, print_info};
+use crate::{cross_eprintln, introspection, print_info};
 
 pub async fn run() -> Result<()> {
     let argv: Result<Vec<_>> = cross::env::argv().collect();
@@ -18,8 +18,8 @@ pub async fn run() -> Result<()> {
     }
 
     let config = app::Config::load(cli.config_location.as_deref()).unwrap_or_else(|err| {
-        eprintln!("Failed to load config: {}", err);
-        std::process::exit(1);
+        cross_eprintln!("Failed to load config: {}", err);
+        cross::process::exit(1);
     });
 
     let ctx = app::Context {
