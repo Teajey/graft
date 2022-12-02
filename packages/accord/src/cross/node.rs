@@ -24,6 +24,9 @@ extern "C" {
     #[wasm_bindgen(js_name = "process.stdout.write")]
     pub fn process_stdout_write(arg: &str);
 
+    #[wasm_bindgen(js_name = "process.stderr.write")]
+    pub fn process_stderr_write(arg: &str);
+
     #[wasm_bindgen(js_name = "process.chdir", catch)]
     pub fn process_chdir(path: &str) -> Result<(), JsValue>;
 
@@ -60,7 +63,12 @@ macro_rules! console_error {
 
 #[macro_export]
 macro_rules! node_stdout {
-    ($($t:tt)*) => (node::process_stdout_write(&format_args!($($t)*).to_string()))
+    ($($t:tt)*) => ($crate::cross::node::process_stdout_write(&format_args!($($t)*).to_string()))
+}
+
+#[macro_export]
+macro_rules! node_stderr {
+    ($($t:tt)*) => ($crate::cross::node::process_stderr_write(&format_args!($($t)*).to_string()))
 }
 
 pub fn argv() -> Vec<JsValue> {

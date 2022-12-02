@@ -1,28 +1,50 @@
 #[cfg(target_arch = "wasm32")]
 pub mod node;
 
-#[cfg(not(target_arch = "wasm32"))]
+#[macro_export]
+macro_rules! cross_print {
+    ($($t:tt)*) => {
+        #[cfg(not(target_arch = "wasm32"))]
+        print!($($t)*);
+        #[cfg(target_arch = "wasm32")]
+        $crate::node_stdout!($($t)*);
+    }
+}
+
+#[macro_export]
+macro_rules! cross_eprint {
+    ($($t:tt)*) => {
+        #[cfg(not(target_arch = "wasm32"))]
+        eprint!($($t)*);
+        #[cfg(target_arch = "wasm32")]
+        $crate::node_stderr!($($t)*);
+    }
+}
+
 #[macro_export]
 macro_rules! cross_println {
-    ($($t:tt)*) => (println!($($t)*))
+    ($($t:tt)*) => {
+        #[cfg(not(target_arch = "wasm32"))]
+        println!($($t)*);
+        #[cfg(target_arch = "wasm32")]
+        {
+            $crate::node_stdout!($($t)*);
+            $crate::node_stdout!("\n");
+        }
+    }
 }
 
-#[cfg(target_arch = "wasm32")]
-#[macro_export]
-macro_rules! cross_println {
-    ($($t:tt)*) => ($crate::console_log!($($t)*))
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-#[macro_export]
-macro_rules! cross_eprintln {
-    ($($t:tt)*) => (eprintln!($($t)*))
-}
-
-#[cfg(target_arch = "wasm32")]
 #[macro_export]
 macro_rules! cross_eprintln {
-    ($($t:tt)*) => ($crate::console_error!($($t)*))
+    ($($t:tt)*) => {
+        #[cfg(not(target_arch = "wasm32"))]
+        eprintln!($($t)*);
+        #[cfg(target_arch = "wasm32")]
+        {
+            $crate::node_stderr!($($t)*);
+            $crate::node_stderr!("\n");
+        }
+    }
 }
 
 #[cfg(target_arch = "wasm32")]

@@ -6,12 +6,18 @@ use crate::{
     app::{self, cli},
     cross,
 };
-use crate::{cross_eprintln, introspection, print_info};
+use crate::{cross_eprint, cross_eprintln, introspection, print_info};
 
 pub async fn run() -> Result<()> {
     let argv: Result<Vec<_>> = cross::env::argv().collect();
 
-    let cli = cli::Base::try_parse_from(argv?)?;
+    let cli = match cli::Base::try_parse_from(argv?) {
+        Ok(cli) => cli,
+        Err(err) => {
+            cross_eprint!("{err}");
+            cross::process::exit(0);
+        }
+    };
 
     if let Some(working_dir) = &cli.working_directory {
         cross::env::set_current_dir(working_dir)?;

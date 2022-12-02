@@ -1,4 +1,4 @@
-use crate::{cross_eprintln, cross_println};
+use crate::cross_println;
 
 pub struct Context {
     pub config: super::config::Config,
@@ -12,9 +12,9 @@ impl Context {
         }
     }
 
-    pub fn print_error(&self, msg: &str) {
-        cross_eprintln!("{msg}");
-    }
+    // pub fn print_error(&self, msg: &str) {
+    //     cross_eprintln!("{msg}");
+    // }
 }
 
 #[macro_export]
