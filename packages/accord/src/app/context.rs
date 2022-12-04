@@ -3,6 +3,7 @@ use crate::cross_println;
 pub struct Context {
     pub config: super::config::Config,
     pub verbose: u8,
+    pub config_location: Option<String>,
 }
 
 impl Context {

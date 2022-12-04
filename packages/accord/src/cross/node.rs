@@ -7,8 +7,6 @@ extern "C" {
     #[wasm_bindgen]
     type Process;
 
-    pub type Buffer;
-
     #[allow(non_upper_case_globals)]
     static process: Process;
 
@@ -30,6 +28,9 @@ extern "C" {
     #[wasm_bindgen(js_name = "process.chdir", catch)]
     pub fn process_chdir(path: &str) -> Result<(), JsValue>;
 
+    #[wasm_bindgen(js_name = "process.cwd", catch)]
+    pub fn process_cwd() -> Result<String, JsValue>;
+
     #[wasm_bindgen(js_name = "process.exit")]
     pub fn process_exit(code: i32);
 
@@ -46,6 +47,9 @@ pub fn process_env() -> HashMap<String, String> {
 extern "C" {
     #[wasm_bindgen(js_name = writeFileSync, catch)]
     pub fn write_file(path: &str, data: &str) -> Result<(), JsValue>;
+
+    #[wasm_bindgen(js_name = readdirSync, catch)]
+    pub fn read_dir(path: &str) -> Result<Vec<JsValue>, JsValue>;
 
     // #[wasm_bindgen(js_name = existsSync, catch)]
     // pub fn path_try_exists(path: &str) -> Result<bool, JsValue>;

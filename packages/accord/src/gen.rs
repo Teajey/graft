@@ -112,15 +112,15 @@ pub async fn generate_typescript_with_document<'a>(
 
 pub async fn generate_typescript(
     cli: cli::Base,
-    config: app::Config,
+    ctx: &app::Context,
     schema: Schema,
 ) -> Result<String> {
-    let Some(document_path) = &config.document_path else {
+    let Some(document_path) = &ctx.config.document_path else {
         return generate_typescript_with_document(cli, schema, None)
         .await;
     };
 
-    let document_path = path_with_possible_prefix(cli.config_location.as_deref(), document_path);
+    let document_path = path_with_possible_prefix(ctx.config_location.as_deref(), document_path);
 
     let document_str = cross::fs::read_to_string(document_path)?;
 

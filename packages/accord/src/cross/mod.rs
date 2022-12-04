@@ -52,14 +52,30 @@ fn path_to_string<P: AsRef<std::path::Path>>(path: P) -> eyre::Result<String> {
     Ok(path
         .as_ref()
         .to_str()
-        .ok_or_else(|| eyre::eyre!("set_current_dir: Couldn't convert provided path to UTF-8"))?
+        .ok_or_else(|| eyre::eyre!("Couldn't convert provided path to UTF-8"))?
         .to_owned())
 }
 
 pub mod env {
-    use std::{ffi::OsString, path::Path};
+    use std::{
+        ffi::OsString,
+        path::{Path, PathBuf},
+    };
 
-    use eyre::Result;
+    use eyre::{eyre, Result};
+
+    pub fn current_dir() -> Result<PathBuf> {
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            Ok(std::env::current_dir()?)
+        }
+        #[cfg(target_arch = "wasm32")]
+        {
+            super::node::process_cwd()
+                .map(PathBuf::from)
+                .map_err(|err| eyre!("{err:?}"))
+        }
+    }
 
     pub fn set_current_dir<P: AsRef<Path>>(path: P) -> Result<()> {
         #[cfg(not(target_arch = "wasm32"))]
@@ -109,7 +125,9 @@ pub mod env {
 pub mod fs {
     use std::path::Path;
 
-    use eyre::Result;
+    use eyre::{eyre, Result};
+
+    use super::path_to_string;
 
     pub fn read_to_string<P: AsRef<Path>>(path: P) -> Result<String> {
         #[cfg(not(target_arch = "wasm32"))]
@@ -133,6 +151,25 @@ pub mod fs {
             use std::io::Write;
 
             Ok(write!(std::fs::File::create(path)?, "{data}")?)
+        }
+    }
+
+    pub fn read_dir<P: AsRef<Path>>(path: P) -> Result<Vec<String>> {
+        #[cfg(target_arch = "wasm32")]
+        {
+            super::node::read_dir(&path_to_string(path)?)
+                .map_err(|err| eyre::eyre!("{:?}", err))?
+                .into_iter()
+                .map(|js_value| {
+                    js_value
+                        .as_string()
+                        .ok_or_else(|| eyre!("read_dir js_value couldn't be converted to a string"))
+                })
+                .collect()
+        }
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            std::fs::read_dir()
         }
     }
 

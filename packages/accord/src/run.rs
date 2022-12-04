@@ -1,16 +1,18 @@
 use clap::Parser;
-use eyre::Result;
+use eyre::{eyre, Result};
 
 use crate::gen::generate_typescript;
 use crate::{
     app::{self, cli},
-    cross,
+    cross, util,
 };
 use crate::{cross_eprint, cross_eprintln, introspection, print_info};
 
 pub async fn run() -> Result<()> {
+    util::debug::log("Collecting argv\n")?;
     let argv: Result<Vec<_>> = cross::env::argv().collect();
 
+    util::debug::log("Parsing cli\n")?;
     let cli = match cli::Base::try_parse_from(argv?) {
         Ok(cli) => cli,
         Err(err) => {
@@ -20,10 +22,27 @@ pub async fn run() -> Result<()> {
     };
 
     if let Some(working_dir) = &cli.working_directory {
+        util::debug::log("Setting current directory\n")?;
         cross::env::set_current_dir(working_dir)?;
     }
 
-    let config = app::Config::load(cli.config_location.as_deref()).unwrap_or_else(|err| {
+    let config_location = match cli.config_location.clone() {
+        Some(config_location) => Some(config_location),
+        None => {
+            util::debug::log("Searching for config\n")?;
+            match util::file_location_in_path_by_prefix(".accord")?.map(|path| {
+                path.to_str()
+                    .map(|string| string.to_owned())
+                    .ok_or_else(|| eyre!("Couldn't convert config location pathbuf to utf-8"))
+            }) {
+                Some(result) => Some(result?),
+                None => None,
+            }
+        }
+    };
+
+    util::debug::log("Loading config file\n")?;
+    let config = app::Config::load(config_location.as_deref()).unwrap_or_else(|err| {
         cross_eprintln!("Failed to load config: {}", err);
         cross::process::exit(1);
     });
@@ -31,6 +50,7 @@ pub async fn run() -> Result<()> {
     let ctx = app::Context {
         verbose: cli.verbose,
         config,
+        config_location,
     };
     print_info!(ctx, 1, "Context generated!");
 
@@ -47,7 +67,7 @@ pub async fn run() -> Result<()> {
     }
 
     print_info!(ctx, 1, "Generating typescript...");
-    let ts = generate_typescript(cli, ctx.config, schema).await?;
+    let ts = generate_typescript(cli, &ctx, schema).await?;
 
     cross::fs::write_to_file("generated.ts", &ts)?;
 
