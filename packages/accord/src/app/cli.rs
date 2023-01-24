@@ -5,7 +5,7 @@ use clap::Parser;
 #[derive(Parser)]
 #[command(name = "Accord", author, version, about)]
 pub struct Base {
-    pub working_directory: Option<String>,
+    pub working_directory: Option<PathBuf>,
     #[arg(short, long = "config")]
     pub config_location: Option<PathBuf>,
     #[arg(short, long, action = clap::ArgAction::Count)]
