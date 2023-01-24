@@ -7,7 +7,7 @@ extern "C" {
     #[wasm_bindgen]
     type Process;
 
-    #[allow(non_upper_case_globals)]
+    #[wasm_bindgen(js_name = "process")]
     static PROCESS: Process;
 
     #[wasm_bindgen(method, getter)]
@@ -34,16 +34,17 @@ extern "C" {
     #[wasm_bindgen(js_name = "process.exit")]
     pub fn process_exit(code: i32);
 
-    #[wasm_bindgen(js_name = "process.argv")]
-    pub fn process_argv() -> Vec<JsValue>;
-
     #[wasm_bindgen(method, getter)]
-    pub fn env(this: &Process) -> JsValue;
+    fn env(this: &Process) -> JsValue;
 }
 
 pub fn process_env() -> HashMap<String, String> {
     serde_wasm_bindgen::from_value(PROCESS.env())
         .expect("process.env must be HashMap<String, String>")
+}
+
+pub fn process_argv() -> Vec<JsValue> {
+    PROCESS.argv()
 }
 
 #[wasm_bindgen(module = "fs")]
@@ -53,9 +54,6 @@ extern "C" {
 
     #[wasm_bindgen(js_name = readdirSync, catch)]
     pub fn read_dir(path: &str) -> Result<Vec<JsValue>, JsValue>;
-
-    // #[wasm_bindgen(js_name = existsSync, catch)]
-    // pub fn path_try_exists(path: &str) -> Result<bool, JsValue>;
 }
 
 #[macro_export]
