@@ -105,7 +105,7 @@ pub mod env {
     pub fn argv() -> impl Iterator<Item = Result<OsString>> {
         #[cfg(target_arch = "wasm32")]
         {
-            super::node::argv()
+            super::node::process_argv()
                 .into_iter()
                 .map(|arg| {
                     arg.as_string()

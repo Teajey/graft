@@ -8,7 +8,7 @@ extern "C" {
     type Process;
 
     #[allow(non_upper_case_globals)]
-    static process: Process;
+    static PROCESS: Process;
 
     #[wasm_bindgen(method, getter)]
     fn argv(this: &Process) -> Vec<JsValue>;
@@ -34,12 +34,15 @@ extern "C" {
     #[wasm_bindgen(js_name = "process.exit")]
     pub fn process_exit(code: i32);
 
+    #[wasm_bindgen(js_name = "process.argv")]
+    pub fn process_argv() -> Vec<JsValue>;
+
     #[wasm_bindgen(method, getter)]
     pub fn env(this: &Process) -> JsValue;
 }
 
 pub fn process_env() -> HashMap<String, String> {
-    serde_wasm_bindgen::from_value(process.env())
+    serde_wasm_bindgen::from_value(PROCESS.env())
         .expect("process.env must be HashMap<String, String>")
 }
 
@@ -73,10 +76,6 @@ macro_rules! node_stdout {
 #[macro_export]
 macro_rules! node_stderr {
     ($($t:tt)*) => ($crate::cross::node::process_stderr_write(&format_args!($($t)*).to_string()))
-}
-
-pub fn argv() -> Vec<JsValue> {
-    process.argv()
 }
 
 #[wasm_bindgen(module = "/node.js")]
