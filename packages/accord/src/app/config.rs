@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use eyre::eyre;
 use eyre::{Report, Result};
@@ -20,7 +20,7 @@ struct RawConfig {
 pub struct Config {
     pub schema: Url,
     pub no_ssl: bool,
-    pub document_path: Option<String>,
+    pub document_path: Option<PathBuf>,
     pub emit_schema: bool,
 }
 
@@ -48,27 +48,20 @@ impl TryFrom<RawConfig> for Config {
 
         let schema = Url::try_from(schema.as_ref())?;
 
-        let document_path = match raw.document {
-            Some(document) => Some(document.into_os_string().into_string().map_err(
-                |os_string| eyre!("Failed to parse document path as UTF-8: {os_string:?}"),
-            )?),
-            None => None,
-        };
-
         Ok(Config {
             schema,
             no_ssl: raw.no_ssl.unwrap_or(false),
-            document_path,
+            document_path: raw.document,
             emit_schema: raw.emit_schema.unwrap_or(false),
         })
     }
 }
 
 impl Config {
-    pub fn load(dir: Option<&str>) -> Result<Self> {
+    pub fn load(dir: Option<&Path>) -> Result<Self> {
         let config_name = ".accord.yml";
 
-        let path = util::path_with_possible_prefix(dir, config_name);
+        let path = util::path_with_possible_prefix(dir, &PathBuf::try_from(config_name)?);
 
         let config_string = cross::fs::read_to_string(path)?;
 

@@ -62,7 +62,7 @@ pub mod env {
         path::{Path, PathBuf},
     };
 
-    use eyre::{eyre, Result};
+    use eyre::Result;
 
     pub fn current_dir() -> Result<PathBuf> {
         #[cfg(not(target_arch = "wasm32"))]
@@ -73,7 +73,7 @@ pub mod env {
         {
             super::node::process_cwd()
                 .map(PathBuf::from)
-                .map_err(|err| eyre!("{err:?}"))
+                .map_err(|err| eyre::eyre!("{err:?}"))
         }
     }
 
@@ -127,8 +127,6 @@ pub mod fs {
 
     use eyre::{eyre, Result};
 
-    use super::path_to_string;
-
     pub fn read_to_string<P: AsRef<Path>>(path: P) -> Result<String> {
         #[cfg(not(target_arch = "wasm32"))]
         {
@@ -157,7 +155,7 @@ pub mod fs {
     pub fn read_dir<P: AsRef<Path>>(path: P) -> Result<Vec<String>> {
         #[cfg(target_arch = "wasm32")]
         {
-            super::node::read_dir(&path_to_string(path)?)
+            super::node::read_dir(&super::path_to_string(path)?)
                 .map_err(|err| eyre::eyre!("{:?}", err))?
                 .into_iter()
                 .map(|js_value| {
@@ -169,21 +167,17 @@ pub mod fs {
         }
         #[cfg(not(target_arch = "wasm32"))]
         {
-            std::fs::read_dir()
+            std::fs::read_dir(path)?
+                .map(|result| match result {
+                    Ok(dir_entry) => dir_entry
+                        .file_name()
+                        .into_string()
+                        .map_err(|err| eyre!("Couldn't parse filename: {err:?}")),
+                    Err(err) => Err(eyre!(err)),
+                })
+                .collect()
         }
     }
-
-    // pub fn try_path_exists<P: AsRef<Path>>(path: P) -> Result<bool> {
-    //     #[cfg(not(target_arch = "wasm32"))]
-    //     {
-    //         path.try_exists()
-    //     }
-    //     #[cfg(target_arch = "wasm32")]
-    //     {
-    //         super::node::path_try_exists(&super::path_to_string(path)?)
-    //             .map_err(|err| eyre!("{:?}", err))
-    //     }
-    // }
 }
 
 pub mod net {

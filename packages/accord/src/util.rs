@@ -1,12 +1,11 @@
 use std::path::{Path, PathBuf};
 
 use ::graphql_parser::query::Type as GraphQLParserType;
-use eyre::{eyre, Result};
+use eyre::Result;
 
 use crate::{
     cross,
     introspection::{Type, TypeRef},
-    util,
 };
 
 pub type Arg<'a> = GraphQLParserType<'a, &'a str>;
@@ -43,9 +42,9 @@ impl MaybeNamed for Type {
     }
 }
 
-pub fn path_with_possible_prefix(prefix: Option<&str>, path: &str) -> PathBuf {
+pub fn path_with_possible_prefix(prefix: Option<&Path>, path: &Path) -> PathBuf {
     prefix
-        .map(|p| Path::new(p).join(path))
+        .map(|p| p.join(path))
         .unwrap_or_else(|| PathBuf::from(path))
 }
 

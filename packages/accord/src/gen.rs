@@ -133,6 +133,7 @@ pub async fn generate_typescript(
 #[cfg(not(target_arch = "wasm32"))]
 #[cfg(test)]
 mod test {
+    use std::path::PathBuf;
     use std::str::FromStr;
 
     use eyre::Result;
@@ -152,13 +153,19 @@ mod test {
         let config = app::Config {
             schema: Url::from_str("https://swapi-graphql.netlify.app/.netlify/functions/index")?,
             no_ssl: false,
-            document_path: Some("../testing/document.graphql".to_string()),
+            document_path: Some(PathBuf::try_from("../testing/document.graphql")?),
             emit_schema: false,
         };
 
         let schema = introspection::Response::fetch(&config).await?.schema();
 
-        let typescript = generate_typescript(cli, config, schema).await?;
+        let ctx = app::Context {
+            config,
+            verbose: 0,
+            config_location: None,
+        };
+
+        let typescript = generate_typescript(cli, &ctx, schema).await?;
 
         insta::assert_snapshot!(typescript);
 

@@ -1,5 +1,5 @@
 use clap::Parser;
-use eyre::{eyre, Result};
+use eyre::Result;
 
 use crate::gen::generate_typescript;
 use crate::{
@@ -26,23 +26,8 @@ pub async fn run() -> Result<()> {
         cross::env::set_current_dir(working_dir)?;
     }
 
-    let config_location = match cli.config_location.clone() {
-        Some(config_location) => Some(config_location),
-        None => {
-            util::debug::log("Searching for config\n")?;
-            match util::file_location_in_path_by_prefix(".accord")?.map(|path| {
-                path.to_str()
-                    .map(|string| string.to_owned())
-                    .ok_or_else(|| eyre!("Couldn't convert config location pathbuf to utf-8"))
-            }) {
-                Some(result) => Some(result?),
-                None => None,
-            }
-        }
-    };
-
     util::debug::log("Loading config file\n")?;
-    let config = app::Config::load(config_location.as_deref()).unwrap_or_else(|err| {
+    let config = app::Config::load(cli.config_location.as_deref()).unwrap_or_else(|err| {
         cross_eprintln!("Failed to load config: {}", err);
         cross::process::exit(1);
     });
@@ -50,7 +35,7 @@ pub async fn run() -> Result<()> {
     let ctx = app::Context {
         verbose: cli.verbose,
         config,
-        config_location,
+        config_location: cli.config_location.clone(),
     };
     print_info!(ctx, 1, "Context generated!");
 
