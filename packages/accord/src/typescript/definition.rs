@@ -185,7 +185,9 @@ fn recursively_typescriptify_selected_object_fields<'a>(
                 let selected_field = selectable_fields
                     .iter()
                     .find(|f| f.name == **name)
-                    .ok_or_else(|| eyre!("Tried to select non-existent field at {position}"))?;
+                    .ok_or_else(|| {
+                        eyre!("Tried to select non-existent field '{name}' at {position}")
+                    })?;
                 let field_name = alias.unwrap_or(&selected_field.name);
 
                 write!(buffer, "{}: ", field_name)?;
