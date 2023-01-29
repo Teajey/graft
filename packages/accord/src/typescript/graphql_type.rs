@@ -131,15 +131,15 @@ impl<'a> TypescriptableWithBuffer<'a> for Type {
                 interfaces,
             } => {
                 possibly_write_description(&mut buffer.interfaces, description.as_ref())?;
-                writeln!(buffer.interfaces, "export type {name}Interface = ")?;
+                write!(buffer.interfaces, "export type {name}Interface = ")?;
                 for interface in interfaces {
                     if let TypeRef::Interface { name } = interface {
-                        write!(buffer.objects, "{name}Interface & ")?;
+                        write!(buffer.interfaces, "{name}Interface & ")?;
                     } else {
                         return Err(eyre!("Found a non-interface listed as an interface."));
                     }
                 }
-                writeln!(buffer.objects, "{{")?;
+                writeln!(buffer.interfaces, "{{")?;
                 for f in fields {
                     possibly_write_description(&mut buffer.interfaces, f.description.as_ref())?;
                     writeln!(
