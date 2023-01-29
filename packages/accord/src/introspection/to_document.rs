@@ -5,14 +5,14 @@ use graphql_parser::schema::{
     SchemaDefinition, TypeDefinition,
 };
 
-use super::{Directive, EnumValue, Field, InputValue, Schema, Type, TypeRef};
+use super::{EnumValue, Field, InputValue, Schema, Type, TypeRef};
 use crate::util::MaybeNamed;
 
 impl<'a> From<&'a Schema> for Document<'a, &'a str> {
     fn from(schema: &'a Schema) -> Self {
         let schema_def = Definition::SchemaDefinition(SchemaDefinition {
             position: Default::default(),
-            directives: schema.directives.iter().map(|d| d.into()).collect(),
+            directives: vec![],
             query: Some(schema.query_type.name.as_str()),
             mutation: schema.mutation_type.as_ref().map(|m| m.name.as_str()),
             subscription: schema.subscription_type.as_ref().map(|s| s.name.as_str()),
@@ -30,26 +30,6 @@ impl<'a> From<&'a Schema> for Document<'a, &'a str> {
         doc.definitions.push(schema_def);
 
         doc
-    }
-}
-
-impl<'a> From<&'a Directive> for gql_parser::Directive<'a, &'a str> {
-    fn from(directive: &'a Directive) -> Self {
-        Self {
-            position: Default::default(),
-            name: directive.name.as_str(),
-            arguments: directive
-                .args
-                .iter()
-                .map(|a| {
-                    let default_value = match &a.default_value {
-                        Some(default_value) => gql_parser::Value::String(default_value.clone()),
-                        None => gql_parser::Value::Null,
-                    };
-                    (a.name.as_str(), default_value)
-                })
-                .collect(),
-        }
     }
 }
 
