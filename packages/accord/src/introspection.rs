@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::app;
 use crate::cross;
+use crate::print_info;
 use crate::typescript::TypeIndex;
 use crate::util::Arg;
 use crate::util::MaybeNamed;
@@ -265,10 +266,13 @@ pub struct Response {
 }
 
 impl Response {
-    pub async fn fetch(config: &app::Config) -> Result<Self> {
+    pub async fn fetch(ctx: &app::Context) -> Result<Self> {
         let body = IntrospectionQuery::build_query(introspection_query::Variables {});
 
-        let json = cross::net::fetch_json(config.schema.as_str(), config.no_ssl, body).await?;
+        let json =
+            cross::net::fetch_json(ctx.config.schema.as_str(), ctx.config.no_ssl, body).await?;
+
+        print_info!(ctx, 3, "Recieved json: {}", json);
 
         Ok(serde_json::from_value(json)?)
     }

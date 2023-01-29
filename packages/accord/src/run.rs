@@ -41,7 +41,7 @@ pub async fn run() -> Result<()> {
     print_info!(ctx, 1, "Context generated!");
 
     print_info!(ctx, 1, "Fetching schema...");
-    let schema = introspection::Response::fetch(&ctx.config).await?.schema();
+    let schema = introspection::Response::fetch(&ctx).await?.schema();
     print_info!(ctx, 1, "Schema fetched!");
 
     if ctx.config.emit_schema {
