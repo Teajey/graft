@@ -1,0 +1,6 @@
+schema: ${ACCORD_DOMAIN}
+generates:
+  ./codegen-schema.graphql:
+    documents: ./document.graphql
+    plugins:
+      - schema-ast
