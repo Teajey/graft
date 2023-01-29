@@ -1,3 +1,5 @@
+mod to_document;
+
 use eyre::{eyre, Result};
 use graphql_client::GraphQLQuery;
 use serde::{Deserialize, Serialize};
@@ -6,6 +8,7 @@ use crate::app;
 use crate::cross;
 use crate::typescript::TypeIndex;
 use crate::util::Arg;
+use crate::util::MaybeNamed;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -109,6 +112,9 @@ pub enum Type {
         description: Option<String>,
         fields: Vec<Field>,
         possible_types: Vec<TypeRef>,
+        // FIXME: this field only valid in the October 2021 GraphQL spec
+        #[serde(skip)]
+        interfaces: Vec<TypeRef>,
     },
     #[serde(rename_all = "camelCase")]
     Union {
@@ -132,6 +138,21 @@ pub enum Type {
     NonNull { of_type: TypeRef },
     #[serde(rename_all = "camelCase")]
     List { of_type: TypeRef },
+}
+
+impl Type {
+    fn is_builtin(&self) -> bool {
+        let Some(name) = self.maybe_name() else {
+            return false;
+        };
+
+        name.starts_with("__")
+            || name == "Boolean"
+            || name == "String"
+            || name == "Int"
+            || name == "Float"
+            || name == "ID"
+    }
 }
 
 impl From<Type> for TypeRef {
@@ -160,6 +181,7 @@ pub struct InputValue {
     pub description: Option<String>,
     #[serde(rename = "type")]
     pub of_type: TypeRef,
+    // FIXME: default_value can be more than just a string
     pub default_value: Option<String>,
 }
 

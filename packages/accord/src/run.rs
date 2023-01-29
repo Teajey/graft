@@ -1,5 +1,6 @@
 use clap::Parser;
 use eyre::Result;
+use graphql_parser::schema::Document;
 
 use crate::gen::generate_typescript;
 use crate::{
@@ -49,6 +50,8 @@ pub async fn run() -> Result<()> {
         let schema_json =
             serde_json::to_string_pretty(&schema).expect("recieved valid schema json");
         cross::fs::write_to_file("schema.json", &schema_json)?;
+        let schema_graphql = format!("{}", Document::from(&schema));
+        cross::fs::write_to_file("schema.graphql", &schema_graphql)?;
     }
 
     print_info!(ctx, 1, "Generating typescript...");

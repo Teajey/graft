@@ -14,5 +14,6 @@ g2t-config.yml
 
 generated.ts
 schema.json
+schema.graphql
 
 *.snap.new
