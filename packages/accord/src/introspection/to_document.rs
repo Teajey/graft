@@ -162,7 +162,7 @@ impl<'a> From<&'a TypeRef> for gql_parser::Type<'a, &'a str> {
             | TypeRef::Enum { name }
             | TypeRef::InputObject { name } => Self::NamedType(name.as_str()),
             TypeRef::NonNull { of_type } => Self::NonNullType(Box::new((&**of_type).into())),
-            TypeRef::List { of_type } => Self::NonNullType(Box::new((&**of_type).into())),
+            TypeRef::List { of_type } => Self::ListType(Box::new((&**of_type).into())),
         }
     }
 }
