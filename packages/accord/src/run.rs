@@ -2,7 +2,7 @@ use clap::Parser;
 use eyre::Result;
 use graphql_parser::schema::Document;
 
-use crate::gen::generate_typescript;
+// use crate::gen::generate_typescript;
 use crate::{
     app::{self, cli},
     cross, util,
@@ -35,29 +35,39 @@ pub async fn run() -> Result<()> {
 
     let ctx = app::Context {
         verbose: cli.verbose,
-        config,
         config_location: cli.config_location.clone(),
     };
     print_info!(ctx, 1, "Context generated!");
 
-    print_info!(ctx, 1, "Fetching schema...");
-    let schema = introspection::Response::fetch(&ctx).await?.schema();
-    print_info!(ctx, 1, "Schema fetched!");
+    for (name, plans) in config.generates {
+        if let Some(schema_gen_plan) = plans.schema_gen_plan {
+            print_info!(ctx, 1, "Fetching schema for {name}...");
+            let schema = introspection::Response::fetch(
+                &ctx,
+                schema_gen_plan.url.0.as_str(),
+                schema_gen_plan.no_ssl,
+            )
+            .await?
+            .schema();
+            print_info!(ctx, 1, "Schema fetched!");
 
-    if ctx.config.emit_schema {
-        print_info!(ctx, 1, "Emitting schema json");
-        // FIXME: Doesn't really make sense to serialize the schema again when we already recieved it in serial form...
-        let schema_json =
-            serde_json::to_string_pretty(&schema).expect("recieved valid schema json");
-        cross::fs::write_to_file("schema.json", &schema_json)?;
-        let schema_graphql = format!("{}", Document::from(&schema));
-        cross::fs::write_to_file("schema.graphql", &schema_graphql)?;
+            if let Some(json_path) = schema_gen_plan.out.json_path {
+                print_info!(ctx, 1, "Emitting schema json");
+                let schema_json = serde_json::to_string_pretty(&schema)?;
+                cross::fs::write_to_file(json_path, &schema_json)?;
+            }
+            if let Some(ast_path) = schema_gen_plan.out.ast_path {
+                let schema_graphql = format!("{}", Document::from(&schema));
+                cross::fs::write_to_file(ast_path, &schema_graphql)?;
+            }
+        }
+        // if let Some(typescript_gen_plan) = plans.typescript_gen_plan {
+        //     print_info!(ctx, 1, "Generating typescript...");
+        //     let ts = generate_typescript(&ctx, typescript_gen_plan, &schema).await?;
+
+        //     cross::fs::write_to_file("generated.ts", &ts)?;
+        // }
     }
-
-    print_info!(ctx, 1, "Generating typescript...");
-    let ts = generate_typescript(&ctx, schema).await?;
-
-    cross::fs::write_to_file("generated.ts", &ts)?;
 
     Ok(())
 }

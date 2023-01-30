@@ -63,7 +63,7 @@ impl Display for Buffer {
 }
 
 pub async fn generate_typescript_with_document<'a>(
-    schema: Schema,
+    schema: &Schema,
     document: Option<Document<'a, &'a str>>,
 ) -> Result<String> {
     let mut buffer = Buffer {
@@ -102,22 +102,35 @@ pub async fn generate_typescript_with_document<'a>(
         }
     }
 
-    for t in schema.types {
+    for t in &schema.types {
         t.as_typescript_on(&mut buffer)?;
     }
 
     Ok(buffer.to_string())
 }
 
-pub async fn generate_typescript(ctx: &app::Context, schema: Schema) -> Result<String> {
-    let Some(document_path) = &ctx.config.document_path else {
+pub async fn generate_typescript(
+    ctx: &app::Context,
+    plan: app::config::TypescriptGenPlan,
+    schema: &Schema,
+) -> Result<String> {
+    let Some(app::config::Glob(document_paths)) = plan.documents else {
         return generate_typescript_with_document(schema, None)
         .await;
     };
 
-    let document_path = path_with_possible_prefix(ctx.config_location.as_deref(), document_path);
+    let document_str = document_paths
+        .collect::<Result<Vec<_>, _>>()?
+        .iter()
+        .map(|document_path| {
+            let document_path =
+                path_with_possible_prefix(ctx.config_location.as_deref(), &document_path.as_path());
 
-    let document_str = cross::fs::read_to_string(document_path)?;
+            let document_str = cross::fs::read_to_string(document_path)?;
+
+            Ok(document_str)
+        })
+        .collect::<Result<String>>()?;
 
     let document = graphql_parser::parse_query::<&str>(&document_str)?;
 

@@ -123,9 +123,13 @@ pub mod fs {
         }
     }
 
-    pub fn write_to_file(path: &str, data: &str) -> Result<()> {
+    pub fn write_to_file<P: AsRef<Path>>(path: P, data: &str) -> Result<()> {
         #[cfg(target_arch = "wasm32")]
         {
+            let os_str = path.as_ref().as_os_str();
+            let path = os_str.to_str().ok_or_else(|| {
+                eyre::eyre!("On write to file couldn't stringify path: {os_str:?}")
+            })?;
             super::node::write_file(path, data).map_err(|err| eyre::eyre!("{:?}", err))
         }
         #[cfg(not(target_arch = "wasm32"))]

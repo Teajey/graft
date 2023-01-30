@@ -1,4 +1,12 @@
-schema: "{{ACCORD_DOMAIN}}"
-no_ssl: true
-document: document.graphql
-emit_schema: true
+generates:
+  mySchema:
+    schema:
+      url: "{{ACCORD_DOMAIN}}"
+      no_ssl: true
+      out:
+        ast: schema.graphql
+        json: schema.json
+    # typescript:
+    #   ast: schema.graphql
+    #   documents: document.graphql
+    #   out: generated.ts

@@ -1,5 +1,5 @@
 pub mod cli;
-mod config;
+pub mod config;
 mod context;
 
 pub use config::Config;

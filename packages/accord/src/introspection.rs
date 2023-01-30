@@ -1,14 +1,16 @@
 mod to_document;
 
-use eyre::{eyre, Result};
+// use eyre::{eyre, Result};
+use eyre::Result;
 use graphql_client::GraphQLQuery;
 use serde::{Deserialize, Serialize};
+// use url::Url;
 
 use crate::app;
 use crate::cross;
 use crate::print_info;
-use crate::typescript::TypeIndex;
-use crate::util::Arg;
+// use crate::typescript::TypeIndex;
+// use crate::util::Arg;
 use crate::util::MaybeNamed;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -64,33 +66,33 @@ pub enum TypeRef {
     },
 }
 
-impl TypeRef {
-    pub fn try_from_arg<'a>(type_index: &TypeIndex, arg: &Arg<'a>) -> Result<TypeRef> {
-        match arg {
-            Arg::NamedType(var_type_name) => type_index
-                .get(var_type_name)
-                .ok_or_else(|| {
-                    eyre!(
-                        "Found a query argument type not defined in the schema: {}",
-                        var_type_name
-                    )
-                })
-                .map(|t| t.clone().into()),
-            Arg::NonNullType(var_type) => {
-                let type_ref = Self::try_from_arg(type_index, var_type)?;
-                Ok(TypeRef::NonNull {
-                    of_type: Box::new(type_ref),
-                })
-            }
-            Arg::ListType(var_type) => {
-                let type_ref = Self::try_from_arg(type_index, var_type)?;
-                Ok(TypeRef::List {
-                    of_type: Box::new(type_ref),
-                })
-            }
-        }
-    }
-}
+// impl TypeRef {
+//     pub fn try_from_arg<'a>(type_index: &TypeIndex, arg: &Arg<'a>) -> Result<TypeRef> {
+//         match arg {
+//             Arg::NamedType(var_type_name) => type_index
+//                 .get(var_type_name)
+//                 .ok_or_else(|| {
+//                     eyre!(
+//                         "Found a query argument type not defined in the schema: {}",
+//                         var_type_name
+//                     )
+//                 })
+//                 .map(|t| t.clone().into()),
+//             Arg::NonNullType(var_type) => {
+//                 let type_ref = Self::try_from_arg(type_index, var_type)?;
+//                 Ok(TypeRef::NonNull {
+//                     of_type: Box::new(type_ref),
+//                 })
+//             }
+//             Arg::ListType(var_type) => {
+//                 let type_ref = Self::try_from_arg(type_index, var_type)?;
+//                 Ok(TypeRef::List {
+//                     of_type: Box::new(type_ref),
+//                 })
+//             }
+//         }
+//     }
+// }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "kind", rename_all = "SCREAMING_SNAKE_CASE")]
@@ -266,11 +268,10 @@ pub struct Response {
 }
 
 impl Response {
-    pub async fn fetch(ctx: &app::Context) -> Result<Self> {
+    pub async fn fetch(ctx: &app::Context, url: &str, no_ssl: bool) -> Result<Self> {
         let body = IntrospectionQuery::build_query(introspection_query::Variables {});
 
-        let json =
-            cross::net::fetch_json(ctx.config.schema.as_str(), ctx.config.no_ssl, body).await?;
+        let json = cross::net::fetch_json(url, no_ssl, body).await?;
 
         print_info!(ctx, 3, "Recieved json: {}", json);
 

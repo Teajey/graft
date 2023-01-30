@@ -1,10 +1,10 @@
 use std::path::{Path, PathBuf};
 
-use ::graphql_parser::query::Type as GraphQLParserType;
+// use ::graphql_parser::query::Type as GraphQLParserType;
 
 use crate::introspection::{Type, TypeRef};
 
-pub type Arg<'a> = GraphQLParserType<'a, &'a str>;
+// pub type Arg<'a> = GraphQLParserType<'a, &'a str>;
 
 pub trait MaybeNamed {
     fn maybe_name(&self) -> Option<&str>;
