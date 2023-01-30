@@ -1,12 +1,8 @@
 use std::path::{Path, PathBuf};
 
 use ::graphql_parser::query::Type as GraphQLParserType;
-use eyre::Result;
 
-use crate::{
-    cross,
-    introspection::{Type, TypeRef},
-};
+use crate::introspection::{Type, TypeRef};
 
 pub type Arg<'a> = GraphQLParserType<'a, &'a str>;
 
@@ -46,24 +42,6 @@ pub fn path_with_possible_prefix(prefix: Option<&Path>, path: &Path) -> PathBuf 
     prefix
         .map(|p| p.join(path))
         .unwrap_or_else(|| PathBuf::from(path))
-}
-
-pub fn file_location_in_path_by_prefix(prefix: &str) -> Result<Option<PathBuf>> {
-    fn recurse(prefix: &str, current_dir: &Path) -> Result<Option<PathBuf>> {
-        let file_names = cross::fs::read_dir(current_dir)?;
-
-        let prefix_matched = file_names.into_iter().any(|f| f.starts_with(prefix));
-
-        if prefix_matched {
-            Ok(Some(current_dir.to_path_buf()))
-        } else if let Some(dir) = current_dir.parent() {
-            recurse(prefix, dir)
-        } else {
-            Ok(None)
-        }
-    }
-
-    recurse(prefix, &cross::env::current_dir()?)
 }
 
 pub mod debug {

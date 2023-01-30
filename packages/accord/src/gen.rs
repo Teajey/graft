@@ -3,7 +3,7 @@ use std::fmt::{Display, Write as FmtWrite};
 use eyre::Result;
 use graphql_parser::query::Document;
 
-use crate::app::{self, cli};
+use crate::app;
 use crate::cross;
 use crate::introspection::Schema;
 use crate::typescript::{TypeIndex, TypescriptableWithBuffer, WithIndexable};
@@ -63,7 +63,6 @@ impl Display for Buffer {
 }
 
 pub async fn generate_typescript_with_document<'a>(
-    cli: cli::Base,
     schema: Schema,
     document: Option<Document<'a, &'a str>>,
 ) -> Result<String> {
@@ -110,13 +109,9 @@ pub async fn generate_typescript_with_document<'a>(
     Ok(buffer.to_string())
 }
 
-pub async fn generate_typescript(
-    cli: cli::Base,
-    ctx: &app::Context,
-    schema: Schema,
-) -> Result<String> {
+pub async fn generate_typescript(ctx: &app::Context, schema: Schema) -> Result<String> {
     let Some(document_path) = &ctx.config.document_path else {
-        return generate_typescript_with_document(cli, schema, None)
+        return generate_typescript_with_document(schema, None)
         .await;
     };
 
@@ -126,7 +121,7 @@ pub async fn generate_typescript(
 
     let document = graphql_parser::parse_query::<&str>(&document_str)?;
 
-    generate_typescript_with_document(cli, schema, Some(document)).await
+    generate_typescript_with_document(schema, Some(document)).await
 }
 
 // Native test only for now...
@@ -144,12 +139,6 @@ mod test {
 
     #[tokio::test]
     async fn typescript_output_matches_snapshot() -> Result<()> {
-        let cli = app::cli::Base {
-            working_directory: None,
-            config_location: None,
-            verbose: 0,
-        };
-
         let config = app::Config {
             schema: Url::from_str("https://swapi-graphql.netlify.app/.netlify/functions/index")?,
             no_ssl: false,
@@ -157,15 +146,15 @@ mod test {
             emit_schema: false,
         };
 
-        let schema = introspection::Response::fetch(&config).await?.schema();
-
         let ctx = app::Context {
             config,
             verbose: 0,
             config_location: None,
         };
 
-        let typescript = generate_typescript(cli, &ctx, schema).await?;
+        let schema = introspection::Response::fetch(&ctx).await?.schema();
+
+        let typescript = generate_typescript(&ctx, schema).await?;
 
         insta::assert_snapshot!(typescript);
 

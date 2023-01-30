@@ -150,7 +150,9 @@ impl<'a, 'b, 'c, 'd> TypescriptableWithBuffer<'a>
                     &TypeRef::from(
                         type_index
                             .get(type_name)
-                            .ok_or_else(|| eyre!("Type targetted by fragment not found"))?
+                            .ok_or_else(|| {
+                                eyre!("Type targetted by fragment not found at {position}")
+                            })?
                             .clone(),
                     ),
                     type_index,
@@ -203,7 +205,7 @@ fn recursively_typescriptify_selected_object_fields<'a>(
                 write!(buffer, ", ")?;
             }
             Selection::FragmentSpread(FragmentSpread {
-                position,
+                position: _,
                 fragment_name,
                 directives,
             }) => {
@@ -224,7 +226,9 @@ fn recursively_typescriptify_selected_object_fields<'a>(
                             type_index
                                 .get(type_name)
                                 .ok_or_else(|| {
-                                    eyre!("Type targetted by inline fragment not found")
+                                    eyre!(
+                                        "Type targetted by inline fragment not found at {position}"
+                                    )
                                 })?
                                 .clone(),
                         ),

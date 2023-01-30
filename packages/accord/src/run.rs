@@ -55,7 +55,7 @@ pub async fn run() -> Result<()> {
     }
 
     print_info!(ctx, 1, "Generating typescript...");
-    let ts = generate_typescript(cli, &ctx, schema).await?;
+    let ts = generate_typescript(&ctx, schema).await?;
 
     cross::fs::write_to_file("generated.ts", &ts)?;
 
