@@ -6,14 +6,13 @@ use crate::introspection as ac;
 impl From<gp::Type<'_, String>> for ac::TypeRef {
     fn from(value: gp::Type<'_, String>) -> Self {
         match value {
-            // FIXME: This is wrong and bad
-            gp::Type::NamedType(name) => Self::Object { name },
-            gp::Type::ListType(of_type) => Self::List {
+            gp::Type::NamedType(name) => Self::To { name },
+            gp::Type::ListType(of_type) => Self::Container(ac::TypeRefContainer::List {
                 of_type: Box::new((*of_type).into()),
-            },
-            gp::Type::NonNullType(of_type) => Self::NonNull {
+            }),
+            gp::Type::NonNullType(of_type) => Self::Container(ac::TypeRefContainer::NonNull {
                 of_type: Box::new((*of_type).into()),
-            },
+            }),
         }
     }
 }
@@ -97,7 +96,7 @@ impl From<gp::EnumValue<'_, String>> for ac::EnumValue {
     }
 }
 
-impl From<gp::TypeDefinition<'_, String>> for ac::Type {
+impl From<gp::TypeDefinition<'_, String>> for ac::NamedType {
     fn from(value: gp::TypeDefinition<'_, String>) -> Self {
         match value {
             gp::TypeDefinition::Scalar(gp::ScalarType {
@@ -105,7 +104,7 @@ impl From<gp::TypeDefinition<'_, String>> for ac::Type {
                 description,
                 name,
                 directives: _,
-            }) => ac::Type::Scalar { name, description },
+            }) => ac::NamedType::Scalar { name, description },
             gp::TypeDefinition::Object(gp::ObjectType {
                 position,
                 description,
@@ -113,13 +112,13 @@ impl From<gp::TypeDefinition<'_, String>> for ac::Type {
                 implements_interfaces,
                 directives,
                 fields,
-            }) => ac::Type::Object {
+            }) => ac::NamedType::Object {
                 name,
                 description,
                 fields: fields.into_iter().map(|f| f.into()).collect(),
                 interfaces: implements_interfaces
                     .into_iter()
-                    .map(|name| ac::TypeRef::Interface { name })
+                    .map(|name| ac::TypeRef::To { name })
                     .collect(),
             },
             gp::TypeDefinition::Interface(gp::InterfaceType {
@@ -129,14 +128,14 @@ impl From<gp::TypeDefinition<'_, String>> for ac::Type {
                 implements_interfaces,
                 directives,
                 fields,
-            }) => ac::Type::Interface {
+            }) => ac::NamedType::Interface {
                 name,
                 description,
                 fields: fields.into_iter().map(|f| f.into()).collect(),
                 possible_types: vec![],
                 interfaces: implements_interfaces
                     .into_iter()
-                    .map(|name| ac::TypeRef::Interface { name })
+                    .map(|name| ac::TypeRef::To { name })
                     .collect(),
             },
             gp::TypeDefinition::Union(gp::UnionType {
@@ -145,12 +144,12 @@ impl From<gp::TypeDefinition<'_, String>> for ac::Type {
                 name,
                 directives,
                 types,
-            }) => ac::Type::Union {
+            }) => ac::NamedType::Union {
                 name,
                 description,
                 possible_types: types
                     .into_iter()
-                    .map(|name| ac::TypeRef::Object { name })
+                    .map(|name| ac::TypeRef::To { name })
                     .collect(),
             },
             gp::TypeDefinition::Enum(gp::EnumType {
@@ -159,7 +158,7 @@ impl From<gp::TypeDefinition<'_, String>> for ac::Type {
                 name,
                 directives,
                 values,
-            }) => ac::Type::Enum {
+            }) => ac::NamedType::Enum {
                 name,
                 description,
                 enum_values: values.into_iter().map(|v| v.into()).collect(),
@@ -170,7 +169,7 @@ impl From<gp::TypeDefinition<'_, String>> for ac::Type {
                 name,
                 directives,
                 fields,
-            }) => ac::Type::InputObject {
+            }) => ac::NamedType::InputObject {
                 name,
                 description,
                 input_fields: fields.into_iter().map(|f| f.into()).collect(),
@@ -234,7 +233,7 @@ impl TryFrom<gp::Document<'_, String>> for ac::Schema {
         let mut mutation_type = Option::<ac::RootType>::None;
         let mut subscription_type = Option::<ac::RootType>::None;
 
-        let mut types = Vec::<ac::Type>::new();
+        let mut types = Vec::<ac::NamedType>::new();
         let mut directives = Vec::<ac::Directive>::new();
 
         for def in document.definitions {

@@ -3,15 +3,38 @@ use std::fmt::Write;
 use convert_case::{Case, Casing};
 use eyre::{eyre, Result};
 
-use super::{possibly_write_description, Typescriptable, TypescriptableWithBuffer};
+use super::{
+    possibly_write_description, Typescriptable, TypescriptableWithBuffer, WithIndex, WithIndexable,
+};
 use crate::gen::Buffer;
-use crate::introspection::{Type, TypeRef};
-use crate::util::MaybeNamed;
+use crate::introspection::{NamedType, TypeRef, TypeRefContainer};
+use crate::util::{MaybeNamed, Named};
 
-impl<'a> TypescriptableWithBuffer<'a> for Type {
-    fn as_typescript_on(&self, buffer: &mut Buffer) -> Result<()> {
+impl NamedType {
+    pub fn typescript_name(&self) -> String {
         match self {
-            Type::Scalar { name, description } => {
+            NamedType::Scalar { name, .. } => {
+                format!("{name}Scalar")
+            }
+            NamedType::Interface { name, .. } => {
+                format!("{name}Interface")
+            }
+            NamedType::Union { name, .. } => {
+                format!("{name}Union")
+            }
+            other_type => other_type.name().to_owned(),
+        }
+    }
+}
+
+impl WithIndexable for NamedType {}
+
+impl<'a, 'b, 'c> TypescriptableWithBuffer for WithIndex<'a, 'b, 'c, NamedType> {
+    fn as_typescript_on(&self, buffer: &mut Buffer) -> Result<()> {
+        let WithIndex { target, type_index } = self;
+        let ts_name = target.typescript_name();
+        match target {
+            NamedType::Scalar { name, description } => {
                 possibly_write_description(&mut buffer.scalars, description.as_ref())?;
                 let scalar_type = match name.as_str() {
                     "ID" => r#"NewType<string, "ID">"#,
@@ -20,30 +43,9 @@ impl<'a> TypescriptableWithBuffer<'a> for Type {
                     "Boolean" => "boolean",
                     _ => "unknown",
                 };
-                writeln!(buffer.scalars, "export type {name}Scalar = {scalar_type};")?;
+                writeln!(buffer.scalars, "export type {} = {scalar_type};", ts_name)?;
             }
-            Type::Enum {
-                name,
-                description,
-                enum_values,
-            } => {
-                if name.starts_with('_') {
-                    return Ok(());
-                }
-                possibly_write_description(&mut buffer.enums, description.as_ref())?;
-                writeln!(buffer.enums, "export enum {name} {{")?;
-                for v in enum_values {
-                    possibly_write_description(&mut buffer.enums, v.description.as_ref())?;
-                    writeln!(
-                        buffer.enums,
-                        "  {} = \"{}\",",
-                        v.name.to_case(Case::Pascal),
-                        v.name
-                    )?;
-                }
-                writeln!(buffer.enums, "}}")?;
-            }
-            Type::Object {
+            NamedType::Object {
                 name,
                 description,
                 fields,
@@ -53,13 +55,12 @@ impl<'a> TypescriptableWithBuffer<'a> for Type {
                     return Ok(());
                 }
                 possibly_write_description(&mut buffer.objects, description.as_ref())?;
-                write!(buffer.objects, "export type {name} = ")?;
+                write!(buffer.objects, "export type {} = ", ts_name)?;
                 for interface in interfaces {
-                    if let TypeRef::Interface { name } = interface {
-                        write!(buffer.objects, "{name}Interface & ")?;
-                    } else {
-                        return Err(eyre!("Found a non-interface listed as an interface."));
-                    }
+                    let interface = type_index
+                        .type_from_ref(interface.clone())?
+                        .try_into_named()?;
+                    write!(buffer.objects, "{} & ", interface.typescript_name())?;
                 }
                 writeln!(buffer.objects, "{{")?;
                 for f in fields {
@@ -68,42 +69,39 @@ impl<'a> TypescriptableWithBuffer<'a> for Type {
                         buffer.objects,
                         "  {}: {},",
                         f.name,
-                        f.of_type.as_typescript()?
+                        type_index.with(&f.of_type).as_typescript()?
                     )?;
                 }
                 writeln!(buffer.objects, "}}")?;
             }
-            Type::InputObject {
+            NamedType::Interface {
                 name,
                 description,
-                input_fields,
+                fields,
+                possible_types,
+                interfaces,
             } => {
-                if name.starts_with('_') {
-                    return Ok(());
+                possibly_write_description(&mut buffer.interfaces, description.as_ref())?;
+                write!(buffer.interfaces, "export type {} = ", ts_name)?;
+                for interface in interfaces {
+                    let interface = type_index
+                        .type_from_ref(interface.clone())?
+                        .try_into_named()?;
+                    write!(buffer.interfaces, "{} & ", interface.typescript_name())?;
                 }
-                possibly_write_description(&mut buffer.objects, description.as_ref())?;
-                writeln!(buffer.input_objects, "export type {name} = {{")?;
-                for f in input_fields {
-                    possibly_write_description(&mut buffer.input_objects, f.description.as_ref())?;
-                    if let TypeRef::NonNull { .. } = f.of_type {
-                        writeln!(
-                            buffer.input_objects,
-                            "  {}: {},",
-                            f.name,
-                            f.of_type.as_typescript()?
-                        )?;
-                    } else {
-                        writeln!(
-                            buffer.input_objects,
-                            "  {}?: {},",
-                            f.name,
-                            f.of_type.as_typescript()?
-                        )?;
-                    }
+                writeln!(buffer.interfaces, "{{")?;
+                for f in fields {
+                    possibly_write_description(&mut buffer.interfaces, f.description.as_ref())?;
+                    writeln!(
+                        buffer.interfaces,
+                        "  {}: {},",
+                        f.name,
+                        type_index.with(&f.of_type).as_typescript()?
+                    )?;
                 }
-                writeln!(buffer.input_objects, "}}")?;
+                writeln!(buffer.interfaces, "}}")?;
             }
-            Type::Union {
+            NamedType::Union {
                 name,
                 description,
                 possible_types,
@@ -119,40 +117,61 @@ impl<'a> TypescriptableWithBuffer<'a> for Type {
                     .join(" | ");
                 writeln!(
                     buffer.unions,
-                    "export type {name}Union = {};",
-                    possible_types
+                    "export type {} = {};",
+                    ts_name, possible_types
                 )?;
             }
-            Type::Interface {
+            NamedType::Enum {
                 name,
                 description,
-                fields,
-                possible_types: _,
-                interfaces,
+                enum_values,
             } => {
-                possibly_write_description(&mut buffer.interfaces, description.as_ref())?;
-                write!(buffer.interfaces, "export type {name}Interface = ")?;
-                for interface in interfaces {
-                    if let TypeRef::Interface { name } = interface {
-                        write!(buffer.interfaces, "{name}Interface & ")?;
-                    } else {
-                        return Err(eyre!("Found a non-interface listed as an interface."));
-                    }
+                if name.starts_with('_') {
+                    return Ok(());
                 }
-                writeln!(buffer.interfaces, "{{")?;
-                for f in fields {
-                    possibly_write_description(&mut buffer.interfaces, f.description.as_ref())?;
+                possibly_write_description(&mut buffer.enums, description.as_ref())?;
+                writeln!(buffer.enums, "export enum {} {{", ts_name)?;
+                for v in enum_values {
+                    possibly_write_description(&mut buffer.enums, v.description.as_ref())?;
                     writeln!(
-                        buffer.interfaces,
-                        "  {}: {},",
-                        f.name,
-                        f.of_type.as_typescript()?
+                        buffer.enums,
+                        "  {} = \"{}\",",
+                        v.name.to_case(Case::Pascal),
+                        v.name
                     )?;
                 }
-                writeln!(buffer.interfaces, "}}")?;
+                writeln!(buffer.enums, "}}")?;
             }
-            Type::List { .. } => return Err(eyre!("Top-level lists not supported.")),
-            Type::NonNull { .. } => return Err(eyre!("Top-level non-nulls not supported.")),
+            NamedType::InputObject {
+                name,
+                description,
+                input_fields,
+            } => {
+                if name.starts_with('_') {
+                    return Ok(());
+                }
+                possibly_write_description(&mut buffer.objects, description.as_ref())?;
+                writeln!(buffer.input_objects, "export type {} = {{", ts_name)?;
+                for f in input_fields {
+                    possibly_write_description(&mut buffer.input_objects, f.description.as_ref())?;
+                    if let TypeRef::Container(TypeRefContainer::NonNull { .. }) = f.of_type {
+                        writeln!(
+                            buffer.input_objects,
+                            "  {}: {},",
+                            f.name,
+                            type_index.with(&f.of_type).as_typescript()?
+                        )?;
+                    } else {
+                        writeln!(
+                            buffer.input_objects,
+                            "  {}?: {},",
+                            f.name,
+                            type_index.with(&f.of_type).as_typescript()?
+                        )?;
+                    }
+                }
+                writeln!(buffer.input_objects, "}}")?;
+            }
         }
 
         Ok(())

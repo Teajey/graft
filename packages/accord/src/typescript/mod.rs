@@ -7,9 +7,9 @@ use std::fmt::Write;
 
 use eyre::{eyre, Result};
 
-use crate::introspection::{Schema, Type, TypeRef};
-use crate::util::MaybeNamed;
 use crate::gen::Buffer;
+use crate::introspection::{NamedType, Schema, Type, TypeRef};
+use crate::util::Named;
 
 pub(in crate::typescript) fn possibly_write_description<W: Write>(
     out: &mut W,
@@ -27,47 +27,36 @@ pub(in crate::typescript) fn possibly_write_description<W: Write>(
 }
 
 pub struct TypeIndex<'a> {
-    map: HashMap<String, &'a Type>,
-    pub query: &'a Type,
-    pub mutation: Option<&'a Type>,
-    pub subscription: Option<&'a Type>,
+    map: HashMap<String, &'a NamedType>,
+    pub query: &'a NamedType,
+    pub mutation: Option<&'a NamedType>,
+    pub subscription: Option<&'a NamedType>,
 }
 
 impl<'a> TypeIndex<'a> {
-    pub fn get(&self, k: &str) -> Option<&Type> {
+    pub fn get(&self, k: &str) -> Option<&NamedType> {
         self.map.get(k).copied()
     }
 
-    pub fn type_from_ref(&self, type_ref: &TypeRef) -> Type {
-        match type_ref {
-            TypeRef::NonNull { of_type } => Type::NonNull {
-                of_type: (**of_type).clone(),
-            },
-            TypeRef::List { of_type } => Type::List {
-                of_type: (**of_type).clone(),
-            },
-            TypeRef::Enum { name } 
-            | TypeRef::InputObject { name } 
-            | TypeRef::Interface { name } 
-            | TypeRef::Object { name } 
-            | TypeRef::Union { name } 
-            | TypeRef::Scalar { name } => self.map.get(name).copied().unwrap_or_else(|| {
-                panic!(
-                    "TypeIndex couldn't find the Type referred to by TypeRef::{:?}\nKeys available in TypeMap: {:#?}",
-                    type_ref,
-                    self.map.keys().collect::<Vec<_>>()
-                )
-            }).to_owned(),
-        }
+    pub fn type_from_ref(&self, type_ref: TypeRef) -> Result<Type> {
+        let t = match type_ref {
+            TypeRef::Container(contained) => Type::Container(contained),
+            TypeRef::To { name } => {
+                let named_type = self.map.get(&name)
+                .copied().ok_or_else(|| eyre!(
+                    "TypeIndex couldn't find the Type referred to by TypeRef::{{ name: {:?} }}\nKeys available in TypeMap: {:#?}",
+                    name,
+                    self.map.keys().collect::<Vec<_>>()))?;
+                Type::Named(named_type.clone())
+            }
+        };
+
+        Ok(t)
     }
 
     pub fn try_new(schema: &'a Schema) -> Result<Self> {
         let mut map = schema.types.iter().fold(HashMap::new(), |mut map, t| {
-            if let Some(name) = t.maybe_name() {
-                map.insert(name.to_owned(), t);
-            } else {
-                eprintln!("WARN: TypeIndex tried to index an unnamed type.");
-            }
+            map.insert(t.name().to_owned(), t);
             map
         });
         let query = map
@@ -88,6 +77,13 @@ impl<'a> TypeIndex<'a> {
             subscription,
         })
     }
+
+    pub fn with<'b, 'c, T>(&'b self, target: &'c T) -> WithIndex<'c, 'b, 'a, T> {
+        WithIndex {
+            target,
+            type_index: self,
+        }
+    }
 }
 
 pub struct WithIndex<'a, 'b, 'c, T> {
@@ -96,19 +92,25 @@ pub struct WithIndex<'a, 'b, 'c, T> {
 }
 
 pub trait WithIndexable: Sized {
-    fn with_index<'a, 'b, 'c>(&'a self, type_index: &'b TypeIndex<'c>) -> WithIndex<'a, 'b, 'c, Self> {
-        WithIndex { target: self, type_index }
+    fn with_index<'a, 'b, 'c>(
+        &'a self,
+        type_index: &'b TypeIndex<'c>,
+    ) -> WithIndex<'a, 'b, 'c, Self> {
+        WithIndex {
+            target: self,
+            type_index,
+        }
     }
 }
 
 pub trait Typescriptable {
     fn as_typescript(&self) -> Result<String>;
-    
+
     fn as_typescript_non_nullable(&self) -> Result<String> {
         unimplemented!()
     }
 }
 
-pub(crate) trait TypescriptableWithBuffer<'a> {
-    fn as_typescript_on(&'a self, buffer: &mut Buffer) -> Result<()>;
+pub(crate) trait TypescriptableWithBuffer {
+    fn as_typescript_on(&self, buffer: &mut Buffer) -> Result<()>;
 }

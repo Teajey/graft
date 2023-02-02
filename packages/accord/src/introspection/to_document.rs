@@ -5,8 +5,9 @@ use graphql_parser::schema::{
     SchemaDefinition, TypeDefinition,
 };
 
-use super::{EnumValue, Field, InputValue, Schema, Type, TypeRef, Value};
 use crate::util::MaybeNamed;
+
+use super::{EnumValue, Field, InputValue, NamedType, Schema, TypeRef, TypeRefContainer, Value};
 
 impl<'a> From<&'a Schema> for Document<'a, &'a str> {
     fn from(schema: &'a Schema) -> Self {
@@ -43,16 +44,16 @@ impl<'a> From<&'a EnumValue> for gql_parser::EnumValue<'a, &'a str> {
     }
 }
 
-impl<'a> From<&'a Type> for TypeDefinition<'a, &'a str> {
-    fn from(t: &'a Type) -> Self {
+impl<'a> From<&'a NamedType> for TypeDefinition<'a, &'a str> {
+    fn from(t: &'a NamedType) -> Self {
         match t {
-            Type::Scalar { name, description } => TypeDefinition::Scalar(ScalarType {
+            NamedType::Scalar { name, description } => TypeDefinition::Scalar(ScalarType {
                 position: Default::default(),
                 description: description.as_ref().map(|d| d.as_str().into()),
                 name: name.as_str(),
                 directives: vec![],
             }),
-            Type::Object {
+            NamedType::Object {
                 name,
                 description,
                 fields,
@@ -65,7 +66,7 @@ impl<'a> From<&'a Type> for TypeDefinition<'a, &'a str> {
                 directives: vec![],
                 fields: fields.iter().map(|f| f.into()).collect(),
             }),
-            Type::Interface {
+            NamedType::Interface {
                 name,
                 description,
                 fields,
@@ -79,7 +80,7 @@ impl<'a> From<&'a Type> for TypeDefinition<'a, &'a str> {
                 directives: vec![],
                 fields: fields.iter().map(|f| f.into()).collect(),
             }),
-            Type::Union {
+            NamedType::Union {
                 name,
                 description,
                 possible_types,
@@ -93,7 +94,7 @@ impl<'a> From<&'a Type> for TypeDefinition<'a, &'a str> {
                     .filter_map(|o| o.maybe_name())
                     .collect(),
             }),
-            Type::Enum {
+            NamedType::Enum {
                 name,
                 description,
                 enum_values,
@@ -104,7 +105,7 @@ impl<'a> From<&'a Type> for TypeDefinition<'a, &'a str> {
                 directives: vec![],
                 values: enum_values.iter().map(|e| e.into()).collect(),
             }),
-            Type::InputObject {
+            NamedType::InputObject {
                 name,
                 description,
                 input_fields,
@@ -115,9 +116,6 @@ impl<'a> From<&'a Type> for TypeDefinition<'a, &'a str> {
                 directives: vec![],
                 fields: input_fields.iter().map(|f| f.into()).collect(),
             }),
-            Type::NonNull { .. } | Type::List { .. } => {
-                panic!("graphql_parser::schema::TypeDefinition does not support NonNull and List")
-            }
         }
     }
 }
@@ -157,14 +155,13 @@ impl<'a> From<&'a Field> for gql_parser::Field<'a, &'a str> {
 impl<'a> From<&'a TypeRef> for gql_parser::Type<'a, &'a str> {
     fn from(type_ref: &'a TypeRef) -> Self {
         match type_ref {
-            TypeRef::Scalar { name }
-            | TypeRef::Object { name }
-            | TypeRef::Interface { name }
-            | TypeRef::Union { name }
-            | TypeRef::Enum { name }
-            | TypeRef::InputObject { name } => Self::NamedType(name.as_str()),
-            TypeRef::NonNull { of_type } => Self::NonNullType(Box::new((&**of_type).into())),
-            TypeRef::List { of_type } => Self::ListType(Box::new((&**of_type).into())),
+            TypeRef::To { name } => Self::NamedType(name.as_str()),
+            TypeRef::Container(TypeRefContainer::NonNull { of_type }) => {
+                Self::NonNullType(Box::new((&**of_type).into()))
+            }
+            TypeRef::Container(TypeRefContainer::List { of_type }) => {
+                Self::ListType(Box::new((&**of_type).into()))
+            }
         }
     }
 }

@@ -10,17 +10,15 @@ use graphql_parser::query::{
 use super::{TypeIndex, Typescriptable, TypescriptableWithBuffer, WithIndex, WithIndexable};
 use crate::{
     gen::Buffer,
-    introspection::{Field, Type, TypeRef},
+    introspection::{Field, NamedType, Type, TypeRef, TypeRefContainer},
 };
 
 use graphql_parser::query::{Field as SelectedField, Selection, SelectionSet};
 
 impl<'a> WithIndexable for Definition<'a, &'a str> {}
 
-impl<'a, 'b, 'c, 'd> TypescriptableWithBuffer<'a>
-    for WithIndex<'a, 'b, 'c, Definition<'d, &'d str>>
-{
-    fn as_typescript_on(&'a self, buffer: &mut Buffer) -> Result<()> {
+impl<'a, 'b, 'c, 'd> TypescriptableWithBuffer for WithIndex<'a, 'b, 'c, Definition<'d, &'d str>> {
+    fn as_typescript_on(&self, buffer: &mut Buffer) -> Result<()> {
         let definition = self.target;
         let type_index = self.type_index;
 
@@ -102,22 +100,27 @@ impl<'a, 'b, 'c, 'd> TypescriptableWithBuffer<'a>
                 } else {
                     writeln!(buffer.args, "export type {args_name} = {{")?;
                     for def in variable_definitions {
-                        let ts_type = TypeRef::try_from_arg(type_index, &def.var_type)?;
-                        if let TypeRef::NonNull { .. } = ts_type {
-                            writeln!(buffer.args, "  {}: {},", def.name, ts_type.as_typescript()?)?;
+                        let ts_type = TypeRef::from(def.var_type.clone());
+                        if ts_type.is_non_null() {
+                            writeln!(
+                                buffer.args,
+                                "  {}: {},",
+                                def.name,
+                                type_index.with(&ts_type).as_typescript()?
+                            )?;
                         } else {
                             writeln!(
                                 buffer.args,
                                 "  {}?: {},",
                                 def.name,
-                                ts_type.as_typescript()?
+                                type_index.with(&ts_type).as_typescript()?
                             )?;
                         }
                     }
                     writeln!(buffer.args, "}}")?;
                 }
 
-                let operation_fields = if let Type::Object { fields, .. } = operation_type {
+                let operation_fields = if let NamedType::Object { fields, .. } = operation_type {
                     fields
                 } else {
                     return Err(eyre!("Top-level operation must be an object"));
@@ -147,14 +150,9 @@ impl<'a, 'b, 'c, 'd> TypescriptableWithBuffer<'a>
                 recursively_typescriptify_selected_field(
                     selection_set,
                     &mut buffer.fragments,
-                    &TypeRef::from(
-                        type_index
-                            .get(type_name)
-                            .ok_or_else(|| {
-                                eyre!("Type targetted by fragment not found at {position}")
-                            })?
-                            .clone(),
-                    ),
+                    &TypeRef::from(type_index.get(type_name).ok_or_else(|| {
+                        eyre!("Type targetted by fragment at {position} not found")
+                    })?),
                     type_index,
                     &mut false,
                 )?;
@@ -222,16 +220,9 @@ fn recursively_typescriptify_selected_object_fields<'a>(
                     recursively_typescriptify_selected_field(
                         selection_set,
                         &mut fragment_buffer,
-                        &TypeRef::from(
-                            type_index
-                                .get(type_name)
-                                .ok_or_else(|| {
-                                    eyre!(
-                                        "Type targetted by inline fragment not found at {position}"
-                                    )
-                                })?
-                                .clone(),
-                        ),
+                        &TypeRef::from(type_index.get(type_name).ok_or_else(|| {
+                            eyre!("Type targetted by inline fragment at {position} not found")
+                        })?),
                         type_index,
                         &mut false,
                     )?;
@@ -260,45 +251,51 @@ fn recursively_typescriptify_selected_field<'a>(
     type_index: &TypeIndex,
     nullable: &mut bool,
 ) -> Result<()> {
-    let selected_field_type = type_index.type_from_ref(type_ref);
+    let selected_field_type = type_index.type_from_ref(type_ref.clone())?;
     let mut local_buffer = String::new();
 
     match selected_field_type {
-        Type::Object { fields, .. } => {
-            recursively_typescriptify_selected_object_fields(
-                selection_set,
-                &mut local_buffer,
-                &fields,
-                type_index,
-            )?;
-        }
-        Type::NonNull { of_type } => {
-            *nullable = false;
-            recursively_typescriptify_selected_field(
-                selection_set,
-                &mut local_buffer,
-                &of_type,
-                type_index,
-                nullable,
-            )?;
-        }
-        Type::List { of_type } => {
-            recursively_typescriptify_selected_field(
-                selection_set,
-                &mut local_buffer,
-                &of_type,
-                type_index,
-                nullable,
-            )?;
-            write!(local_buffer, "[]")?;
-        }
-        leaf_field_type => {
-            write!(
-                local_buffer,
-                "{}",
-                TypeRef::from(leaf_field_type).as_typescript_non_nullable()?
-            )?;
-        }
+        Type::Named(named_type) => match named_type {
+            NamedType::Object { fields, .. } => {
+                recursively_typescriptify_selected_object_fields(
+                    selection_set,
+                    &mut local_buffer,
+                    &fields,
+                    type_index,
+                )?;
+            }
+            leaf_field_type => {
+                write!(
+                    local_buffer,
+                    "{}",
+                    type_index
+                        .with(&TypeRef::from(&leaf_field_type))
+                        .as_typescript_non_nullable()?
+                )?;
+            }
+        },
+        Type::Container(contained) => match contained {
+            TypeRefContainer::NonNull { of_type } => {
+                *nullable = false;
+                recursively_typescriptify_selected_field(
+                    selection_set,
+                    &mut local_buffer,
+                    &of_type,
+                    type_index,
+                    nullable,
+                )?;
+            }
+            TypeRefContainer::List { of_type } => {
+                recursively_typescriptify_selected_field(
+                    selection_set,
+                    &mut local_buffer,
+                    &of_type,
+                    type_index,
+                    nullable,
+                )?;
+                write!(local_buffer, "[]")?;
+            }
+        },
     };
 
     if *nullable {

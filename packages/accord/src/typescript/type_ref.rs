@@ -1,10 +1,9 @@
-use eyre::{eyre, Result};
+use eyre::Result;
 
-use super::Typescriptable;
-use crate::introspection::TypeRef;
-use crate::util::MaybeNamed;
+use super::{Typescriptable, WithIndex};
+use crate::introspection::{Type, TypeRef, TypeRefContainer};
 
-impl Typescriptable for TypeRef {
+impl<'a, 'b, 'c> Typescriptable for WithIndex<'a, 'b, 'c, TypeRef> {
     fn as_typescript(&self) -> Result<String> {
         recursive_typescriptify(self, &mut true)
     }
@@ -14,36 +13,29 @@ impl Typescriptable for TypeRef {
     }
 }
 
-fn recursive_typescriptify(type_ref: &TypeRef, nullable: &mut bool) -> Result<String> {
-    let type_ref_string = match type_ref {
-        TypeRef::Scalar { name } => format!("{name}Scalar"),
-        TypeRef::NonNull { of_type } => {
+fn recursive_typescriptify<'a, 'b, 'c>(
+    type_ref_with_index: &WithIndex<'a, 'b, 'c, TypeRef>,
+    nullable: &mut bool,
+) -> Result<String> {
+    let WithIndex { target, type_index } = type_ref_with_index;
+    let this_type = type_index.type_from_ref((*target).clone())?;
+    let type_name = match this_type {
+        Type::Container(TypeRefContainer::NonNull { of_type }) => {
             *nullable = false;
-            recursive_typescriptify(of_type, nullable)?
+            recursive_typescriptify(&type_index.with(&of_type), nullable)?
         }
-        TypeRef::List { of_type } => {
-            let string = recursive_typescriptify(of_type, nullable)?;
+        Type::Container(TypeRefContainer::List { of_type }) => {
+            let string = recursive_typescriptify(&type_index.with(&of_type), nullable)?;
             format!("{string}[]")
         }
-        TypeRef::Union { name } => {
-            format!("{name}Union")
-        }
-        TypeRef::Interface { name } => {
-            format!("{name}Interface")
-        }
-        type_ref => {
-            let name = type_ref
-                .maybe_name()
-                .ok_or_else(|| eyre!("Tried to get name from nameless TypeRef"))?;
-            name.to_owned()
-        }
+        Type::Named(other_type) => other_type.typescript_name(),
     };
 
-    let type_ref_string = if *nullable {
-        format!("Nullable<{type_ref_string}>")
+    let type_name = if *nullable {
+        format!("Nullable<{type_name}>")
     } else {
-        type_ref_string
+        type_name
     };
 
-    Ok(type_ref_string)
+    Ok(type_name)
 }

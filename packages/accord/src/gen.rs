@@ -98,13 +98,13 @@ pub async fn generate_typescript_with_document<'a>(
     )?;
 
     if let Some(document) = document {
-        for def in &document.definitions {
+        for def in document.definitions {
             def.with_index(&type_index).as_typescript_on(&mut buffer)?;
         }
     }
 
     for t in &schema.types {
-        t.as_typescript_on(&mut buffer)?;
+        t.with_index(&type_index).as_typescript_on(&mut buffer)?;
     }
 
     Ok(buffer.to_string())

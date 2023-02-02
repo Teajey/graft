@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 
 use ::graphql_parser::query::Type as GraphQLParserType;
 
-use crate::introspection::{Type, TypeRef};
+use crate::introspection::{NamedType, TypeRef};
 
 pub type Arg<'a> = GraphQLParserType<'a, &'a str>;
 
@@ -10,33 +10,45 @@ pub trait MaybeNamed {
     fn maybe_name(&self) -> Option<&str>;
 }
 
-impl MaybeNamed for TypeRef {
-    fn maybe_name(&self) -> Option<&str> {
+pub trait Named {
+    fn name(&self) -> &str;
+}
+
+impl Named for NamedType {
+    fn name(&self) -> &str {
         match self {
-            TypeRef::Scalar { name }
-            | TypeRef::Object { name }
-            | TypeRef::Interface { name }
-            | TypeRef::Union { name }
-            | TypeRef::Enum { name }
-            | TypeRef::InputObject { name } => Some(name),
-            TypeRef::NonNull { .. } | TypeRef::List { .. } => None,
+            NamedType::Scalar { name, .. }
+            | NamedType::Object { name, .. }
+            | NamedType::Interface { name, .. }
+            | NamedType::Union { name, .. }
+            | NamedType::Enum { name, .. }
+            | NamedType::InputObject { name, .. } => name,
         }
     }
 }
 
-impl MaybeNamed for Type {
+impl MaybeNamed for TypeRef {
     fn maybe_name(&self) -> Option<&str> {
         match self {
-            Type::Scalar { name, .. }
-            | Type::Object { name, .. }
-            | Type::Interface { name, .. }
-            | Type::Union { name, .. }
-            | Type::Enum { name, .. }
-            | Type::InputObject { name, .. } => Some(name),
-            Type::NonNull { .. } | Type::List { .. } => None,
+            TypeRef::To { name } => Some(name),
+            _ => None,
         }
     }
 }
+
+// impl MaybeNamed for Type {
+//     fn maybe_name(&self) -> Option<&str> {
+//         match self {
+//             Type::Scalar { name, .. }
+//             | Type::Object { name, .. }
+//             | Type::Interface { name, .. }
+//             | Type::Union { name, .. }
+//             | Type::Enum { name, .. }
+//             | Type::InputObject { name, .. } => Some(name),
+//             Type::NonNull { .. } | Type::List { .. } => None,
+//         }
+//     }
+// }
 
 pub fn path_with_possible_prefix(prefix: Option<&Path>, path: &Path) -> PathBuf {
     prefix
