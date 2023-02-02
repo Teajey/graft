@@ -70,7 +70,7 @@ pub async fn run() -> Result<()> {
             let schema_ast = parse_schema::<String>(&schema_ast)?;
             let schema = schema_ast.try_into()?;
             print_info!(ctx, 1, "Generating typescript...");
-            let ts = generate_typescript(&ctx, typescript_gen_plan, &schema).await?;
+            let ts = generate_typescript(&ctx, typescript_gen_plan.documents, &schema).await?;
 
             cross::fs::write_to_file("generated.ts", &ts)?;
         }

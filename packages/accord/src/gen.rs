@@ -4,6 +4,7 @@ use eyre::Result;
 use graphql_parser::query::Document;
 
 use crate::app;
+use crate::app::config::Glob;
 use crate::cross;
 use crate::debug_log;
 use crate::introspection::Schema;
@@ -112,10 +113,10 @@ pub async fn generate_typescript_with_document<'a>(
 
 pub async fn generate_typescript(
     ctx: &app::Context,
-    plan: app::config::TypescriptGenPlan,
+    documents: Option<Glob>,
     schema: &Schema,
 ) -> Result<String> {
-    let Some(app::config::Glob(document_paths)) = plan.documents else {
+    let Some(app::config::Glob(document_paths)) = documents else {
         return generate_typescript_with_document(schema, None)
         .await;
     };
@@ -150,32 +151,34 @@ pub async fn generate_typescript(
 #[cfg(test)]
 mod test {
     use std::path::PathBuf;
-    use std::str::FromStr;
 
     use eyre::Result;
-    use url::Url;
 
+    use crate::app::config::Glob;
     use crate::introspection;
     use crate::{app, gen::generate_typescript};
 
     #[tokio::test]
     async fn typescript_output_matches_snapshot() -> Result<()> {
-        let config = app::Config {
-            schema: Url::from_str("https://swapi-graphql.netlify.app/.netlify/functions/index")?,
-            no_ssl: false,
-            document_path: Some(PathBuf::try_from("../testing/document.graphql")?),
-            emit_schema: false,
-        };
-
         let ctx = app::Context {
-            config,
             verbose: 0,
             config_location: None,
         };
 
-        let schema = introspection::Response::fetch(&ctx).await?.schema();
+        let schema = introspection::Response::fetch(
+            &ctx,
+            "https://swapi-graphql.netlify.app/.netlify/functions/index",
+            false,
+        )
+        .await?
+        .schema();
 
-        let typescript = generate_typescript(&ctx, schema).await?;
+        let typescript = generate_typescript(
+            &ctx,
+            Some(Glob(vec![PathBuf::from("../testing/document.graphql")])),
+            &schema,
+        )
+        .await?;
 
         insta::assert_snapshot!(typescript);
 
