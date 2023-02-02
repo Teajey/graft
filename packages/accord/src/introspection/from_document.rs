@@ -1,0 +1,276 @@
+use eyre::{eyre, Report, Result};
+use graphql_parser::schema as gp;
+
+use crate::introspection as ac;
+
+impl From<gp::Type<'_, String>> for ac::TypeRef {
+    fn from(value: gp::Type<'_, String>) -> Self {
+        match value {
+            // FIXME: This is wrong and bad
+            gp::Type::NamedType(name) => Self::Object { name },
+            gp::Type::ListType(of_type) => Self::List {
+                of_type: Box::new((*of_type).into()),
+            },
+            gp::Type::NonNullType(of_type) => Self::NonNull {
+                of_type: Box::new((*of_type).into()),
+            },
+        }
+    }
+}
+
+impl From<gp::Value<'_, String>> for ac::Value {
+    fn from(value: gp::Value<'_, String>) -> Self {
+        match value {
+            gp::Value::Variable(var) => ac::Value(var),
+            gp::Value::Int(int) => {
+                let int = format!("{}", int.as_i64().expect("Int(i64) could not be unwrapped"));
+                ac::Value(int)
+            }
+            gp::Value::Float(fl) => ac::Value(format!("{}", fl)),
+            gp::Value::String(st) => ac::Value(st),
+            gp::Value::Boolean(b) => ac::Value(format!("{}", b)),
+            gp::Value::Null => ac::Value("null".to_owned()),
+            gp::Value::Enum(en) => ac::Value(en),
+            gp::Value::List(list) => ac::Value(format!("{:?}", list)),
+            gp::Value::Object(map) => ac::Value(format!("{:?}", map)),
+        }
+    }
+}
+
+impl From<gp::InputValue<'_, String>> for ac::InputValue {
+    fn from(
+        gp::InputValue {
+            position,
+            description,
+            name,
+            value_type,
+            default_value,
+            directives,
+        }: gp::InputValue<'_, String>,
+    ) -> Self {
+        Self {
+            name,
+            description,
+            of_type: value_type.into(),
+            default_value: default_value.map(|v| v.into()),
+        }
+    }
+}
+
+impl From<gp::Field<'_, String>> for ac::Field {
+    fn from(
+        gp::Field {
+            position: _,
+            description,
+            name,
+            arguments,
+            field_type,
+            directives,
+        }: gp::Field<'_, String>,
+    ) -> Self {
+        Self {
+            name,
+            description,
+            args: arguments.into_iter().map(|a| a.into()).collect(),
+            of_type: field_type.into(),
+            is_deprecated: false,
+            deprecation_reason: None,
+        }
+    }
+}
+
+impl From<gp::EnumValue<'_, String>> for ac::EnumValue {
+    fn from(
+        gp::EnumValue {
+            position,
+            description,
+            name,
+            directives,
+        }: gp::EnumValue<'_, String>,
+    ) -> Self {
+        Self {
+            name,
+            description,
+            is_deprecated: false,
+            deprecation_reason: None,
+        }
+    }
+}
+
+impl From<gp::TypeDefinition<'_, String>> for ac::Type {
+    fn from(value: gp::TypeDefinition<'_, String>) -> Self {
+        match value {
+            gp::TypeDefinition::Scalar(gp::ScalarType {
+                position: _,
+                description,
+                name,
+                directives: _,
+            }) => ac::Type::Scalar { name, description },
+            gp::TypeDefinition::Object(gp::ObjectType {
+                position,
+                description,
+                name,
+                implements_interfaces,
+                directives,
+                fields,
+            }) => ac::Type::Object {
+                name,
+                description,
+                fields: fields.into_iter().map(|f| f.into()).collect(),
+                interfaces: implements_interfaces
+                    .into_iter()
+                    .map(|name| ac::TypeRef::Interface { name })
+                    .collect(),
+            },
+            gp::TypeDefinition::Interface(gp::InterfaceType {
+                position,
+                description,
+                name,
+                implements_interfaces,
+                directives,
+                fields,
+            }) => ac::Type::Interface {
+                name,
+                description,
+                fields: fields.into_iter().map(|f| f.into()).collect(),
+                possible_types: vec![],
+                interfaces: implements_interfaces
+                    .into_iter()
+                    .map(|name| ac::TypeRef::Interface { name })
+                    .collect(),
+            },
+            gp::TypeDefinition::Union(gp::UnionType {
+                position,
+                description,
+                name,
+                directives,
+                types,
+            }) => ac::Type::Union {
+                name,
+                description,
+                possible_types: types
+                    .into_iter()
+                    .map(|name| ac::TypeRef::Object { name })
+                    .collect(),
+            },
+            gp::TypeDefinition::Enum(gp::EnumType {
+                position,
+                description,
+                name,
+                directives,
+                values,
+            }) => ac::Type::Enum {
+                name,
+                description,
+                enum_values: values.into_iter().map(|v| v.into()).collect(),
+            },
+            gp::TypeDefinition::InputObject(gp::InputObjectType {
+                position,
+                description,
+                name,
+                directives,
+                fields,
+            }) => ac::Type::InputObject {
+                name,
+                description,
+                input_fields: fields.into_iter().map(|f| f.into()).collect(),
+            },
+        }
+    }
+}
+
+impl From<gp::DirectiveLocation> for ac::DirectiveLocation {
+    fn from(value: gp::DirectiveLocation) -> Self {
+        use ac::DirectiveLocation as ac;
+        use gp::DirectiveLocation as gp;
+        match value {
+            gp::Query => ac::Query,
+            gp::Mutation => ac::Mutation,
+            gp::Subscription => ac::Subscription,
+            gp::Field => ac::Field,
+            gp::FragmentDefinition => ac::FragmentDefinition,
+            gp::FragmentSpread => ac::FragmentSpread,
+            gp::InlineFragment => ac::InlineFragment,
+            gp::Schema => ac::Schema,
+            gp::Scalar => ac::Scalar,
+            gp::Object => ac::Object,
+            gp::FieldDefinition => ac::FieldDefinition,
+            gp::ArgumentDefinition => ac::ArgumentDefinition,
+            gp::Interface => ac::Interface,
+            gp::Union => ac::Union,
+            gp::Enum => ac::Enum,
+            gp::EnumValue => ac::EnumValue,
+            gp::InputObject => ac::InputObject,
+            gp::InputFieldDefinition => ac::InputFieldDefinition,
+        }
+    }
+}
+
+impl From<gp::DirectiveDefinition<'_, String>> for ac::Directive {
+    fn from(
+        gp::DirectiveDefinition {
+            position,
+            description,
+            name,
+            arguments,
+            repeatable,
+            locations,
+        }: gp::DirectiveDefinition<'_, String>,
+    ) -> Self {
+        Self {
+            description,
+            name,
+            locations: locations.into_iter().map(|l| l.into()).collect(),
+            args: arguments.into_iter().map(|a| a.into()).collect(),
+        }
+    }
+}
+
+impl TryFrom<gp::Document<'_, String>> for ac::Schema {
+    type Error = Report;
+
+    fn try_from(document: gp::Document<'_, String>) -> Result<Self> {
+        let mut query_type = Option::<ac::RootType>::None;
+        let mut mutation_type = Option::<ac::RootType>::None;
+        let mut subscription_type = Option::<ac::RootType>::None;
+
+        let mut types = Vec::<ac::Type>::new();
+        let mut directives = Vec::<ac::Directive>::new();
+
+        for def in document.definitions {
+            match def {
+                gp::Definition::SchemaDefinition(gp::SchemaDefinition {
+                    position: _,
+                    directives: _,
+                    query,
+                    mutation,
+                    subscription,
+                }) => {
+                    if query_type.is_some() {
+                        return Err(eyre!("Tried to set schema definition more than once"));
+                    }
+                    query_type = query.map(|name| ac::RootType { name });
+                    mutation_type = mutation.map(|name| ac::RootType { name });
+                    subscription_type = subscription.map(|name| ac::RootType { name });
+                }
+                gp::Definition::TypeDefinition(type_definition) => {
+                    types.push(type_definition.into());
+                }
+                gp::Definition::TypeExtension(_) => panic!("TypeExtension not yet supported"),
+                gp::Definition::DirectiveDefinition(directive_definition) => {
+                    directives.push(directive_definition.into());
+                }
+            }
+        }
+
+        let query_type = query_type.ok_or_else(|| eyre!("query_type was not filled"))?;
+
+        Ok(ac::Schema {
+            types,
+            query_type,
+            mutation_type,
+            subscription_type,
+            directives,
+        })
+    }
+}

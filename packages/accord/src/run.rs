@@ -1,19 +1,19 @@
 use clap::Parser;
 use eyre::Result;
-use graphql_parser::schema::Document;
+use graphql_parser::schema::{parse_schema, Document};
 
-// use crate::gen::generate_typescript;
+use crate::gen::generate_typescript;
 use crate::{
     app::{self, cli},
-    cross, util,
+    cross,
 };
-use crate::{cross_eprint, cross_eprintln, introspection, print_info};
+use crate::{cross_eprint, cross_eprintln, debug_log, introspection, print_info};
 
 pub async fn run() -> Result<()> {
-    util::debug::log("Collecting argv\n")?;
+    debug_log!("Collecting argv");
     let argv: Result<Vec<_>> = cross::env::argv().collect();
 
-    util::debug::log("Parsing cli\n")?;
+    debug_log!("Parsing cli");
     let cli = match cli::Base::try_parse_from(argv?) {
         Ok(cli) => cli,
         Err(err) => {
@@ -22,21 +22,23 @@ pub async fn run() -> Result<()> {
         }
     };
 
+    let ctx = app::Context {
+        verbose: cli.verbose,
+        config_location: cli.config_location.clone(),
+    };
+
     if let Some(working_dir) = &cli.working_directory {
-        util::debug::log("Setting current directory\n")?;
+        debug_log!("Setting current directory");
         cross::env::set_current_dir(working_dir)?;
+        debug_log!("Current directory set to {:?}", cross::env::current_dir()?);
     }
 
-    util::debug::log("Loading config file\n")?;
+    debug_log!("Loading config file");
     let config = app::Config::load(cli.config_location.as_deref()).unwrap_or_else(|err| {
         cross_eprintln!("Failed to load config: {}", err);
         cross::process::exit(1);
     });
 
-    let ctx = app::Context {
-        verbose: cli.verbose,
-        config_location: cli.config_location.clone(),
-    };
     print_info!(ctx, 1, "Context generated!");
 
     for (name, plans) in config.generates {
@@ -57,16 +59,21 @@ pub async fn run() -> Result<()> {
                 cross::fs::write_to_file(json_path, &schema_json)?;
             }
             if let Some(ast_path) = schema_gen_plan.out.ast_path {
+                print_info!(ctx, 1, "Emitting schema ast");
                 let schema_graphql = format!("{}", Document::from(&schema));
                 cross::fs::write_to_file(ast_path, &schema_graphql)?;
             }
         }
-        // if let Some(typescript_gen_plan) = plans.typescript_gen_plan {
-        //     print_info!(ctx, 1, "Generating typescript...");
-        //     let ts = generate_typescript(&ctx, typescript_gen_plan, &schema).await?;
+        if let Some(typescript_gen_plan) = plans.typescript_gen_plan {
+            print_info!(ctx, 1, "Reading schema ast...");
+            let schema_ast = cross::fs::read_to_string(&typescript_gen_plan.ast)?;
+            let schema_ast = parse_schema::<String>(&schema_ast)?;
+            let schema = schema_ast.try_into()?;
+            print_info!(ctx, 1, "Generating typescript...");
+            let ts = generate_typescript(&ctx, typescript_gen_plan, &schema).await?;
 
-        //     cross::fs::write_to_file("generated.ts", &ts)?;
-        // }
+            cross::fs::write_to_file("generated.ts", &ts)?;
+        }
     }
 
     Ok(())

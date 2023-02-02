@@ -6,7 +6,7 @@ generates:
       out:
         ast: schema.graphql
         json: schema.json
-    # typescript:
-    #   ast: schema.graphql
-    #   documents: document.graphql
-    #   out: generated.ts
+    typescript:
+      ast: schema.graphql
+      documents: document.graphql
+      out: generated.ts

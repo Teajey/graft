@@ -2,14 +2,14 @@
 mod app;
 #[cfg(target_arch = "wasm32")]
 mod cross;
-// #[cfg(target_arch = "wasm32")]
-// mod gen;
+#[cfg(target_arch = "wasm32")]
+mod gen;
 #[cfg(target_arch = "wasm32")]
 mod introspection;
 #[cfg(target_arch = "wasm32")]
 mod run;
-// #[cfg(target_arch = "wasm32")]
-// mod typescript;
+#[cfg(target_arch = "wasm32")]
+mod typescript;
 #[cfg(target_arch = "wasm32")]
 mod util;
 

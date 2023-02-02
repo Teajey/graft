@@ -1,10 +1,10 @@
 use std::path::{Path, PathBuf};
 
-// use ::graphql_parser::query::Type as GraphQLParserType;
+use ::graphql_parser::query::Type as GraphQLParserType;
 
 use crate::introspection::{Type, TypeRef};
 
-// pub type Arg<'a> = GraphQLParserType<'a, &'a str>;
+pub type Arg<'a> = GraphQLParserType<'a, &'a str>;
 
 pub trait MaybeNamed {
     fn maybe_name(&self) -> Option<&str>;
@@ -44,30 +44,49 @@ pub fn path_with_possible_prefix(prefix: Option<&Path>, path: &Path) -> PathBuf 
         .unwrap_or_else(|| PathBuf::from(path))
 }
 
+#[cfg(feature = "debug")]
 pub mod debug {
     use eyre::{eyre, Result};
+    use lazy_static::lazy_static;
 
-    use crate::{cross, cross_eprint};
+    use crate::{cross, cross_eprintln};
 
-    pub fn log(msg: &str) -> Result<()> {
-        let do_debug = cross::env::var("ACCORD_DEBUG")
-            .ok()
-            .map(|loo| match loo.as_str() {
-                "true" => Some(true),
-                "false" => Some(false),
-                _ => None,
-            });
-        match do_debug {
-            Some(Some(do_debug)) => {
-                if do_debug {
-                    cross_eprint!("{msg}");
-                }
-                Ok(())
-            }
-            None => Ok(()),
-            _ => Err(eyre!(
-                "Invalid ACCORD_DEBUG value. Must be 'true' or 'false'"
+    lazy_static! {
+        static ref DO_DEBUG: bool = match init() {
+            Ok(do_debug) => do_debug,
+            Err(err) => panic!("Failed to init debug flag: {err}"),
+        };
+    }
+
+    fn init() -> Result<bool> {
+        let Some(accord_debug) = cross::env::option_var("ACCORD_DEBUG")? else {
+            return Ok(false);
+        };
+
+        let result = match accord_debug.as_str() {
+            "true" => Ok(true),
+            "false" => Ok(false),
+            value => Err(eyre!(
+                "Invalid ACCORD_DEBUG value '{value}'. Must be 'true' or 'false'"
             )),
+        };
+
+        result
+    }
+
+    pub fn log(msg: &str) {
+        {
+            if *DO_DEBUG {
+                cross_eprintln!("{} {msg}", console::style("DEBUG:").red());
+            }
         }
+    }
+}
+
+#[macro_export]
+macro_rules! debug_log {
+    ($($t:tt)*) => {
+        #[cfg(feature = "debug")]
+        $crate::util::debug::log(&format_args!($($t)*).to_string())
     }
 }

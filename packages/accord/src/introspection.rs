@@ -1,16 +1,15 @@
+mod from_document;
 mod to_document;
 
-// use eyre::{eyre, Result};
-use eyre::Result;
+use eyre::{eyre, Result};
 use graphql_client::GraphQLQuery;
 use serde::{Deserialize, Serialize};
-// use url::Url;
 
 use crate::app;
 use crate::cross;
 use crate::print_info;
-// use crate::typescript::TypeIndex;
-// use crate::util::Arg;
+use crate::typescript::TypeIndex;
+use crate::util::Arg;
 use crate::util::MaybeNamed;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -66,33 +65,33 @@ pub enum TypeRef {
     },
 }
 
-// impl TypeRef {
-//     pub fn try_from_arg<'a>(type_index: &TypeIndex, arg: &Arg<'a>) -> Result<TypeRef> {
-//         match arg {
-//             Arg::NamedType(var_type_name) => type_index
-//                 .get(var_type_name)
-//                 .ok_or_else(|| {
-//                     eyre!(
-//                         "Found a query argument type not defined in the schema: {}",
-//                         var_type_name
-//                     )
-//                 })
-//                 .map(|t| t.clone().into()),
-//             Arg::NonNullType(var_type) => {
-//                 let type_ref = Self::try_from_arg(type_index, var_type)?;
-//                 Ok(TypeRef::NonNull {
-//                     of_type: Box::new(type_ref),
-//                 })
-//             }
-//             Arg::ListType(var_type) => {
-//                 let type_ref = Self::try_from_arg(type_index, var_type)?;
-//                 Ok(TypeRef::List {
-//                     of_type: Box::new(type_ref),
-//                 })
-//             }
-//         }
-//     }
-// }
+impl TypeRef {
+    pub fn try_from_arg<'a>(type_index: &TypeIndex, arg: &Arg<'a>) -> Result<TypeRef> {
+        match arg {
+            Arg::NamedType(var_type_name) => type_index
+                .get(var_type_name)
+                .ok_or_else(|| {
+                    eyre!(
+                        "Found a query argument type not defined in the schema: {}",
+                        var_type_name
+                    )
+                })
+                .map(|t| t.clone().into()),
+            Arg::NonNullType(var_type) => {
+                let type_ref = Self::try_from_arg(type_index, var_type)?;
+                Ok(TypeRef::NonNull {
+                    of_type: Box::new(type_ref),
+                })
+            }
+            Arg::ListType(var_type) => {
+                let type_ref = Self::try_from_arg(type_index, var_type)?;
+                Ok(TypeRef::List {
+                    of_type: Box::new(type_ref),
+                })
+            }
+        }
+    }
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "kind", rename_all = "SCREAMING_SNAKE_CASE")]
@@ -178,14 +177,17 @@ impl From<Type> for TypeRef {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+// FIXME: Value can be more than just a string
+pub struct Value(pub String);
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct InputValue {
     pub name: String,
     pub description: Option<String>,
     #[serde(rename = "type")]
     pub of_type: TypeRef,
-    // FIXME: default_value can be more than just a string
-    pub default_value: Option<String>,
+    pub default_value: Option<Value>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

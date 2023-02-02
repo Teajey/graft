@@ -5,6 +5,7 @@ use graphql_parser::query::Document;
 
 use crate::app;
 use crate::cross;
+use crate::debug_log;
 use crate::introspection::Schema;
 use crate::typescript::{TypeIndex, TypescriptableWithBuffer, WithIndexable};
 use crate::util::path_with_possible_prefix;
@@ -83,7 +84,7 @@ pub async fn generate_typescript_with_document<'a>(
         fragments: String::new(),
     };
 
-    let type_index = TypeIndex::try_new(&schema)?;
+    let type_index = TypeIndex::try_new(schema)?;
 
     writeln!(
         buffer.imports,
@@ -119,20 +120,27 @@ pub async fn generate_typescript(
         .await;
     };
 
+    debug_log!("current dir files: {:?}", std::fs::read_dir("./"));
+
+    debug_log!("document_paths: {:?}", document_paths);
+
     let document_str = document_paths
-        .collect::<Result<Vec<_>, _>>()?
         .iter()
         .map(|document_path| {
             let document_path =
-                path_with_possible_prefix(ctx.config_location.as_deref(), &document_path.as_path());
+                path_with_possible_prefix(ctx.config_location.as_deref(), document_path.as_path());
 
             let document_str = cross::fs::read_to_string(document_path)?;
 
             Ok(document_str)
         })
-        .collect::<Result<String>>()?;
+        .collect::<Result<Vec<_>>>()?
+        .join("\n");
+
+    debug_log!("AST: {}", document_str);
 
     let document = graphql_parser::parse_query::<&str>(&document_str)?;
+    debug_log!("parsed document");
 
     generate_typescript_with_document(schema, Some(document)).await
 }

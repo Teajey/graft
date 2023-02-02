@@ -9,7 +9,7 @@ use url::Url;
 
 use crate::{cross, util};
 
-pub struct Glob(pub glob::Paths);
+pub struct Glob(pub Vec<PathBuf>);
 
 struct GlobVisitor;
 
@@ -24,7 +24,7 @@ impl<'de> Visitor<'de> for GlobVisitor {
     where
         E: serde::de::Error,
     {
-        match glob::glob(st) {
+        match crate::cross::fs::glob(st) {
             Ok(paths) => Ok(Glob(paths)),
             Err(err) => Err(E::custom(err)),
         }
