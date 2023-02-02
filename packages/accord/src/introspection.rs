@@ -138,6 +138,12 @@ pub enum NamedType {
     },
 }
 
+impl NamedType {
+    pub fn is_internal(&self) -> bool {
+        self.name().starts_with("__")
+    }
+}
+
 impl From<&NamedType> for TypeRef {
     fn from(t: &NamedType) -> Self {
         TypeRef::To {

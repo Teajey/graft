@@ -33,6 +33,9 @@ impl<'a, 'b, 'c> TypescriptableWithBuffer for WithIndex<'a, 'b, 'c, NamedType> {
     fn as_typescript_on(&self, buffer: &mut Buffer) -> Result<()> {
         let WithIndex { target, type_index } = self;
         let ts_name = target.typescript_name();
+        if target.is_internal() {
+            return Ok(());
+        }
         match target {
             NamedType::Scalar { name, description } => {
                 possibly_write_description(&mut buffer.scalars, description.as_ref())?;
@@ -46,14 +49,11 @@ impl<'a, 'b, 'c> TypescriptableWithBuffer for WithIndex<'a, 'b, 'c, NamedType> {
                 writeln!(buffer.scalars, "export type {} = {scalar_type};", ts_name)?;
             }
             NamedType::Object {
-                name,
+                name: _,
                 description,
                 fields,
                 interfaces,
             } => {
-                if name.starts_with('_') {
-                    return Ok(());
-                }
                 possibly_write_description(&mut buffer.objects, description.as_ref())?;
                 write!(buffer.objects, "export type {} = ", ts_name)?;
                 for interface in interfaces {
@@ -75,7 +75,7 @@ impl<'a, 'b, 'c> TypescriptableWithBuffer for WithIndex<'a, 'b, 'c, NamedType> {
                 writeln!(buffer.objects, "}}")?;
             }
             NamedType::Interface {
-                name,
+                name: _,
                 description,
                 fields,
                 possible_types,
@@ -102,7 +102,7 @@ impl<'a, 'b, 'c> TypescriptableWithBuffer for WithIndex<'a, 'b, 'c, NamedType> {
                 writeln!(buffer.interfaces, "}}")?;
             }
             NamedType::Union {
-                name,
+                name: _,
                 description,
                 possible_types,
             } => {
@@ -122,13 +122,10 @@ impl<'a, 'b, 'c> TypescriptableWithBuffer for WithIndex<'a, 'b, 'c, NamedType> {
                 )?;
             }
             NamedType::Enum {
-                name,
+                name: _,
                 description,
                 enum_values,
             } => {
-                if name.starts_with('_') {
-                    return Ok(());
-                }
                 possibly_write_description(&mut buffer.enums, description.as_ref())?;
                 writeln!(buffer.enums, "export enum {} {{", ts_name)?;
                 for v in enum_values {
@@ -143,13 +140,10 @@ impl<'a, 'b, 'c> TypescriptableWithBuffer for WithIndex<'a, 'b, 'c, NamedType> {
                 writeln!(buffer.enums, "}}")?;
             }
             NamedType::InputObject {
-                name,
+                name: _,
                 description,
                 input_fields,
             } => {
-                if name.starts_with('_') {
-                    return Ok(());
-                }
                 possibly_write_description(&mut buffer.objects, description.as_ref())?;
                 writeln!(buffer.input_objects, "export type {} = {{", ts_name)?;
                 for f in input_fields {

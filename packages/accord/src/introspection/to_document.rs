@@ -22,6 +22,7 @@ impl<'a> From<&'a Schema> for Document<'a, &'a str> {
         let definitions = schema
             .types
             .iter()
+            .filter(|t| !t.is_internal())
             .map(|t| Definition::TypeDefinition(t.into()))
             .collect();
 
