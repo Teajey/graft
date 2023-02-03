@@ -22,7 +22,6 @@
     "pkg",
     "README.md",
     "LICENSE",
-    "fetchJson.js",
     "Cargo.toml",
     "src",
     "Cargo.lock"
