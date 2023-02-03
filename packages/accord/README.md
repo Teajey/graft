@@ -13,8 +13,8 @@ Inspired by [`graphql-code-generator`](https://github.com/dotansimha/graphql-cod
 ## (Planned) Features
 
 - [x] Generate basic GraphQL types
+- [x] Option to generate a GraphQL AST file of the schema
 - [ ] ~Everything that `graphql-code-generator` can do~ Eh, maybe just the stuff that I need
-- [ ] Option to generate a GraphQL AST file of the schema
 - [ ] User can arbitrarily extend the generated types with a `*.config.js`-like file instead of plugins
 
 ## Build
@@ -22,7 +22,7 @@ Inspired by [`graphql-code-generator`](https://github.com/dotansimha/graphql-cod
 As a native Rust binary
 
 ```
-cargo build --features native
+cargo build
 ```
 
 As an executable NPM package
@@ -65,9 +65,18 @@ Example config
 
 ```yml
 # .accord.yml
-schema: https://localhost:9443/trivia/graphql
-no_ssl: true
-document: document.graphql
+generates:
+  mySchema:
+    schema:
+      url: "{{MY_DOMAIN}}" # environment variable interpolation supported
+      no_ssl: true
+      out:
+        ast: schema.graphql
+        json: schema.json
+    typescript:
+      ast: schema.graphql
+      documents: document.graphql
+      out: generated.ts
 ```
 
 ## Usage
