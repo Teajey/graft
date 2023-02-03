@@ -7,7 +7,7 @@ use graphql_parser::schema::{
 
 use crate::util::MaybeNamed;
 
-use super::{EnumValue, Field, InputValue, NamedType, Schema, TypeRef, TypeRefContainer, Value};
+use super::{EnumValue, Field, InputValue, NamedType, Schema, TypeRef, TypeRefContainer};
 
 impl<'a> From<&'a Schema> for Document<'a, &'a str> {
     fn from(schema: &'a Schema) -> Self {
@@ -121,12 +121,6 @@ impl<'a> From<&'a NamedType> for TypeDefinition<'a, &'a str> {
     }
 }
 
-impl<'a> From<&'a Value> for gql_parser::Value<'a, &'a str> {
-    fn from(value: &'a Value) -> Self {
-        gql_parser::Value::String(value.0.clone())
-    }
-}
-
 impl<'a> From<&'a InputValue> for gql_parser::InputValue<'a, &'a str> {
     fn from(input: &'a InputValue) -> Self {
         Self {
@@ -134,7 +128,7 @@ impl<'a> From<&'a InputValue> for gql_parser::InputValue<'a, &'a str> {
             description: input.description.as_ref().cloned(),
             name: input.name.as_str(),
             value_type: input.of_type.borrow().into(),
-            default_value: input.default_value.as_ref().map(|v| v.into()),
+            default_value: None,
             directives: vec![],
         }
     }

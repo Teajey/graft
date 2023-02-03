@@ -17,25 +17,6 @@ impl From<gp::Type<'_, String>> for ac::TypeRef {
     }
 }
 
-impl From<gp::Value<'_, String>> for ac::Value {
-    fn from(value: gp::Value<'_, String>) -> Self {
-        match value {
-            gp::Value::Variable(var) => ac::Value(var),
-            gp::Value::Int(int) => {
-                let int = format!("{}", int.as_i64().expect("Int(i64) could not be unwrapped"));
-                ac::Value(int)
-            }
-            gp::Value::Float(fl) => ac::Value(format!("{}", fl)),
-            gp::Value::String(st) => ac::Value(st),
-            gp::Value::Boolean(b) => ac::Value(format!("{}", b)),
-            gp::Value::Null => ac::Value("null".to_owned()),
-            gp::Value::Enum(en) => ac::Value(en),
-            gp::Value::List(list) => ac::Value(format!("{:?}", list)),
-            gp::Value::Object(map) => ac::Value(format!("{:?}", map)),
-        }
-    }
-}
-
 impl From<gp::InputValue<'_, String>> for ac::InputValue {
     fn from(
         gp::InputValue {
@@ -43,7 +24,7 @@ impl From<gp::InputValue<'_, String>> for ac::InputValue {
             description,
             name,
             value_type,
-            default_value,
+            default_value: _,
             directives,
         }: gp::InputValue<'_, String>,
     ) -> Self {
@@ -51,7 +32,6 @@ impl From<gp::InputValue<'_, String>> for ac::InputValue {
             name,
             description,
             of_type: value_type.into(),
-            default_value: default_value.map(|v| v.into()),
         }
     }
 }

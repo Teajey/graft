@@ -153,17 +153,12 @@ impl From<&NamedType> for TypeRef {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-// FIXME: Value can be more than just a string
-pub struct Value(pub String);
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct InputValue {
     pub name: String,
     pub description: Option<String>,
     #[serde(rename = "type")]
     pub of_type: TypeRef,
-    pub default_value: Option<Value>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
