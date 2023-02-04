@@ -22,6 +22,7 @@
     "pkg",
     "README.md",
     "LICENSE",
+    "node.js",
     "Cargo.toml",
     "src",
     "Cargo.lock"
