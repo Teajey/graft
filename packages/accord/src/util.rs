@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 
 use ::graphql_parser::query::Type as GraphQLParserType;
 
-use crate::introspection::{NamedType, TypeRef};
+use crate::graphql::schema::{NamedType, TypeRef};
 
 pub type Arg<'a> = GraphQLParserType<'a, &'a str>;
 

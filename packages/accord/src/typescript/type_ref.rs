@@ -1,7 +1,7 @@
 use eyre::Result;
 
 use super::{Typescriptable, WithIndex};
-use crate::introspection::{Type, TypeRef, TypeRefContainer};
+use crate::graphql::schema::{Type, TypeRef, TypeRefContainer};
 
 impl<'a, 'b, 'c> Typescriptable for WithIndex<'a, 'b, 'c, TypeRef> {
     fn as_typescript(&self) -> Result<String> {

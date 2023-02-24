@@ -10,7 +10,7 @@ use graphql_parser::query::{
 use super::{TypeIndex, Typescriptable, TypescriptableWithBuffer, WithIndex, WithIndexable};
 use crate::{
     gen::Buffer,
-    introspection::{Field, NamedType, Type, TypeRef, TypeRefContainer},
+    graphql::schema::{Field, NamedType, Type, TypeRef, TypeRefContainer},
 };
 
 use graphql_parser::query::{Field as SelectedField, Selection, SelectionSet};

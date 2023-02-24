@@ -7,7 +7,7 @@ use crate::app;
 use crate::app::config::Glob;
 use crate::cross;
 use crate::debug_log;
-use crate::introspection::Schema;
+use crate::graphql::schema::Schema;
 use crate::typescript::{TypeIndex, TypescriptableWithBuffer, WithIndexable};
 use crate::util::path_with_possible_prefix;
 

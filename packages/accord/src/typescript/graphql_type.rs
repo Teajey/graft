@@ -7,7 +7,7 @@ use super::{
     possibly_write_description, Typescriptable, TypescriptableWithBuffer, WithIndex, WithIndexable,
 };
 use crate::gen::Buffer;
-use crate::introspection::{NamedType, TypeRef, TypeRefContainer};
+use crate::graphql::schema::{NamedType, TypeRef, TypeRefContainer};
 use crate::util::{MaybeNamed, Named};
 
 impl NamedType {

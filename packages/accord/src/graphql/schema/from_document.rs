@@ -1,7 +1,7 @@
 use eyre::{eyre, Report, Result};
 use graphql_parser::schema as gp;
 
-use crate::introspection as ac;
+use crate::graphql::schema as ac;
 
 impl From<gp::Type<'_, String>> for ac::TypeRef {
     fn from(value: gp::Type<'_, String>) -> Self {

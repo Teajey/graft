@@ -5,6 +5,8 @@ mod cross;
 #[cfg(not(target_arch = "wasm32"))]
 mod gen;
 #[cfg(not(target_arch = "wasm32"))]
+mod graphql;
+#[cfg(not(target_arch = "wasm32"))]
 mod introspection;
 #[cfg(not(target_arch = "wasm32"))]
 mod run;

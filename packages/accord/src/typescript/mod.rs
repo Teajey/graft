@@ -8,7 +8,7 @@ use std::fmt::Write;
 use eyre::{eyre, Result};
 
 use crate::gen::Buffer;
-use crate::introspection::{NamedType, Schema, Type, TypeRef};
+use crate::graphql::schema::{NamedType, Schema, Type, TypeRef};
 use crate::util::Named;
 
 pub(in crate::typescript) fn possibly_write_description<W: Write>(
