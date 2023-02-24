@@ -13,8 +13,8 @@ impl<'a, 'b, 'c> Typescriptable for WithIndex<'a, 'b, 'c, TypeRef> {
     }
 }
 
-fn recursive_typescriptify<'a, 'b, 'c>(
-    type_ref_with_index: &WithIndex<'a, 'b, 'c, TypeRef>,
+fn recursive_typescriptify(
+    type_ref_with_index: &WithIndex<'_, '_, '_, TypeRef>,
     nullable: &mut bool,
 ) -> Result<String> {
     let WithIndex { target, type_index } = type_ref_with_index;
