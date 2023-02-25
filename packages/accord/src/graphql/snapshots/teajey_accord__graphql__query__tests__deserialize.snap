@@ -1,5 +1,5 @@
 ---
-source: packages/accord/src/graphql/queries.rs
+source: packages/accord/src/graphql/query.rs
 expression: doc
 ---
 [
