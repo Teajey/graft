@@ -1,81 +1,25 @@
-use serde::{
-    de::{self, Visitor},
-    Deserialize,
-};
+use serde::Deserialize;
 
-#[derive(PartialEq, Debug)]
+use super::kind::Kind;
+
+#[derive(PartialEq, Debug, Kind)]
 pub struct Name(String);
-
-struct NameVisitor;
-
-impl<'de> Visitor<'de> for NameVisitor {
-    type Value = Name;
-
-    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-        formatter.write_str(r#"a map { kind: "Name", value: <some name> }"#)
-    }
-
-    fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
-    where
-        A: serde::de::MapAccess<'de>,
-    {
-        let mut kind = None;
-        let mut value = None;
-
-        while let Some(key) = map.next_key::<String>()? {
-            match key.as_str() {
-                "kind" => {
-                    if kind.is_some() {
-                        return Err(de::Error::duplicate_field("kind"));
-                    }
-                    kind = Some(map.next_value::<String>()?);
-                }
-                "value" => {
-                    if value.is_some() {
-                        return Err(de::Error::duplicate_field("value"));
-                    }
-                    value = Some(map.next_value()?);
-                }
-                x => return Err(de::Error::unknown_field(x, &["kind", "value"])),
-            }
-        }
-
-        let Some("Name") = kind.as_deref() else {
-            return Err(de::Error::custom(r#""kind" must be string "Name""#));
-        };
-
-        let Some(value) = value else {
-            return Err(de::Error::missing_field("value"))
-        };
-
-        Ok(Name(value))
-    }
-}
-
-impl<'de> Deserialize<'de> for Name {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        deserializer.deserialize_map(NameVisitor)
-    }
-}
 
 #[derive(Deserialize, Debug)]
 pub struct Directive {
     name: Name,
-    arguments: Vec<Kind>,
+    arguments: Vec<KindEnum>,
 }
 
 #[derive(Deserialize, Debug)]
 #[serde(tag = "kind")]
-pub enum Kind {
+pub enum KindEnum {
     Argument {
         name: Name,
-        value: Box<Kind>,
+        value: Box<KindEnum>,
     },
     ListValue {
-        values: Vec<Kind>,
+        values: Vec<KindEnum>,
     },
     IntValue {
         value: String,
@@ -95,18 +39,18 @@ pub enum Kind {
     },
     #[serde(rename_all = "camelCase")]
     VariableDefinition {
-        variable: Box<Kind>,
+        variable: Box<KindEnum>,
         #[serde(rename = "type")]
-        of_type: Box<Kind>,
-        default_value: Option<Box<Kind>>,
+        of_type: Box<KindEnum>,
+        default_value: Option<Box<KindEnum>>,
         directives: Vec<Directive>,
     },
     ObjectField {
         name: Name,
-        value: Box<Kind>,
+        value: Box<KindEnum>,
     },
     ObjectValue {
-        fields: Vec<Kind>,
+        fields: Vec<KindEnum>,
     },
     StringValue {
         value: String,
@@ -121,13 +65,13 @@ pub enum Selection {
     Field {
         alias: Option<Name>,
         name: Name,
-        arguments: Vec<Kind>,
+        arguments: Vec<KindEnum>,
         directives: Vec<Directive>,
         selection_set: Option<Box<SelectionSet>>,
     },
     #[serde(rename_all = "camelCase")]
     InlineFragment {
-        type_condition: Kind,
+        type_condition: KindEnum,
         directives: Vec<Directive>,
         selection_set: Box<SelectionSet>,
     },
@@ -149,14 +93,14 @@ pub enum Operation {
     #[serde(rename_all = "camelCase")]
     Mutation {
         name: Name,
-        variable_definitions: Vec<Kind>,
+        variable_definitions: Vec<KindEnum>,
         directives: Vec<Directive>,
         selection_set: SelectionSet,
     },
     #[serde(rename_all = "camelCase")]
     Subscription {
         name: Name,
-        variable_definitions: Vec<Kind>,
+        variable_definitions: Vec<KindEnum>,
         directives: Vec<Directive>,
         selection_set: SelectionSet,
     },
@@ -169,7 +113,7 @@ pub enum Definition {
     #[serde(rename_all = "camelCase")]
     FragmentDefinition {
         name: Name,
-        type_condition: Kind,
+        type_condition: KindEnum,
         directives: Vec<Directive>,
         selection_set: SelectionSet,
     },
@@ -236,7 +180,7 @@ mod tests {
           "directives": []
         });
 
-        let result: Result<Kind, _> = serde_json::from_value(json);
+        let result: Result<KindEnum, _> = serde_json::from_value(json);
 
         if let Err(err) = result {
             panic!("Deserialize failure {err}");
