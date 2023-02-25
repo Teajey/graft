@@ -1,3 +1,5 @@
+mod from_ast;
+
 use serde::Deserialize;
 
 use super::kind::Kind;
@@ -29,6 +31,10 @@ pub enum Value {
     #[serde(rename = "IntValue")]
     Int {
         value: String,
+    },
+    #[serde(rename = "FloatValue")]
+    Float {
+        value: f64,
     },
     #[serde(rename = "ObjectValue")]
     Object {
@@ -67,11 +73,22 @@ pub struct NamedType {
 }
 
 #[derive(Deserialize, Debug)]
+#[serde(tag = "kind")]
+pub enum Type {
+    #[serde(rename = "NamedType")]
+    Named(NamedType),
+    #[serde(rename = "NonNullType")]
+    NonNull { value: Box<Type> },
+    #[serde(rename = "ListType")]
+    List { value: Box<Type> },
+}
+
+#[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct VariableDefinition {
     variable: Variable,
     #[serde(rename = "type")]
-    of_type: NamedType,
+    of_type: Type,
     default_value: Option<Value>,
     directives: Vec<Directive>,
 }
@@ -89,9 +106,14 @@ pub enum Selection {
     },
     #[serde(rename_all = "camelCase")]
     InlineFragment {
-        type_condition: NamedType,
+        type_condition: Option<NamedType>,
         directives: Vec<Directive>,
         selection_set: SelectionSet,
+    },
+    #[serde(rename_all = "camelCase")]
+    FragmentSpread {
+        name: Name,
+        directives: Vec<Directive>,
     },
 }
 
@@ -104,20 +126,24 @@ pub struct SelectionSet {
 #[serde(tag = "operation")]
 #[serde(rename_all = "camelCase")]
 pub enum Operation {
+    SelectionSet(SelectionSet),
+    #[serde(rename_all = "camelCase")]
     Query {
         name: Option<Name>,
+        variable_definitions: Vec<VariableDefinition>,
         directives: Vec<Directive>,
+        selection_set: SelectionSet,
     },
     #[serde(rename_all = "camelCase")]
     Mutation {
-        name: Name,
+        name: Option<Name>,
         variable_definitions: Vec<VariableDefinition>,
         directives: Vec<Directive>,
         selection_set: SelectionSet,
     },
     #[serde(rename_all = "camelCase")]
     Subscription {
-        name: Name,
+        name: Option<Name>,
         variable_definitions: Vec<VariableDefinition>,
         directives: Vec<Directive>,
         selection_set: SelectionSet,
@@ -127,9 +153,10 @@ pub enum Operation {
 #[derive(Deserialize, Debug)]
 #[serde(tag = "kind")]
 pub enum Definition {
-    OperationDefinition(Operation),
-    #[serde(rename_all = "camelCase")]
-    FragmentDefinition {
+    #[serde(rename = "OperationDefinition")]
+    Operation(Operation),
+    #[serde(rename = "FragmentDefinition", rename_all = "camelCase")]
+    Fragment {
         name: Name,
         type_condition: NamedType,
         directives: Vec<Directive>,
