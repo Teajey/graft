@@ -1,4 +1,3 @@
-pub use macros::Kind;
 use serde::{de, Deserialize};
 
 use super::query::Name;

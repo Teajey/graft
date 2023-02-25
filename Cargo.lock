@@ -1008,7 +1008,6 @@ dependencies = [
  "insta",
  "js-sys",
  "lazy_static",
- "macros",
  "pretty_assertions",
  "regex",
  "regex-macro",
