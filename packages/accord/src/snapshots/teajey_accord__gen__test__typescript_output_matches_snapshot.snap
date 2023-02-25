@@ -2,7 +2,7 @@
 source: packages/accord/src/gen.rs
 expression: typescript
 ---
-import { parse, TypedQueryDocumentNode } from "graphql";
+import type { TypedQueryDocumentNode } from "graphql";
 
 // Utility types
 export type Nullable<T> = T | null;
@@ -977,7 +977,9 @@ export type NodeInterface = {
 // Selection Sets
 export type BasicQueryQuerySelectionSet = { person: Nullable<{ name: Nullable<StringScalar>, }>, };
 export type NestedFieldsQuerySelectionSet = { person: Nullable<{ name: Nullable<StringScalar>, gender: Nullable<StringScalar>, homeworld: Nullable<{ name: Nullable<StringScalar>, }>, starshipConnection: Nullable<{ edges: Nullable<Nullable<{ node: Nullable<{ id: IDScalar, manufacturers: Nullable<Nullable<StringScalar>[]>, }>, }>[]>, }>, }>, };
-export type AllStarshipsQuerySelectionSet = { allStarships: Nullable<{ edges: Nullable<Nullable<{ node: Nullable<{ } & StarshipFragmentFragment>, }>[]>, }>, };
+export type AllStarshipsQuerySelectionSet = { allStarships: Nullable<{ edges: Nullable<Nullable<{ node: Nullable<{ } & StarshipFragmentFragmentSelectionSet>, }>[]>, }>, };
+export type StarshipFragmentFragmentSelectionSet = { id: IDScalar, name: Nullable<StringScalar>, model: Nullable<StringScalar>, costInCredits: Nullable<FloatScalar>, pilotConnection: Nullable<{ edges: Nullable<Nullable<{ node: Nullable<{ } & PilotFragmentFragmentSelectionSet>, }>[]>, }>, };
+export type PilotFragmentFragmentSelectionSet = { name: Nullable<StringScalar>, homeworld: Nullable<{ name: Nullable<StringScalar>, }>, };
 
 // Args
 export type BasicQueryQueryArgs = Record<string, never>;
@@ -985,46 +987,535 @@ export type NestedFieldsQueryArgs = Record<string, never>;
 export type AllStarshipsQueryArgs = Record<string, never>;
 
 // Queries
-export const BasicQueryQueryDocument = parse(`query BasicQuery {
-  person(personID: 4) {
-    name
-  }
-}
-`) as TypedQueryDocumentNode<BasicQueryQuerySelectionSet, BasicQueryQueryArgs>;
-export const NestedFieldsQueryDocument = parse(`query NestedFields {
-  person(personID: 4) {
-    name
-    gender
-    homeworld {
-      name
-    }
-    starshipConnection {
-      edges {
-        node {
-          id
-          manufacturers
-        }
+export const BasicQueryQueryDocument = {
+  "kind": "Document",
+  "definitions": [
+    {
+      "kind": "OperationDefinition",
+      "operation": "query",
+      "name": {
+        "kind": "Name",
+        "value": "BasicQuery"
+      },
+      "variableDefinitions": [],
+      "directives": [],
+      "selectionSet": {
+        "kind": "SelectionSet",
+        "selections": [
+          {
+            "kind": "Field",
+            "alias": null,
+            "name": {
+              "kind": "Name",
+              "value": "person"
+            },
+            "arguments": [
+              {
+                "kind": "Argument",
+                "name": {
+                  "kind": "Name",
+                  "value": "personID"
+                },
+                "value": {
+                  "kind": "IntValue",
+                  "value": "4"
+                }
+              }
+            ],
+            "directives": [],
+            "selectionSet": {
+              "kind": "SelectionSet",
+              "selections": [
+                {
+                  "kind": "Field",
+                  "alias": null,
+                  "name": {
+                    "kind": "Name",
+                    "value": "name"
+                  },
+                  "arguments": [],
+                  "directives": [],
+                  "selectionSet": {
+                    "kind": "SelectionSet",
+                    "selections": []
+                  }
+                }
+              ]
+            }
+          }
+        ]
       }
     }
-  }
-}
-`) as TypedQueryDocumentNode<NestedFieldsQuerySelectionSet, NestedFieldsQueryArgs>;
-export const AllStarshipsQueryDocument = parse(`query AllStarships {
-  allStarships(first: 7) {
-    edges {
-      node {
-        ...starshipFragment
+  ]
+} as unknown as TypedQueryDocumentNode<BasicQueryQuerySelectionSet, BasicQueryQueryArgs>;
+export const NestedFieldsQueryDocument = {
+  "kind": "Document",
+  "definitions": [
+    {
+      "kind": "OperationDefinition",
+      "operation": "query",
+      "name": {
+        "kind": "Name",
+        "value": "NestedFields"
+      },
+      "variableDefinitions": [],
+      "directives": [],
+      "selectionSet": {
+        "kind": "SelectionSet",
+        "selections": [
+          {
+            "kind": "Field",
+            "alias": null,
+            "name": {
+              "kind": "Name",
+              "value": "person"
+            },
+            "arguments": [
+              {
+                "kind": "Argument",
+                "name": {
+                  "kind": "Name",
+                  "value": "personID"
+                },
+                "value": {
+                  "kind": "IntValue",
+                  "value": "4"
+                }
+              }
+            ],
+            "directives": [],
+            "selectionSet": {
+              "kind": "SelectionSet",
+              "selections": [
+                {
+                  "kind": "Field",
+                  "alias": null,
+                  "name": {
+                    "kind": "Name",
+                    "value": "name"
+                  },
+                  "arguments": [],
+                  "directives": [],
+                  "selectionSet": {
+                    "kind": "SelectionSet",
+                    "selections": []
+                  }
+                },
+                {
+                  "kind": "Field",
+                  "alias": null,
+                  "name": {
+                    "kind": "Name",
+                    "value": "gender"
+                  },
+                  "arguments": [],
+                  "directives": [],
+                  "selectionSet": {
+                    "kind": "SelectionSet",
+                    "selections": []
+                  }
+                },
+                {
+                  "kind": "Field",
+                  "alias": null,
+                  "name": {
+                    "kind": "Name",
+                    "value": "homeworld"
+                  },
+                  "arguments": [],
+                  "directives": [],
+                  "selectionSet": {
+                    "kind": "SelectionSet",
+                    "selections": [
+                      {
+                        "kind": "Field",
+                        "alias": null,
+                        "name": {
+                          "kind": "Name",
+                          "value": "name"
+                        },
+                        "arguments": [],
+                        "directives": [],
+                        "selectionSet": {
+                          "kind": "SelectionSet",
+                          "selections": []
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "kind": "Field",
+                  "alias": null,
+                  "name": {
+                    "kind": "Name",
+                    "value": "starshipConnection"
+                  },
+                  "arguments": [],
+                  "directives": [],
+                  "selectionSet": {
+                    "kind": "SelectionSet",
+                    "selections": [
+                      {
+                        "kind": "Field",
+                        "alias": null,
+                        "name": {
+                          "kind": "Name",
+                          "value": "edges"
+                        },
+                        "arguments": [],
+                        "directives": [],
+                        "selectionSet": {
+                          "kind": "SelectionSet",
+                          "selections": [
+                            {
+                              "kind": "Field",
+                              "alias": null,
+                              "name": {
+                                "kind": "Name",
+                                "value": "node"
+                              },
+                              "arguments": [],
+                              "directives": [],
+                              "selectionSet": {
+                                "kind": "SelectionSet",
+                                "selections": [
+                                  {
+                                    "kind": "Field",
+                                    "alias": null,
+                                    "name": {
+                                      "kind": "Name",
+                                      "value": "id"
+                                    },
+                                    "arguments": [],
+                                    "directives": [],
+                                    "selectionSet": {
+                                      "kind": "SelectionSet",
+                                      "selections": []
+                                    }
+                                  },
+                                  {
+                                    "kind": "Field",
+                                    "alias": null,
+                                    "name": {
+                                      "kind": "Name",
+                                      "value": "manufacturers"
+                                    },
+                                    "arguments": [],
+                                    "directives": [],
+                                    "selectionSet": {
+                                      "kind": "SelectionSet",
+                                      "selections": []
+                                    }
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
       }
     }
-  }
-}
-`) as TypedQueryDocumentNode<AllStarshipsQuerySelectionSet, AllStarshipsQueryArgs>;
+  ]
+} as unknown as TypedQueryDocumentNode<NestedFieldsQuerySelectionSet, NestedFieldsQueryArgs>;
+export const AllStarshipsQueryDocument = {
+  "kind": "Document",
+  "definitions": [
+    {
+      "kind": "OperationDefinition",
+      "operation": "query",
+      "name": {
+        "kind": "Name",
+        "value": "AllStarships"
+      },
+      "variableDefinitions": [],
+      "directives": [],
+      "selectionSet": {
+        "kind": "SelectionSet",
+        "selections": [
+          {
+            "kind": "Field",
+            "alias": null,
+            "name": {
+              "kind": "Name",
+              "value": "allStarships"
+            },
+            "arguments": [
+              {
+                "kind": "Argument",
+                "name": {
+                  "kind": "Name",
+                  "value": "first"
+                },
+                "value": {
+                  "kind": "IntValue",
+                  "value": "7"
+                }
+              }
+            ],
+            "directives": [],
+            "selectionSet": {
+              "kind": "SelectionSet",
+              "selections": [
+                {
+                  "kind": "Field",
+                  "alias": null,
+                  "name": {
+                    "kind": "Name",
+                    "value": "edges"
+                  },
+                  "arguments": [],
+                  "directives": [],
+                  "selectionSet": {
+                    "kind": "SelectionSet",
+                    "selections": [
+                      {
+                        "kind": "Field",
+                        "alias": null,
+                        "name": {
+                          "kind": "Name",
+                          "value": "node"
+                        },
+                        "arguments": [],
+                        "directives": [],
+                        "selectionSet": {
+                          "kind": "SelectionSet",
+                          "selections": [
+                            {
+                              "kind": "FragmentSpread",
+                              "name": {
+                                "kind": "Name",
+                                "value": "starshipFragment"
+                              },
+                              "directives": []
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+} as unknown as TypedQueryDocumentNode<AllStarshipsQuerySelectionSet, AllStarshipsQueryArgs>;
 
 // Mutations
 
 // Subscriptions
 
 // Fragments
-export type StarshipFragmentFragment = { id: IDScalar, name: Nullable<StringScalar>, model: Nullable<StringScalar>, costInCredits: Nullable<FloatScalar>, pilotConnection: Nullable<{ edges: Nullable<Nullable<{ node: Nullable<{ } & PilotFragmentFragment>, }>[]>, }>, };
-export type PilotFragmentFragment = { name: Nullable<StringScalar>, homeworld: Nullable<{ name: Nullable<StringScalar>, }>, };
+export const StarshipFragmentFragmentDocument = {
+  "kind": "Document",
+  "definitions": [
+    {
+      "kind": "FragmentDefinition",
+      "name": {
+        "kind": "Name",
+        "value": "starshipFragment"
+      },
+      "typeCondition": {
+        "kind": "NamedType",
+        "name": {
+          "kind": "Name",
+          "value": "Starship"
+        }
+      },
+      "directives": [],
+      "selectionSet": {
+        "kind": "SelectionSet",
+        "selections": [
+          {
+            "kind": "Field",
+            "alias": null,
+            "name": {
+              "kind": "Name",
+              "value": "id"
+            },
+            "arguments": [],
+            "directives": [],
+            "selectionSet": {
+              "kind": "SelectionSet",
+              "selections": []
+            }
+          },
+          {
+            "kind": "Field",
+            "alias": null,
+            "name": {
+              "kind": "Name",
+              "value": "name"
+            },
+            "arguments": [],
+            "directives": [],
+            "selectionSet": {
+              "kind": "SelectionSet",
+              "selections": []
+            }
+          },
+          {
+            "kind": "Field",
+            "alias": null,
+            "name": {
+              "kind": "Name",
+              "value": "model"
+            },
+            "arguments": [],
+            "directives": [],
+            "selectionSet": {
+              "kind": "SelectionSet",
+              "selections": []
+            }
+          },
+          {
+            "kind": "Field",
+            "alias": null,
+            "name": {
+              "kind": "Name",
+              "value": "costInCredits"
+            },
+            "arguments": [],
+            "directives": [],
+            "selectionSet": {
+              "kind": "SelectionSet",
+              "selections": []
+            }
+          },
+          {
+            "kind": "Field",
+            "alias": null,
+            "name": {
+              "kind": "Name",
+              "value": "pilotConnection"
+            },
+            "arguments": [],
+            "directives": [],
+            "selectionSet": {
+              "kind": "SelectionSet",
+              "selections": [
+                {
+                  "kind": "Field",
+                  "alias": null,
+                  "name": {
+                    "kind": "Name",
+                    "value": "edges"
+                  },
+                  "arguments": [],
+                  "directives": [],
+                  "selectionSet": {
+                    "kind": "SelectionSet",
+                    "selections": [
+                      {
+                        "kind": "Field",
+                        "alias": null,
+                        "name": {
+                          "kind": "Name",
+                          "value": "node"
+                        },
+                        "arguments": [],
+                        "directives": [],
+                        "selectionSet": {
+                          "kind": "SelectionSet",
+                          "selections": [
+                            {
+                              "kind": "FragmentSpread",
+                              "name": {
+                                "kind": "Name",
+                                "value": "pilotFragment"
+                              },
+                              "directives": []
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+} as unknown as TypedQueryDocumentNode<StarshipFragmentFragmentSelectionSet, unknown>
+export const PilotFragmentFragmentDocument = {
+  "kind": "Document",
+  "definitions": [
+    {
+      "kind": "FragmentDefinition",
+      "name": {
+        "kind": "Name",
+        "value": "pilotFragment"
+      },
+      "typeCondition": {
+        "kind": "NamedType",
+        "name": {
+          "kind": "Name",
+          "value": "Person"
+        }
+      },
+      "directives": [],
+      "selectionSet": {
+        "kind": "SelectionSet",
+        "selections": [
+          {
+            "kind": "Field",
+            "alias": null,
+            "name": {
+              "kind": "Name",
+              "value": "name"
+            },
+            "arguments": [],
+            "directives": [],
+            "selectionSet": {
+              "kind": "SelectionSet",
+              "selections": []
+            }
+          },
+          {
+            "kind": "Field",
+            "alias": null,
+            "name": {
+              "kind": "Name",
+              "value": "homeworld"
+            },
+            "arguments": [],
+            "directives": [],
+            "selectionSet": {
+              "kind": "SelectionSet",
+              "selections": [
+                {
+                  "kind": "Field",
+                  "alias": null,
+                  "name": {
+                    "kind": "Name",
+                    "value": "name"
+                  },
+                  "arguments": [],
+                  "directives": [],
+                  "selectionSet": {
+                    "kind": "SelectionSet",
+                    "selections": []
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+} as unknown as TypedQueryDocumentNode<PilotFragmentFragmentSelectionSet, unknown>
 

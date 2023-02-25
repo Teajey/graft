@@ -3,15 +3,14 @@ use std::fmt::Write;
 use convert_case::{Case, Casing};
 use eyre::{eyre, Result};
 use graphql_parser::query::{
-    Definition, FragmentDefinition, FragmentSpread, InlineFragment, OperationDefinition,
-    TypeCondition,
+    Definition, FragmentSpread, InlineFragment, OperationDefinition, TypeCondition,
 };
 
 use super::{TypeIndex, Typescriptable, TypescriptableWithBuffer, WithIndex, WithIndexable};
 use crate::{
     gen::Buffer,
     graphql::{
-        query::Operation,
+        query::{self as ac, Operation},
         schema::{Field, NamedType, Type, TypeRef, TypeRefContainer},
     },
 };
@@ -87,7 +86,9 @@ impl<'a, 'b, 'c> TypescriptableWithBuffer for WithIndex<'a, 'b, 'c, Definition<'
                 ) = operation_bundle;
                 let operation_name = operation_name.to_case(Case::Pascal);
 
-                let operation_json = serde_json::to_string_pretty(&operation_ast)?;
+                let document = ac::Document::new(vec![ac::Definition::Operation(operation_ast)]);
+
+                let document_json = serde_json::to_string_pretty(&document)?;
 
                 let document_name = format!("{operation_name}{operation_type_name}Document");
                 let args_name = format!("{operation_name}{operation_type_name}Args");
@@ -96,7 +97,7 @@ impl<'a, 'b, 'c> TypescriptableWithBuffer for WithIndex<'a, 'b, 'c, Definition<'
 
                 writeln!(
                     operation_buffer,
-                    "export const {document_name} = {operation_json} as unknown as TypedQueryDocumentNode<{selection_set_name}, {args_name}>;",
+                    "export const {document_name} = {document_json} as unknown as TypedQueryDocumentNode<{selection_set_name}, {args_name}>;",
                 )?;
 
                 if variable_definitions.is_empty() {
@@ -141,29 +142,33 @@ impl<'a, 'b, 'c> TypescriptableWithBuffer for WithIndex<'a, 'b, 'c, Definition<'
                 )?;
                 writeln!(buffer.selection_sets, ";")?;
             }
-            Definition::Fragment(FragmentDefinition {
-                position,
-                name,
-                type_condition,
-                directives,
-                selection_set,
-            }) => {
-                let TypeCondition::On(type_name) = type_condition;
+            Definition::Fragment(fragment) => {
+                let definition = ac::Definition::from(Definition::Fragment(fragment.clone()));
+                let document = ac::Document::new(vec![definition]);
+
+                let document_json = serde_json::to_string_pretty(&document)?;
+
+                writeln!(buffer.fragments, "export const {name}FragmentDocument = {document_json} as unknown as TypedQueryDocumentNode<{name}FragmentSelectionSet, unknown>", name = fragment.name.to_case(Case::Pascal))?;
+
+                let TypeCondition::On(type_name) = &fragment.type_condition;
                 write!(
-                    buffer.fragments,
-                    "export type {}Fragment = ",
-                    name.to_case(Case::Pascal)
+                    buffer.selection_sets,
+                    "export type {}FragmentSelectionSet = ",
+                    fragment.name.to_case(Case::Pascal)
                 )?;
                 recursively_typescriptify_selected_field(
-                    selection_set,
-                    &mut buffer.fragments,
+                    &fragment.selection_set,
+                    &mut buffer.selection_sets,
                     &TypeRef::from(type_index.get(type_name).ok_or_else(|| {
-                        eyre!("Type targetted by fragment at {position} not found")
+                        eyre!(
+                            "Type targetted by fragment at {} not found",
+                            fragment.position
+                        )
                     })?),
                     type_index,
                     &mut false,
                 )?;
-                writeln!(buffer.fragments, ";")?;
+                writeln!(buffer.selection_sets, ";")?;
             }
         }
 
@@ -214,7 +219,10 @@ fn recursively_typescriptify_selected_object_fields(
                 fragment_name,
                 directives,
             }) => {
-                fragment_strings.push(format!("{}Fragment", fragment_name.to_case(Case::Pascal)));
+                fragment_strings.push(format!(
+                    "{}FragmentSelectionSet",
+                    fragment_name.to_case(Case::Pascal)
+                ));
             }
             Selection::InlineFragment(InlineFragment {
                 position,

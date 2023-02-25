@@ -130,6 +130,13 @@ pub mod tag {
         #[serde(rename = "NamedType")]
         T,
     }
+
+    #[derive(Debug, serde::Serialize)]
+    #[cfg_attr(test, derive(serde::Deserialize))]
+    pub enum Document {
+        #[serde(rename = "Document")]
+        T,
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -245,6 +252,22 @@ pub enum Definition {
         directives: Vec<Directive>,
         selection_set: SelectionSet,
     },
+}
+
+#[derive(Debug, Serialize)]
+#[cfg_attr(test, derive(serde::Deserialize))]
+pub struct Document {
+    kind: tag::Document,
+    definitions: Vec<Definition>,
+}
+
+impl Document {
+    pub fn new(definitions: Vec<Definition>) -> Self {
+        Self {
+            kind: tag::Document::T,
+            definitions,
+        }
+    }
 }
 
 #[cfg(test)]
