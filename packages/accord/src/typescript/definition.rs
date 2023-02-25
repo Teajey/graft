@@ -88,7 +88,7 @@ impl<'a, 'b, 'c> TypescriptableWithBuffer for WithIndex<'a, 'b, 'c, Definition<'
 
                 let document = ac::Document::new(vec![ac::Definition::Operation(operation_ast)]);
 
-                let document_json = serde_json::to_string_pretty(&document)?;
+                let document_json = serde_json::to_string(&document)?;
 
                 let document_name = format!("{operation_name}{operation_type_name}Document");
                 let args_name = format!("{operation_name}{operation_type_name}Args");
@@ -146,7 +146,7 @@ impl<'a, 'b, 'c> TypescriptableWithBuffer for WithIndex<'a, 'b, 'c, Definition<'
                 let definition = ac::Definition::from(Definition::Fragment(fragment.clone()));
                 let document = ac::Document::new(vec![definition]);
 
-                let document_json = serde_json::to_string_pretty(&document)?;
+                let document_json = serde_json::to_string(&document)?;
 
                 writeln!(buffer.fragments, "export const {name}FragmentDocument = {document_json} as unknown as TypedQueryDocumentNode<{name}FragmentSelectionSet, unknown>", name = fragment.name.to_case(Case::Pascal))?;
 
