@@ -8,54 +8,72 @@ pub struct Name(String);
 #[derive(Deserialize, Debug)]
 pub struct Directive {
     name: Name,
-    arguments: Vec<KindEnum>,
+    arguments: Vec<Argument>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct ObjectField {
+    name: Name,
+    value: Value,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct Variable {
+    name: Name,
 }
 
 #[derive(Deserialize, Debug)]
 #[serde(tag = "kind")]
-pub enum KindEnum {
-    Argument {
-        name: Name,
-        value: Box<KindEnum>,
-    },
-    ListValue {
-        values: Vec<KindEnum>,
-    },
-    IntValue {
+pub enum Value {
+    Variable(Variable),
+    #[serde(rename = "IntValue")]
+    Int {
         value: String,
     },
-    NamedType {
-        name: Name,
+    #[serde(rename = "ObjectValue")]
+    Object {
+        fields: Vec<ObjectField>,
     },
-    BooleanValue {
-        value: bool,
-    },
-    NullValue,
-    Variable {
-        name: Name,
-    },
-    EnumValue {
-        value: String,
-    },
-    #[serde(rename_all = "camelCase")]
-    VariableDefinition {
-        variable: Box<KindEnum>,
-        #[serde(rename = "type")]
-        of_type: Box<KindEnum>,
-        default_value: Option<Box<KindEnum>>,
-        directives: Vec<Directive>,
-    },
-    ObjectField {
-        name: Name,
-        value: Box<KindEnum>,
-    },
-    ObjectValue {
-        fields: Vec<KindEnum>,
-    },
-    StringValue {
+    #[serde(rename = "StringValue")]
+    String {
         value: String,
         block: bool,
     },
+    #[serde(rename = "ListValue")]
+    List {
+        values: Vec<Value>,
+    },
+    #[serde(rename = "BooleanValue")]
+    Boolean {
+        value: bool,
+    },
+    #[serde(rename = "NullValue")]
+    Null,
+    #[serde(rename = "EnumValue")]
+    Enum {
+        value: String,
+    },
+}
+
+#[derive(Deserialize, Debug)]
+pub struct Argument {
+    name: Name,
+    value: Value,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct NamedType {
+    name: Name,
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct VariableDefinition {
+    variable: Variable,
+    #[serde(rename = "type")]
+    of_type: NamedType,
+    default_value: Option<Value>,
+    directives: Vec<Directive>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -65,15 +83,15 @@ pub enum Selection {
     Field {
         alias: Option<Name>,
         name: Name,
-        arguments: Vec<KindEnum>,
+        arguments: Vec<Argument>,
         directives: Vec<Directive>,
-        selection_set: Option<Box<SelectionSet>>,
+        selection_set: Option<SelectionSet>,
     },
     #[serde(rename_all = "camelCase")]
     InlineFragment {
-        type_condition: KindEnum,
+        type_condition: NamedType,
         directives: Vec<Directive>,
-        selection_set: Box<SelectionSet>,
+        selection_set: SelectionSet,
     },
 }
 
@@ -93,14 +111,14 @@ pub enum Operation {
     #[serde(rename_all = "camelCase")]
     Mutation {
         name: Name,
-        variable_definitions: Vec<KindEnum>,
+        variable_definitions: Vec<VariableDefinition>,
         directives: Vec<Directive>,
         selection_set: SelectionSet,
     },
     #[serde(rename_all = "camelCase")]
     Subscription {
         name: Name,
-        variable_definitions: Vec<KindEnum>,
+        variable_definitions: Vec<VariableDefinition>,
         directives: Vec<Directive>,
         selection_set: SelectionSet,
     },
@@ -113,7 +131,7 @@ pub enum Definition {
     #[serde(rename_all = "camelCase")]
     FragmentDefinition {
         name: Name,
-        type_condition: KindEnum,
+        type_condition: NamedType,
         directives: Vec<Directive>,
         selection_set: SelectionSet,
     },
@@ -136,12 +154,10 @@ mod tests {
         let definition: serde_json::Value =
             serde_json::from_str(json_str).expect("must be valid json");
 
-        let result: Result<Document, _> = serde_json::from_value(definition);
+        let doc: Document =
+            serde_json::from_value(definition).expect("kitchen sink query must be deserializable");
 
-        match result {
-            Err(err) => panic!("Deserialize failure {err}"),
-            Ok(doc) => insta::assert_debug_snapshot!(doc),
-        }
+        insta::assert_debug_snapshot!(doc);
     }
 
     #[test]
@@ -180,7 +196,7 @@ mod tests {
           "directives": []
         });
 
-        let result: Result<KindEnum, _> = serde_json::from_value(json);
+        let result: Result<VariableDefinition, _> = serde_json::from_value(json);
 
         if let Err(err) = result {
             panic!("Deserialize failure {err}");

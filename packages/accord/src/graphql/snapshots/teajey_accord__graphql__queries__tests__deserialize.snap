@@ -33,7 +33,7 @@ Document {
                                     name: Name(
                                         "story",
                                     ),
-                                    value: IntValue {
+                                    value: Int {
                                         value: "123",
                                     },
                                 },
@@ -114,11 +114,13 @@ Document {
                                     name: Name(
                                         "input",
                                     ),
-                                    value: Variable {
-                                        name: Name(
-                                            "input",
-                                        ),
-                                    },
+                                    value: Variable(
+                                        Variable {
+                                            name: Name(
+                                                "input",
+                                            ),
+                                        },
+                                    ),
                                 },
                             ],
                             directives: [],
@@ -215,33 +217,37 @@ Document {
                                 name: Name(
                                     "size",
                                 ),
-                                value: Variable {
-                                    name: Name(
-                                        "size",
-                                    ),
-                                },
+                                value: Variable(
+                                    Variable {
+                                        name: Name(
+                                            "size",
+                                        ),
+                                    },
+                                ),
                             },
                             Argument {
                                 name: Name(
                                     "bar",
                                 ),
-                                value: Variable {
-                                    name: Name(
-                                        "b",
-                                    ),
-                                },
+                                value: Variable(
+                                    Variable {
+                                        name: Name(
+                                            "b",
+                                        ),
+                                    },
+                                ),
                             },
                             Argument {
                                 name: Name(
                                     "obj",
                                 ),
-                                value: ObjectValue {
+                                value: Object {
                                     fields: [
                                         ObjectField {
                                             name: Name(
                                                 "key",
                                             ),
-                                            value: StringValue {
+                                            value: String {
                                                 value: "value",
                                                 block: false,
                                             },
@@ -250,7 +256,7 @@ Document {
                                             name: Name(
                                                 "block",
                                             ),
-                                            value: StringValue {
+                                            value: String {
                                                 value: "              block string uses \\\"\\\"\\\"          ",
                                                 block: true,
                                             },
