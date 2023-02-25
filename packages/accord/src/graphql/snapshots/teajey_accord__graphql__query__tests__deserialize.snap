@@ -1,6 +1,6 @@
 ---
 source: packages/accord/src/graphql/query.rs
-expression: doc
+expression: defs
 ---
 [
     Operation(
@@ -12,34 +12,38 @@ expression: doc
             ),
             variable_definitions: [
                 VariableDefinition {
+                    kind: Some(
+                        T,
+                    ),
                     variable: Variable {
+                        kind: T,
                         name: Name(
                             "foo",
                         ),
                     },
-                    of_type: Named(
-                        NamedType {
-                            name: Name(
-                                "ComplexType",
-                            ),
-                        },
-                    ),
+                    of_type: Named {
+                        name: Name(
+                            "ComplexType",
+                        ),
+                    },
                     default_value: None,
                     directives: [],
                 },
                 VariableDefinition {
+                    kind: Some(
+                        T,
+                    ),
                     variable: Variable {
+                        kind: T,
                         name: Name(
                             "site",
                         ),
                     },
-                    of_type: Named(
-                        NamedType {
-                            name: Name(
-                                "Site",
-                            ),
-                        },
-                    ),
+                    of_type: Named {
+                        name: Name(
+                            "Site",
+                        ),
+                    },
                     default_value: Some(
                         Enum {
                             value: "MOBILE",
@@ -50,6 +54,9 @@ expression: doc
             ],
             directives: [],
             selection_set: SelectionSet {
+                kind: Some(
+                    T,
+                ),
                 selections: [
                     Field {
                         alias: Some(
@@ -62,6 +69,9 @@ expression: doc
                         ),
                         arguments: [
                             Argument {
+                                kind: Some(
+                                    T,
+                                ),
                                 name: Name(
                                     "id",
                                 ),
@@ -80,6 +90,9 @@ expression: doc
                         directives: [],
                         selection_set: Some(
                             SelectionSet {
+                                kind: Some(
+                                    T,
+                                ),
                                 selections: [
                                     Field {
                                         alias: None,
@@ -93,6 +106,9 @@ expression: doc
                                     InlineFragment {
                                         type_condition: Some(
                                             NamedType {
+                                                kind: Some(
+                                                    T,
+                                                ),
                                                 name: Name(
                                                     "User",
                                                 ),
@@ -100,6 +116,9 @@ expression: doc
                                         ),
                                         directives: [
                                             Directive {
+                                                kind: Some(
+                                                    T,
+                                                ),
                                                 name: Name(
                                                     "defer",
                                                 ),
@@ -107,6 +126,9 @@ expression: doc
                                             },
                                         ],
                                         selection_set: SelectionSet {
+                                            kind: Some(
+                                                T,
+                                            ),
                                             selections: [
                                                 Field {
                                                     alias: None,
@@ -117,6 +139,9 @@ expression: doc
                                                     directives: [],
                                                     selection_set: Some(
                                                         SelectionSet {
+                                                            kind: Some(
+                                                                T,
+                                                            ),
                                                             selections: [
                                                                 Field {
                                                                     alias: None,
@@ -138,6 +163,9 @@ expression: doc
                                                                     ),
                                                                     arguments: [
                                                                         Argument {
+                                                                            kind: Some(
+                                                                                T,
+                                                                            ),
                                                                             name: Name(
                                                                                 "first",
                                                                             ),
@@ -146,41 +174,49 @@ expression: doc
                                                                             },
                                                                         },
                                                                         Argument {
+                                                                            kind: Some(
+                                                                                T,
+                                                                            ),
                                                                             name: Name(
                                                                                 "after",
                                                                             ),
-                                                                            value: Variable(
-                                                                                Variable {
-                                                                                    name: Name(
-                                                                                        "foo",
-                                                                                    ),
-                                                                                },
-                                                                            ),
+                                                                            value: Variable {
+                                                                                name: Name(
+                                                                                    "foo",
+                                                                                ),
+                                                                            },
                                                                         },
                                                                     ],
                                                                     directives: [
                                                                         Directive {
+                                                                            kind: Some(
+                                                                                T,
+                                                                            ),
                                                                             name: Name(
                                                                                 "include",
                                                                             ),
                                                                             arguments: [
                                                                                 Argument {
+                                                                                    kind: Some(
+                                                                                        T,
+                                                                                    ),
                                                                                     name: Name(
                                                                                         "if",
                                                                                     ),
-                                                                                    value: Variable(
-                                                                                        Variable {
-                                                                                            name: Name(
-                                                                                                "foo",
-                                                                                            ),
-                                                                                        },
-                                                                                    ),
+                                                                                    value: Variable {
+                                                                                        name: Name(
+                                                                                            "foo",
+                                                                                        ),
+                                                                                    },
                                                                                 },
                                                                             ],
                                                                         },
                                                                     ],
                                                                     selection_set: Some(
                                                                         SelectionSet {
+                                                                            kind: Some(
+                                                                                T,
+                                                                            ),
                                                                             selections: [
                                                                                 Field {
                                                                                     alias: None,
@@ -212,26 +248,33 @@ expression: doc
                                         type_condition: None,
                                         directives: [
                                             Directive {
+                                                kind: Some(
+                                                    T,
+                                                ),
                                                 name: Name(
                                                     "skip",
                                                 ),
                                                 arguments: [
                                                     Argument {
+                                                        kind: Some(
+                                                            T,
+                                                        ),
                                                         name: Name(
                                                             "unless",
                                                         ),
-                                                        value: Variable(
-                                                            Variable {
-                                                                name: Name(
-                                                                    "foo",
-                                                                ),
-                                                            },
-                                                        ),
+                                                        value: Variable {
+                                                            name: Name(
+                                                                "foo",
+                                                            ),
+                                                        },
                                                     },
                                                 ],
                                             },
                                         ],
                                         selection_set: SelectionSet {
+                                            kind: Some(
+                                                T,
+                                            ),
                                             selections: [
                                                 Field {
                                                     alias: None,
@@ -249,6 +292,9 @@ expression: doc
                                         type_condition: None,
                                         directives: [],
                                         selection_set: SelectionSet {
+                                            kind: Some(
+                                                T,
+                                            ),
                                             selections: [
                                                 Field {
                                                     alias: None,
@@ -280,6 +326,9 @@ expression: doc
             variable_definitions: [],
             directives: [],
             selection_set: SelectionSet {
+                kind: Some(
+                    T,
+                ),
                 selections: [
                     Field {
                         alias: None,
@@ -288,6 +337,9 @@ expression: doc
                         ),
                         arguments: [
                             Argument {
+                                kind: Some(
+                                    T,
+                                ),
                                 name: Name(
                                     "story",
                                 ),
@@ -298,6 +350,9 @@ expression: doc
                         ],
                         directives: [
                             Directive {
+                                kind: Some(
+                                    T,
+                                ),
                                 name: Name(
                                     "defer",
                                 ),
@@ -306,6 +361,9 @@ expression: doc
                         ],
                         selection_set: Some(
                             SelectionSet {
+                                kind: Some(
+                                    T,
+                                ),
                                 selections: [
                                     Field {
                                         alias: None,
@@ -316,6 +374,9 @@ expression: doc
                                         directives: [],
                                         selection_set: Some(
                                             SelectionSet {
+                                                kind: Some(
+                                                    T,
+                                                ),
                                                 selections: [
                                                     Field {
                                                         alias: None,
@@ -347,24 +408,29 @@ expression: doc
             ),
             variable_definitions: [
                 VariableDefinition {
+                    kind: Some(
+                        T,
+                    ),
                     variable: Variable {
+                        kind: T,
                         name: Name(
                             "input",
                         ),
                     },
-                    of_type: Named(
-                        NamedType {
-                            name: Name(
-                                "StoryLikeSubscribeInput",
-                            ),
-                        },
-                    ),
+                    of_type: Named {
+                        name: Name(
+                            "StoryLikeSubscribeInput",
+                        ),
+                    },
                     default_value: None,
                     directives: [],
                 },
             ],
             directives: [],
             selection_set: SelectionSet {
+                kind: Some(
+                    T,
+                ),
                 selections: [
                     Field {
                         alias: None,
@@ -373,21 +439,25 @@ expression: doc
                         ),
                         arguments: [
                             Argument {
+                                kind: Some(
+                                    T,
+                                ),
                                 name: Name(
                                     "input",
                                 ),
-                                value: Variable(
-                                    Variable {
-                                        name: Name(
-                                            "input",
-                                        ),
-                                    },
-                                ),
+                                value: Variable {
+                                    name: Name(
+                                        "input",
+                                    ),
+                                },
                             },
                         ],
                         directives: [],
                         selection_set: Some(
                             SelectionSet {
+                                kind: Some(
+                                    T,
+                                ),
                                 selections: [
                                     Field {
                                         alias: None,
@@ -398,6 +468,9 @@ expression: doc
                                         directives: [],
                                         selection_set: Some(
                                             SelectionSet {
+                                                kind: Some(
+                                                    T,
+                                                ),
                                                 selections: [
                                                     Field {
                                                         alias: None,
@@ -408,6 +481,9 @@ expression: doc
                                                         directives: [],
                                                         selection_set: Some(
                                                             SelectionSet {
+                                                                kind: Some(
+                                                                    T,
+                                                                ),
                                                                 selections: [
                                                                     Field {
                                                                         alias: None,
@@ -431,6 +507,9 @@ expression: doc
                                                         directives: [],
                                                         selection_set: Some(
                                                             SelectionSet {
+                                                                kind: Some(
+                                                                    T,
+                                                                ),
                                                                 selections: [
                                                                     Field {
                                                                         alias: None,
@@ -462,12 +541,18 @@ expression: doc
             "frag",
         ),
         type_condition: NamedType {
+            kind: Some(
+                T,
+            ),
             name: Name(
                 "Friend",
             ),
         },
         directives: [],
         selection_set: SelectionSet {
+            kind: Some(
+                T,
+            ),
             selections: [
                 Field {
                     alias: None,
@@ -476,36 +561,44 @@ expression: doc
                     ),
                     arguments: [
                         Argument {
+                            kind: Some(
+                                T,
+                            ),
                             name: Name(
                                 "size",
                             ),
-                            value: Variable(
-                                Variable {
-                                    name: Name(
-                                        "size",
-                                    ),
-                                },
-                            ),
+                            value: Variable {
+                                name: Name(
+                                    "size",
+                                ),
+                            },
                         },
                         Argument {
+                            kind: Some(
+                                T,
+                            ),
                             name: Name(
                                 "bar",
                             ),
-                            value: Variable(
-                                Variable {
-                                    name: Name(
-                                        "b",
-                                    ),
-                                },
-                            ),
+                            value: Variable {
+                                name: Name(
+                                    "b",
+                                ),
+                            },
                         },
                         Argument {
+                            kind: Some(
+                                T,
+                            ),
                             name: Name(
                                 "obj",
                             ),
                             value: Object {
                                 fields: [
                                     ObjectField {
+                                        kind: Some(
+                                            T,
+                                        ),
                                         name: Name(
                                             "key",
                                         ),
@@ -515,6 +608,9 @@ expression: doc
                                         },
                                     },
                                     ObjectField {
+                                        kind: Some(
+                                            T,
+                                        ),
                                         name: Name(
                                             "block",
                                         ),
@@ -539,6 +635,9 @@ expression: doc
             variable_definitions: [],
             directives: [],
             selection_set: SelectionSet {
+                kind: Some(
+                    T,
+                ),
                 selections: [
                     Field {
                         alias: None,
@@ -547,6 +646,9 @@ expression: doc
                         ),
                         arguments: [
                             Argument {
+                                kind: Some(
+                                    T,
+                                ),
                                 name: Name(
                                     "truthy",
                                 ),
@@ -555,6 +657,9 @@ expression: doc
                                 },
                             },
                             Argument {
+                                kind: Some(
+                                    T,
+                                ),
                                 name: Name(
                                     "falsey",
                                 ),
@@ -563,6 +668,9 @@ expression: doc
                                 },
                             },
                             Argument {
+                                kind: Some(
+                                    T,
+                                ),
                                 name: Name(
                                     "nullish",
                                 ),

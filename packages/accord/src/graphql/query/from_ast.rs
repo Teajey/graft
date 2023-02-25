@@ -7,9 +7,9 @@ use super::ObjectField;
 impl From<gp::Type<'_, String>> for ac::Type {
     fn from(t: gp::Type<'_, String>) -> Self {
         match t {
-            gp::Type::NamedType(name) => ac::Type::Named(ac::NamedType {
+            gp::Type::NamedType(name) => ac::Type::Named {
                 name: ac::Name(name),
-            }),
+            },
             gp::Type::ListType(value) => ac::Type::List {
                 value: Box::new((*value).into()),
             },
@@ -23,9 +23,9 @@ impl From<gp::Type<'_, String>> for ac::Type {
 impl From<gp::Value<'_, String>> for ac::Value {
     fn from(value: gp::Value<'_, String>) -> Self {
         match value {
-            gp::Value::Variable(var) => ac::Value::Variable(ac::Variable {
+            gp::Value::Variable(var) => ac::Value::Variable {
                 name: ac::Name(var),
-            }),
+            },
             gp::Value::Int(i) => ac::Value::Int {
                 // TODO: Should just be an i64
                 value: i.as_i64().expect("must be i64").to_string(),
@@ -42,6 +42,7 @@ impl From<gp::Value<'_, String>> for ac::Value {
                 let fields = map
                     .into_iter()
                     .map(|(k, v)| ObjectField {
+                        kind: Some(ac::tag::ObjectField::T),
                         name: ac::Name(k),
                         value: v.into(),
                     })
@@ -62,7 +63,9 @@ impl From<gp::VariableDefinition<'_, String>> for ac::VariableDefinition {
         }: gp::VariableDefinition<'_, String>,
     ) -> Self {
         Self {
+            kind: Some(ac::tag::VariableDefinition::T),
             variable: ac::Variable {
+                kind: ac::tag::Variable::T,
                 name: ac::Name(name),
             },
             of_type: var_type.into(),
@@ -81,10 +84,12 @@ impl From<gp::Directive<'_, String>> for ac::Directive {
         }: gp::Directive<'_, String>,
     ) -> Self {
         Self {
+            kind: Some(ac::tag::Directive::T),
             name: ac::Name(name),
             arguments: arguments
                 .into_iter()
                 .map(|(name, value)| ac::Argument {
+                    kind: Some(ac::tag::Argument::T),
                     name: ac::Name(name),
                     value: value.into(),
                 })
@@ -109,6 +114,7 @@ impl From<gp::Selection<'_, String>> for ac::Selection {
                 arguments: arguments
                     .into_iter()
                     .map(|(name, value)| ac::Argument {
+                        kind: Some(ac::tag::Argument::T),
                         name: ac::Name(name),
                         value: value.into(),
                     })
@@ -132,6 +138,7 @@ impl From<gp::Selection<'_, String>> for ac::Selection {
                 selection_set,
             }) => ac::Selection::InlineFragment {
                 type_condition: type_condition.map(|gp::TypeCondition::On(name)| ac::NamedType {
+                    kind: Some(ac::tag::NamedType::T),
                     name: ac::Name(name),
                 }),
                 directives: directives.into_iter().map(Into::into).collect(),
@@ -144,6 +151,7 @@ impl From<gp::Selection<'_, String>> for ac::Selection {
 impl From<gp::SelectionSet<'_, String>> for ac::SelectionSet {
     fn from(gp::SelectionSet { span: _, items }: gp::SelectionSet<'_, String>) -> Self {
         Self {
+            kind: Some(ac::tag::SelectionSet::T),
             selections: items.into_iter().map(Into::into).collect(),
         }
     }
@@ -208,6 +216,7 @@ impl From<gp::Definition<'_, String>> for ac::Definition {
             }) => ac::Definition::Fragment {
                 name: ac::Name(name),
                 type_condition: ac::NamedType {
+                    kind: Some(ac::tag::NamedType::T),
                     name: ac::Name(tc_name),
                 },
                 directives: directives.into_iter().map(Into::into).collect(),

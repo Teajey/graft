@@ -1,33 +1,52 @@
 mod from_ast;
 
-use serde::Deserialize;
+use serde::{ser::SerializeMap, Serialize};
 
-use super::kind::Kind;
+#[derive(PartialEq, Debug)]
+pub struct Name(pub String);
 
-#[derive(PartialEq, Debug, Kind)]
-pub struct Name(String);
+impl Serialize for Name {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let mut map = serializer.serialize_map(Some(2))?;
+        map.serialize_entry("kind", "Name")?;
+        map.serialize_entry("value", &self.0)?;
+        map.end()
+    }
+}
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Serialize)]
+#[cfg_attr(test, derive(serde::Deserialize))]
 pub struct Directive {
+    kind: Option<tag::Directive>,
     name: Name,
     arguments: Vec<Argument>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Serialize)]
+#[cfg_attr(test, derive(serde::Deserialize))]
 pub struct ObjectField {
+    kind: Option<tag::ObjectField>,
     name: Name,
     value: Value,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Serialize)]
+#[cfg_attr(test, derive(serde::Deserialize))]
 pub struct Variable {
+    kind: tag::Variable,
     name: Name,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Serialize)]
+#[cfg_attr(test, derive(serde::Deserialize))]
 #[serde(tag = "kind")]
 pub enum Value {
-    Variable(Variable),
+    Variable {
+        name: Name,
+    },
     #[serde(rename = "IntValue")]
     Int {
         value: String,
@@ -61,31 +80,90 @@ pub enum Value {
     },
 }
 
-#[derive(Deserialize, Debug)]
+// FIXME: I shouldn't need this :'(
+pub mod tag {
+    #[derive(Debug, serde::Serialize)]
+    #[cfg_attr(test, derive(serde::Deserialize))]
+    pub enum Argument {
+        #[serde(rename = "Argument")]
+        T,
+    }
+
+    #[derive(Debug, serde::Serialize)]
+    #[cfg_attr(test, derive(serde::Deserialize))]
+    pub enum VariableDefinition {
+        #[serde(rename = "VariableDefinition")]
+        T,
+    }
+
+    #[derive(Debug, serde::Serialize)]
+    #[cfg_attr(test, derive(serde::Deserialize))]
+    pub enum Variable {
+        #[serde(rename = "Variable")]
+        T,
+    }
+
+    #[derive(Debug, serde::Serialize)]
+    #[cfg_attr(test, derive(serde::Deserialize))]
+    pub enum Directive {
+        #[serde(rename = "Directive")]
+        T,
+    }
+
+    #[derive(Debug, serde::Serialize)]
+    #[cfg_attr(test, derive(serde::Deserialize))]
+    pub enum ObjectField {
+        #[serde(rename = "ObjectField")]
+        T,
+    }
+
+    #[derive(Debug, serde::Serialize)]
+    #[cfg_attr(test, derive(serde::Deserialize))]
+    pub enum SelectionSet {
+        #[serde(rename = "SelectionSet")]
+        T,
+    }
+
+    #[derive(Debug, serde::Serialize)]
+    #[cfg_attr(test, derive(serde::Deserialize))]
+    pub enum NamedType {
+        #[serde(rename = "NamedType")]
+        T,
+    }
+}
+
+#[derive(Debug, Serialize)]
+#[cfg_attr(test, derive(serde::Deserialize))]
 pub struct Argument {
+    kind: Option<tag::Argument>,
     name: Name,
     value: Value,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Serialize)]
+#[cfg_attr(test, derive(serde::Deserialize))]
 pub struct NamedType {
+    kind: Option<tag::NamedType>,
     name: Name,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Serialize)]
+#[cfg_attr(test, derive(serde::Deserialize))]
 #[serde(tag = "kind")]
 pub enum Type {
     #[serde(rename = "NamedType")]
-    Named(NamedType),
+    Named { name: Name },
     #[serde(rename = "NonNullType")]
     NonNull { value: Box<Type> },
     #[serde(rename = "ListType")]
     List { value: Box<Type> },
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Serialize)]
+#[cfg_attr(test, derive(serde::Deserialize))]
 #[serde(rename_all = "camelCase")]
 pub struct VariableDefinition {
+    kind: Option<tag::VariableDefinition>,
     variable: Variable,
     #[serde(rename = "type")]
     of_type: Type,
@@ -93,7 +171,8 @@ pub struct VariableDefinition {
     directives: Vec<Directive>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Serialize)]
+#[cfg_attr(test, derive(serde::Deserialize))]
 #[serde(tag = "kind")]
 pub enum Selection {
     #[serde(rename_all = "camelCase")]
@@ -117,12 +196,15 @@ pub enum Selection {
     },
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Serialize)]
+#[cfg_attr(test, derive(serde::Deserialize))]
 pub struct SelectionSet {
+    kind: Option<tag::SelectionSet>,
     selections: Vec<Selection>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Serialize)]
+#[cfg_attr(test, derive(serde::Deserialize))]
 #[serde(tag = "operation")]
 #[serde(rename_all = "camelCase")]
 pub enum Operation {
@@ -150,7 +232,8 @@ pub enum Operation {
     },
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Debug, Serialize)]
+#[cfg_attr(test, derive(serde::Deserialize))]
 #[serde(tag = "kind")]
 pub enum Definition {
     #[serde(rename = "OperationDefinition")]
@@ -166,6 +249,8 @@ pub enum Definition {
 
 #[cfg(test)]
 mod tests {
+    use pretty_assertions::{assert_eq, assert_str_eq};
+
     use super::*;
 
     #[test]
@@ -174,10 +259,29 @@ mod tests {
 
         let doc: serde_json::Value = serde_json::from_str(json_str).expect("must be valid json");
 
-        let doc: Vec<Definition> = serde_json::from_value(doc["definitions"].clone())
+        let defs: Vec<Definition> = serde_json::from_value(doc["definitions"].clone())
             .expect("kitchen sink query must be deserializable");
 
-        insta::assert_debug_snapshot!(doc);
+        insta::assert_debug_snapshot!(defs);
+    }
+
+    #[test]
+    fn lossless() {
+        let json_str = include_str!("../../fixtures/kitchen-sink_query.json");
+
+        let doc: serde_json::Value = serde_json::from_str(json_str).expect("must be valid json");
+
+        let defs: Vec<Definition> = serde_json::from_value(doc["definitions"].clone())
+            .expect("kitchen sink query must be deserializable");
+
+        let re_json = serde_json::json!({
+            "kind": "Document",
+            "definitions": defs,
+        });
+
+        insta::assert_snapshot!(
+            serde_json::to_string_pretty(&re_json).expect("failed to pretty print re_json")
+        )
     }
 
     #[test]
@@ -187,12 +291,9 @@ mod tests {
             "value": "queryName",
         });
 
-        let result: Result<Name, _> = serde_json::from_value(json);
+        let name: Name = serde_json::from_value(json).expect("Failed to deserialize");
 
-        match result {
-            Err(err) => panic!("Deserialize failure {err}"),
-            Ok(name) => assert_eq!(Name("queryName".to_owned()), name),
-        };
+        assert_eq!(Name("queryName".to_owned()), name);
     }
 
     #[test]
@@ -213,13 +314,18 @@ mod tests {
               "value": "StoryLikeSubscribeInput"
             }
           },
-          "directives": []
+          "directives": [],
+          "defaultValue": null,
         });
 
-        let result: Result<VariableDefinition, _> = serde_json::from_value(json);
+        let json_str = serde_json::to_string_pretty(&json).expect("Failed to pretty print json");
 
-        if let Err(err) = result {
-            panic!("Deserialize failure {err}");
-        }
+        let vd: VariableDefinition = serde_json::from_value(json).expect("Failed to deserialize");
+
+        assert_str_eq!(
+            json_str,
+            serde_json::to_string_pretty(&serde_json::json!(vd))
+                .expect("Failed to pretty print vd")
+        );
     }
 }

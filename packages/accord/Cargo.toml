@@ -33,6 +33,7 @@ url = { version = "2.3.1", features = ["serde"] }
 
 [dev-dependencies]
 insta = "1.21.0"
+pretty_assertions = "1.3.0"
 
 [target.'cfg(not(any(target_arch = "wasm32", target_arch = "wasm64")))'.dependencies]
 reqwest = { version = "0.11.12", features = ["json"] }
