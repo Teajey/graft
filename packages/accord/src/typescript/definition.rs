@@ -10,14 +10,17 @@ use graphql_parser::query::{
 use super::{TypeIndex, Typescriptable, TypescriptableWithBuffer, WithIndex, WithIndexable};
 use crate::{
     gen::Buffer,
-    graphql::schema::{Field, NamedType, Type, TypeRef, TypeRefContainer},
+    graphql::{
+        query::Operation,
+        schema::{Field, NamedType, Type, TypeRef, TypeRefContainer},
+    },
 };
 
 use graphql_parser::query::{Field as SelectedField, Selection, SelectionSet};
 
-impl<'a> WithIndexable for Definition<'a, &'a str> {}
+impl WithIndexable for Definition<'_, String> {}
 
-impl<'a, 'b, 'c, 'd> TypescriptableWithBuffer for WithIndex<'a, 'b, 'c, Definition<'d, &'d str>> {
+impl<'a, 'b, 'c> TypescriptableWithBuffer for WithIndex<'a, 'b, 'c, Definition<'_, String>> {
     fn as_typescript_on(&self, buffer: &mut Buffer) -> Result<()> {
         let definition = self.target;
         let type_index = self.type_index;
@@ -32,9 +35,10 @@ impl<'a, 'b, 'c, 'd> TypescriptableWithBuffer for WithIndex<'a, 'b, 'c, Definiti
                       ));
                     }
                     OperationDefinition::Query(query) => (
-                        query.to_string(),
+                        Operation::from(OperationDefinition::Query(query.clone())),
                         query
                             .name
+                            .as_ref()
                             .ok_or_else(|| eyre!("Encountered a query with no name."))?,
                         &mut buffer.queries,
                         "Query",
@@ -43,9 +47,10 @@ impl<'a, 'b, 'c, 'd> TypescriptableWithBuffer for WithIndex<'a, 'b, 'c, Definiti
                         &type_index.query,
                     ),
                     OperationDefinition::Mutation(mutation) => (
-                        mutation.to_string(),
+                        Operation::from(OperationDefinition::Mutation(mutation.clone())),
                         mutation
                             .name
+                            .as_ref()
                             .ok_or_else(|| eyre!("Encountered a mutation with no name."))?,
                         &mut buffer.mutations,
                         "Mutation",
@@ -57,9 +62,10 @@ impl<'a, 'b, 'c, 'd> TypescriptableWithBuffer for WithIndex<'a, 'b, 'c, Definiti
                             .ok_or_else(|| eyre!("Mutation type does not exist in TypeIndex"))?,
                     ),
                     OperationDefinition::Subscription(subscription) => (
-                        subscription.to_string(),
+                        Operation::from(OperationDefinition::Subscription(subscription.clone())),
                         subscription
                             .name
+                            .as_ref()
                             .ok_or_else(|| eyre!("Encountered a subscription with no name."))?,
                         &mut buffer.subscriptions,
                         "Subscription",
@@ -81,6 +87,8 @@ impl<'a, 'b, 'c, 'd> TypescriptableWithBuffer for WithIndex<'a, 'b, 'c, Definiti
                 ) = operation_bundle;
                 let operation_name = operation_name.to_case(Case::Pascal);
 
+                let operation_json = serde_json::to_string_pretty(&operation_ast)?;
+
                 let document_name = format!("{operation_name}{operation_type_name}Document");
                 let args_name = format!("{operation_name}{operation_type_name}Args");
                 let selection_set_name =
@@ -88,8 +96,7 @@ impl<'a, 'b, 'c, 'd> TypescriptableWithBuffer for WithIndex<'a, 'b, 'c, Definiti
 
                 writeln!(
                     operation_buffer,
-                    "export const {document_name} = parse(`{operation_ast}`) \
-                  as TypedQueryDocumentNode<{selection_set_name}, {args_name}>;",
+                    "export const {document_name} = {operation_json} as unknown as TypedQueryDocumentNode<{selection_set_name}, {args_name}>;",
                 )?;
 
                 if variable_definitions.is_empty() {
@@ -164,8 +171,8 @@ impl<'a, 'b, 'c, 'd> TypescriptableWithBuffer for WithIndex<'a, 'b, 'c, Definiti
     }
 }
 
-fn recursively_typescriptify_selected_object_fields<'a>(
-    selection_set: &SelectionSet<'a, &'a str>,
+fn recursively_typescriptify_selected_object_fields(
+    selection_set: &SelectionSet<'_, String>,
     buffer: &mut String,
     selectable_fields: &[Field],
     type_index: &TypeIndex,
@@ -188,7 +195,7 @@ fn recursively_typescriptify_selected_object_fields<'a>(
                     .ok_or_else(|| {
                         eyre!("Tried to select non-existent field '{name}' at {position}")
                     })?;
-                let field_name = alias.unwrap_or(&selected_field.name);
+                let field_name = alias.as_ref().unwrap_or(&selected_field.name);
 
                 write!(buffer, "{}: ", field_name)?;
 
@@ -244,8 +251,8 @@ fn recursively_typescriptify_selected_object_fields<'a>(
     Ok(())
 }
 
-fn recursively_typescriptify_selected_field<'a>(
-    selection_set: &SelectionSet<'a, &'a str>,
+fn recursively_typescriptify_selected_field(
+    selection_set: &SelectionSet<'_, String>,
     buffer: &mut String,
     type_ref: &TypeRef,
     type_index: &TypeIndex,

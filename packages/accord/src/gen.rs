@@ -64,9 +64,9 @@ impl Display for Buffer {
     }
 }
 
-pub async fn generate_typescript_with_document<'a>(
+pub async fn generate_typescript_with_document(
     schema: &Schema,
-    document: Option<Document<'a, &'a str>>,
+    document: Option<Document<'_, String>>,
 ) -> Result<String> {
     let mut buffer = Buffer {
         imports: String::new(),
@@ -89,7 +89,7 @@ pub async fn generate_typescript_with_document<'a>(
 
     writeln!(
         buffer.imports,
-        r#"import {{ parse, TypedQueryDocumentNode }} from "graphql";"#
+        r#"import type {{ TypedQueryDocumentNode }} from "graphql";"#
     )?;
 
     writeln!(buffer.util_types, "export type Nullable<T> = T | null;")?;
@@ -140,7 +140,7 @@ pub async fn generate_typescript(
 
     debug_log!("AST: {}", document_str);
 
-    let document = graphql_parser::parse_query::<&str>(&document_str)?;
+    let document = graphql_parser::parse_query::<String>(&document_str)?;
     debug_log!("parsed document");
 
     generate_typescript_with_document(schema, Some(document)).await
