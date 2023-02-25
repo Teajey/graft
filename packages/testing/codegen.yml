@@ -4,3 +4,10 @@ generates:
     documents: ./document.graphql
     plugins:
       - schema-ast
+  ./typed-document-nodes.ts:
+    schema: ./schema.graphql
+    documents: ./document.graphql
+    plugins:
+      - typescript
+      - typescript-operations
+      - typed-document-node
