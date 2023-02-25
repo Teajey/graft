@@ -2,280 +2,278 @@
 source: packages/accord/src/graphql/queries.rs
 expression: doc
 ---
-Document {
-    definitions: [
-        OperationDefinition(
-            Query {
-                name: Some(
-                    Name(
-                        "queryName",
-                    ),
+[
+    OperationDefinition(
+        Query {
+            name: Some(
+                Name(
+                    "queryName",
                 ),
-                directives: [],
-            },
-        ),
-        OperationDefinition(
-            Mutation {
-                name: Name(
-                    "likeStory",
-                ),
-                variable_definitions: [],
-                directives: [],
-                selection_set: SelectionSet {
-                    selections: [
-                        Field {
-                            alias: None,
-                            name: Name(
-                                "like",
-                            ),
-                            arguments: [
-                                Argument {
-                                    name: Name(
-                                        "story",
-                                    ),
-                                    value: Int {
-                                        value: "123",
-                                    },
-                                },
-                            ],
-                            directives: [
-                                Directive {
-                                    name: Name(
-                                        "defer",
-                                    ),
-                                    arguments: [],
-                                },
-                            ],
-                            selection_set: Some(
-                                SelectionSet {
-                                    selections: [
-                                        Field {
-                                            alias: None,
-                                            name: Name(
-                                                "story",
-                                            ),
-                                            arguments: [],
-                                            directives: [],
-                                            selection_set: Some(
-                                                SelectionSet {
-                                                    selections: [
-                                                        Field {
-                                                            alias: None,
-                                                            name: Name(
-                                                                "id",
-                                                            ),
-                                                            arguments: [],
-                                                            directives: [],
-                                                            selection_set: None,
-                                                        },
-                                                    ],
-                                                },
-                                            ),
-                                        },
-                                    ],
-                                },
-                            ),
-                        },
-                    ],
-                },
-            },
-        ),
-        OperationDefinition(
-            Subscription {
-                name: Name(
-                    "StoryLikeSubscription",
-                ),
-                variable_definitions: [
-                    VariableDefinition {
-                        variable: Variable {
-                            name: Name(
-                                "input",
-                            ),
-                        },
-                        of_type: NamedType {
-                            name: Name(
-                                "StoryLikeSubscribeInput",
-                            ),
-                        },
-                        default_value: None,
-                        directives: [],
-                    },
-                ],
-                directives: [],
-                selection_set: SelectionSet {
-                    selections: [
-                        Field {
-                            alias: None,
-                            name: Name(
-                                "storyLikeSubscribe",
-                            ),
-                            arguments: [
-                                Argument {
-                                    name: Name(
-                                        "input",
-                                    ),
-                                    value: Variable(
-                                        Variable {
-                                            name: Name(
-                                                "input",
-                                            ),
-                                        },
-                                    ),
-                                },
-                            ],
-                            directives: [],
-                            selection_set: Some(
-                                SelectionSet {
-                                    selections: [
-                                        Field {
-                                            alias: None,
-                                            name: Name(
-                                                "story",
-                                            ),
-                                            arguments: [],
-                                            directives: [],
-                                            selection_set: Some(
-                                                SelectionSet {
-                                                    selections: [
-                                                        Field {
-                                                            alias: None,
-                                                            name: Name(
-                                                                "likers",
-                                                            ),
-                                                            arguments: [],
-                                                            directives: [],
-                                                            selection_set: Some(
-                                                                SelectionSet {
-                                                                    selections: [
-                                                                        Field {
-                                                                            alias: None,
-                                                                            name: Name(
-                                                                                "count",
-                                                                            ),
-                                                                            arguments: [],
-                                                                            directives: [],
-                                                                            selection_set: None,
-                                                                        },
-                                                                    ],
-                                                                },
-                                                            ),
-                                                        },
-                                                        Field {
-                                                            alias: None,
-                                                            name: Name(
-                                                                "likeSentence",
-                                                            ),
-                                                            arguments: [],
-                                                            directives: [],
-                                                            selection_set: Some(
-                                                                SelectionSet {
-                                                                    selections: [
-                                                                        Field {
-                                                                            alias: None,
-                                                                            name: Name(
-                                                                                "text",
-                                                                            ),
-                                                                            arguments: [],
-                                                                            directives: [],
-                                                                            selection_set: None,
-                                                                        },
-                                                                    ],
-                                                                },
-                                                            ),
-                                                        },
-                                                    ],
-                                                },
-                                            ),
-                                        },
-                                    ],
-                                },
-                            ),
-                        },
-                    ],
-                },
-            },
-        ),
-        FragmentDefinition {
-            name: Name(
-                "frag",
             ),
-            type_condition: NamedType {
-                name: Name(
-                    "Friend",
-                ),
-            },
+            directives: [],
+        },
+    ),
+    OperationDefinition(
+        Mutation {
+            name: Name(
+                "likeStory",
+            ),
+            variable_definitions: [],
             directives: [],
             selection_set: SelectionSet {
                 selections: [
                     Field {
                         alias: None,
                         name: Name(
-                            "foo",
+                            "like",
                         ),
                         arguments: [
                             Argument {
                                 name: Name(
-                                    "size",
+                                    "story",
                                 ),
-                                value: Variable(
-                                    Variable {
-                                        name: Name(
-                                            "size",
-                                        ),
-                                    },
-                                ),
-                            },
-                            Argument {
-                                name: Name(
-                                    "bar",
-                                ),
-                                value: Variable(
-                                    Variable {
-                                        name: Name(
-                                            "b",
-                                        ),
-                                    },
-                                ),
-                            },
-                            Argument {
-                                name: Name(
-                                    "obj",
-                                ),
-                                value: Object {
-                                    fields: [
-                                        ObjectField {
-                                            name: Name(
-                                                "key",
-                                            ),
-                                            value: String {
-                                                value: "value",
-                                                block: false,
-                                            },
-                                        },
-                                        ObjectField {
-                                            name: Name(
-                                                "block",
-                                            ),
-                                            value: String {
-                                                value: "              block string uses \\\"\\\"\\\"          ",
-                                                block: true,
-                                            },
-                                        },
-                                    ],
+                                value: Int {
+                                    value: "123",
                                 },
                             },
                         ],
-                        directives: [],
-                        selection_set: None,
+                        directives: [
+                            Directive {
+                                name: Name(
+                                    "defer",
+                                ),
+                                arguments: [],
+                            },
+                        ],
+                        selection_set: Some(
+                            SelectionSet {
+                                selections: [
+                                    Field {
+                                        alias: None,
+                                        name: Name(
+                                            "story",
+                                        ),
+                                        arguments: [],
+                                        directives: [],
+                                        selection_set: Some(
+                                            SelectionSet {
+                                                selections: [
+                                                    Field {
+                                                        alias: None,
+                                                        name: Name(
+                                                            "id",
+                                                        ),
+                                                        arguments: [],
+                                                        directives: [],
+                                                        selection_set: None,
+                                                    },
+                                                ],
+                                            },
+                                        ),
+                                    },
+                                ],
+                            },
+                        ),
                     },
                 ],
             },
         },
-        OperationDefinition(
-            Query {
-                name: None,
-                directives: [],
+    ),
+    OperationDefinition(
+        Subscription {
+            name: Name(
+                "StoryLikeSubscription",
+            ),
+            variable_definitions: [
+                VariableDefinition {
+                    variable: Variable {
+                        name: Name(
+                            "input",
+                        ),
+                    },
+                    of_type: NamedType {
+                        name: Name(
+                            "StoryLikeSubscribeInput",
+                        ),
+                    },
+                    default_value: None,
+                    directives: [],
+                },
+            ],
+            directives: [],
+            selection_set: SelectionSet {
+                selections: [
+                    Field {
+                        alias: None,
+                        name: Name(
+                            "storyLikeSubscribe",
+                        ),
+                        arguments: [
+                            Argument {
+                                name: Name(
+                                    "input",
+                                ),
+                                value: Variable(
+                                    Variable {
+                                        name: Name(
+                                            "input",
+                                        ),
+                                    },
+                                ),
+                            },
+                        ],
+                        directives: [],
+                        selection_set: Some(
+                            SelectionSet {
+                                selections: [
+                                    Field {
+                                        alias: None,
+                                        name: Name(
+                                            "story",
+                                        ),
+                                        arguments: [],
+                                        directives: [],
+                                        selection_set: Some(
+                                            SelectionSet {
+                                                selections: [
+                                                    Field {
+                                                        alias: None,
+                                                        name: Name(
+                                                            "likers",
+                                                        ),
+                                                        arguments: [],
+                                                        directives: [],
+                                                        selection_set: Some(
+                                                            SelectionSet {
+                                                                selections: [
+                                                                    Field {
+                                                                        alias: None,
+                                                                        name: Name(
+                                                                            "count",
+                                                                        ),
+                                                                        arguments: [],
+                                                                        directives: [],
+                                                                        selection_set: None,
+                                                                    },
+                                                                ],
+                                                            },
+                                                        ),
+                                                    },
+                                                    Field {
+                                                        alias: None,
+                                                        name: Name(
+                                                            "likeSentence",
+                                                        ),
+                                                        arguments: [],
+                                                        directives: [],
+                                                        selection_set: Some(
+                                                            SelectionSet {
+                                                                selections: [
+                                                                    Field {
+                                                                        alias: None,
+                                                                        name: Name(
+                                                                            "text",
+                                                                        ),
+                                                                        arguments: [],
+                                                                        directives: [],
+                                                                        selection_set: None,
+                                                                    },
+                                                                ],
+                                                            },
+                                                        ),
+                                                    },
+                                                ],
+                                            },
+                                        ),
+                                    },
+                                ],
+                            },
+                        ),
+                    },
+                ],
             },
+        },
+    ),
+    FragmentDefinition {
+        name: Name(
+            "frag",
         ),
-    ],
-}
+        type_condition: NamedType {
+            name: Name(
+                "Friend",
+            ),
+        },
+        directives: [],
+        selection_set: SelectionSet {
+            selections: [
+                Field {
+                    alias: None,
+                    name: Name(
+                        "foo",
+                    ),
+                    arguments: [
+                        Argument {
+                            name: Name(
+                                "size",
+                            ),
+                            value: Variable(
+                                Variable {
+                                    name: Name(
+                                        "size",
+                                    ),
+                                },
+                            ),
+                        },
+                        Argument {
+                            name: Name(
+                                "bar",
+                            ),
+                            value: Variable(
+                                Variable {
+                                    name: Name(
+                                        "b",
+                                    ),
+                                },
+                            ),
+                        },
+                        Argument {
+                            name: Name(
+                                "obj",
+                            ),
+                            value: Object {
+                                fields: [
+                                    ObjectField {
+                                        name: Name(
+                                            "key",
+                                        ),
+                                        value: String {
+                                            value: "value",
+                                            block: false,
+                                        },
+                                    },
+                                    ObjectField {
+                                        name: Name(
+                                            "block",
+                                        ),
+                                        value: String {
+                                            value: "              block string uses \\\"\\\"\\\"          ",
+                                            block: true,
+                                        },
+                                    },
+                                ],
+                            },
+                        },
+                    ],
+                    directives: [],
+                    selection_set: None,
+                },
+            ],
+        },
+    },
+    OperationDefinition(
+        Query {
+            name: None,
+            directives: [],
+        },
+    ),
+]

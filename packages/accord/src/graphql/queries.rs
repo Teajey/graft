@@ -137,12 +137,6 @@ pub enum Definition {
     },
 }
 
-#[derive(Deserialize, Debug)]
-#[serde(tag = "kind")]
-enum Document {
-    Document { definitions: Vec<Definition> },
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -151,11 +145,10 @@ mod tests {
     fn deserialize() {
         let json_str = include_str!("../../fixtures/kitchen-sink_query.json");
 
-        let definition: serde_json::Value =
-            serde_json::from_str(json_str).expect("must be valid json");
+        let doc: serde_json::Value = serde_json::from_str(json_str).expect("must be valid json");
 
-        let doc: Document =
-            serde_json::from_value(definition).expect("kitchen sink query must be deserializable");
+        let doc: Vec<Definition> = serde_json::from_value(doc["definitions"].clone())
+            .expect("kitchen sink query must be deserializable");
 
         insta::assert_debug_snapshot!(doc);
     }
