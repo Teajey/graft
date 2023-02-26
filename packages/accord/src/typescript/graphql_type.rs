@@ -37,11 +37,11 @@ impl<'a, 'b, 'c> TypescriptableWithBuffer for WithContext<'a, 'b, 'c, NamedType>
             NamedType::Scalar { name, description } => {
                 possibly_write_description(&mut buffer.scalars, description.as_ref())?;
                 let scalar_type = match name.as_str() {
-                    "ID" => r#"NewType<string, "ID">"#,
-                    "String" => "string",
-                    "Int" | "Float" => "number",
-                    "Boolean" => "boolean",
-                    _ => "unknown",
+                    "ID" => r#"NewType<string, "ID">"#.to_owned(),
+                    "String" => "string".to_owned(),
+                    "Int" | "Float" => "number".to_owned(),
+                    "Boolean" => "boolean".to_owned(),
+                    name => format!(r#"NewType<string, "{name}">"#),
                 };
                 writeln!(buffer.scalars, "export type {} = {scalar_type};", ts_name)?;
             }
