@@ -1,9 +1,9 @@
 use eyre::Result;
 
-use super::{Typescriptable, WithIndex};
+use super::{Typescriptable, WithContext};
 use crate::graphql::schema::{Type, TypeRef, TypeRefContainer};
 
-impl<'a, 'b, 'c> Typescriptable for WithIndex<'a, 'b, 'c, TypeRef> {
+impl<'a, 'b, 'c> Typescriptable for WithContext<'a, 'b, 'c, TypeRef> {
     fn as_typescript(&self) -> Result<String> {
         recursive_typescriptify(self, &mut true)
     }
@@ -14,18 +14,18 @@ impl<'a, 'b, 'c> Typescriptable for WithIndex<'a, 'b, 'c, TypeRef> {
 }
 
 fn recursive_typescriptify(
-    type_ref_with_index: &WithIndex<'_, '_, '_, TypeRef>,
+    with_context: &WithContext<'_, '_, '_, TypeRef>,
     nullable: &mut bool,
 ) -> Result<String> {
-    let WithIndex { target, type_index } = type_ref_with_index;
-    let this_type = type_index.type_from_ref((*target).clone())?;
+    let WithContext { target, ctx } = with_context;
+    let this_type = ctx.index.type_from_ref((*target).clone())?;
     let type_name = match this_type {
         Type::Container(TypeRefContainer::NonNull { of_type }) => {
             *nullable = false;
-            recursive_typescriptify(&type_index.with(&of_type), nullable)?
+            recursive_typescriptify(&ctx.with(&of_type), nullable)?
         }
         Type::Container(TypeRefContainer::List { of_type }) => {
-            let string = recursive_typescriptify(&type_index.with(&of_type), nullable)?;
+            let string = recursive_typescriptify(&ctx.with(&of_type), nullable)?;
             format!("{string}[]")
         }
         Type::Named(other_type) => other_type.typescript_name(),

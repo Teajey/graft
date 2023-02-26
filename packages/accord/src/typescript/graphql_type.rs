@@ -3,9 +3,7 @@ use std::fmt::Write;
 use convert_case::{Case, Casing};
 use eyre::{eyre, Result};
 
-use super::{
-    possibly_write_description, Typescriptable, TypescriptableWithBuffer, WithIndex, WithIndexable,
-};
+use super::{possibly_write_description, Typescriptable, TypescriptableWithBuffer, WithContext};
 use crate::gen::Buffer;
 use crate::graphql::schema::{NamedType, TypeRef, TypeRefContainer};
 use crate::util::{MaybeNamed, Named};
@@ -27,11 +25,10 @@ impl NamedType {
     }
 }
 
-impl WithIndexable for NamedType {}
-
-impl<'a, 'b, 'c> TypescriptableWithBuffer for WithIndex<'a, 'b, 'c, NamedType> {
+impl<'a, 'b, 'c> TypescriptableWithBuffer for WithContext<'a, 'b, 'c, NamedType> {
     fn as_typescript_on(&self, buffer: &mut Buffer) -> Result<()> {
-        let WithIndex { target, type_index } = self;
+        let WithContext { target, ctx } = self;
+
         let ts_name = target.typescript_name();
         if target.is_internal() {
             return Ok(());
@@ -57,7 +54,8 @@ impl<'a, 'b, 'c> TypescriptableWithBuffer for WithIndex<'a, 'b, 'c, NamedType> {
                 possibly_write_description(&mut buffer.objects, description.as_ref())?;
                 write!(buffer.objects, "export type {} = ", ts_name)?;
                 for interface in interfaces {
-                    let interface = type_index
+                    let interface = ctx
+                        .index
                         .type_from_ref(interface.clone())?
                         .try_into_named()?;
                     write!(buffer.objects, "{} & ", interface.typescript_name())?;
@@ -69,7 +67,7 @@ impl<'a, 'b, 'c> TypescriptableWithBuffer for WithIndex<'a, 'b, 'c, NamedType> {
                         buffer.objects,
                         "  {}: {},",
                         f.name,
-                        type_index.with(&f.of_type).as_typescript()?
+                        ctx.with(&f.of_type).as_typescript()?
                     )?;
                 }
                 writeln!(buffer.objects, "}}")?;
@@ -84,7 +82,8 @@ impl<'a, 'b, 'c> TypescriptableWithBuffer for WithIndex<'a, 'b, 'c, NamedType> {
                 possibly_write_description(&mut buffer.interfaces, description.as_ref())?;
                 write!(buffer.interfaces, "export type {} = ", ts_name)?;
                 for interface in interfaces {
-                    let interface = type_index
+                    let interface = ctx
+                        .index
                         .type_from_ref(interface.clone())?
                         .try_into_named()?;
                     write!(buffer.interfaces, "{} & ", interface.typescript_name())?;
@@ -96,7 +95,7 @@ impl<'a, 'b, 'c> TypescriptableWithBuffer for WithIndex<'a, 'b, 'c, NamedType> {
                         buffer.interfaces,
                         "  {}: {},",
                         f.name,
-                        type_index.with(&f.of_type).as_typescript()?
+                        ctx.with(&f.of_type).as_typescript()?
                     )?;
                 }
                 writeln!(buffer.interfaces, "}}")?;
@@ -153,14 +152,14 @@ impl<'a, 'b, 'c> TypescriptableWithBuffer for WithIndex<'a, 'b, 'c, NamedType> {
                             buffer.input_objects,
                             "  {}: {},",
                             f.name,
-                            type_index.with(&f.of_type).as_typescript()?
+                            ctx.with(&f.of_type).as_typescript()?
                         )?;
                     } else {
                         writeln!(
                             buffer.input_objects,
                             "  {}?: {},",
                             f.name,
-                            type_index.with(&f.of_type).as_typescript()?
+                            ctx.with(&f.of_type).as_typescript()?
                         )?;
                     }
                 }

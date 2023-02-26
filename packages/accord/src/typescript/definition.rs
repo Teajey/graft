@@ -6,7 +6,7 @@ use graphql_parser::query::{
     Definition, FragmentSpread, InlineFragment, OperationDefinition, TypeCondition,
 };
 
-use super::{TypeIndex, Typescriptable, TypescriptableWithBuffer, WithIndex, WithIndexable};
+use super::{TypescriptContext, Typescriptable, TypescriptableWithBuffer, WithContext};
 use crate::{
     gen::Buffer,
     graphql::{
@@ -17,12 +17,10 @@ use crate::{
 
 use graphql_parser::query::{Field as SelectedField, Selection, SelectionSet};
 
-impl WithIndexable for Definition<'_, String> {}
-
-impl<'a, 'b, 'c> TypescriptableWithBuffer for WithIndex<'a, 'b, 'c, Definition<'_, String>> {
+impl<'a, 'b, 'c> TypescriptableWithBuffer for WithContext<'a, 'b, 'c, Definition<'_, String>> {
     fn as_typescript_on(&self, buffer: &mut Buffer) -> Result<()> {
         let definition = self.target;
-        let type_index = self.type_index;
+        let ctx = self.ctx;
 
         match definition {
             Definition::Operation(operation_definition) => {
@@ -43,7 +41,7 @@ impl<'a, 'b, 'c> TypescriptableWithBuffer for WithIndex<'a, 'b, 'c, Definition<'
                         "Query",
                         &query.variable_definitions,
                         &query.selection_set,
-                        &type_index.query,
+                        &ctx.index.query,
                     ),
                     OperationDefinition::Mutation(mutation) => (
                         Operation::from(OperationDefinition::Mutation(mutation.clone())),
@@ -55,7 +53,7 @@ impl<'a, 'b, 'c> TypescriptableWithBuffer for WithIndex<'a, 'b, 'c, Definition<'
                         "Mutation",
                         &mutation.variable_definitions,
                         &mutation.selection_set,
-                        type_index
+                        ctx.index
                             .mutation
                             .as_ref()
                             .ok_or_else(|| eyre!("Mutation type does not exist in TypeIndex"))?,
@@ -70,7 +68,7 @@ impl<'a, 'b, 'c> TypescriptableWithBuffer for WithIndex<'a, 'b, 'c, Definition<'
                         "Subscription",
                         &subscription.variable_definitions,
                         &subscription.selection_set,
-                        type_index.subscription.as_ref().ok_or_else(|| {
+                        ctx.index.subscription.as_ref().ok_or_else(|| {
                             eyre!("Subscription type does not exist in TypeIndex")
                         })?,
                     ),
@@ -97,7 +95,8 @@ impl<'a, 'b, 'c> TypescriptableWithBuffer for WithIndex<'a, 'b, 'c, Definition<'
 
                 writeln!(
                     operation_buffer,
-                    "export const {document_name} = {document_json} as unknown as TypedQueryDocumentNode<{selection_set_name}, {args_name}>;",
+                    "export const {document_name} = {document_json} as unknown as {document_type_name}<{selection_set_name}, {args_name}>;",
+                    document_type_name = ctx.document_type_name
                 )?;
 
                 if variable_definitions.is_empty() {
@@ -114,14 +113,14 @@ impl<'a, 'b, 'c> TypescriptableWithBuffer for WithIndex<'a, 'b, 'c, Definition<'
                                 buffer.args,
                                 "  {}: {},",
                                 def.name,
-                                type_index.with(&ts_type).as_typescript()?
+                                ctx.with(&ts_type).as_typescript()?
                             )?;
                         } else {
                             writeln!(
                                 buffer.args,
                                 "  {}?: {},",
                                 def.name,
-                                type_index.with(&ts_type).as_typescript()?
+                                ctx.with(&ts_type).as_typescript()?
                             )?;
                         }
                     }
@@ -138,7 +137,7 @@ impl<'a, 'b, 'c> TypescriptableWithBuffer for WithIndex<'a, 'b, 'c, Definition<'
                     selection_set,
                     &mut buffer.selection_sets,
                     operation_fields,
-                    type_index,
+                    ctx,
                 )?;
                 writeln!(buffer.selection_sets, ";")?;
             }
@@ -159,13 +158,13 @@ impl<'a, 'b, 'c> TypescriptableWithBuffer for WithIndex<'a, 'b, 'c, Definition<'
                 recursively_typescriptify_selected_field(
                     &fragment.selection_set,
                     &mut buffer.selection_sets,
-                    &TypeRef::from(type_index.get(type_name).ok_or_else(|| {
+                    &TypeRef::from(ctx.index.get(type_name).ok_or_else(|| {
                         eyre!(
                             "Type targetted by fragment at {} not found",
                             fragment.position
                         )
                     })?),
-                    type_index,
+                    ctx,
                     &mut false,
                 )?;
                 writeln!(buffer.selection_sets, ";")?;
@@ -180,7 +179,7 @@ fn recursively_typescriptify_selected_object_fields(
     selection_set: &SelectionSet<'_, String>,
     buffer: &mut String,
     selectable_fields: &[Field],
-    type_index: &TypeIndex,
+    ctx: &TypescriptContext,
 ) -> Result<()> {
     let mut fragment_strings = Vec::<String>::new();
     write!(buffer, "{{ ")?;
@@ -208,7 +207,7 @@ fn recursively_typescriptify_selected_object_fields(
                     selection_set,
                     buffer,
                     &selected_field.of_type,
-                    type_index,
+                    ctx,
                     &mut true,
                 )?;
 
@@ -235,10 +234,10 @@ fn recursively_typescriptify_selected_object_fields(
                     recursively_typescriptify_selected_field(
                         selection_set,
                         &mut fragment_buffer,
-                        &TypeRef::from(type_index.get(type_name).ok_or_else(|| {
+                        &TypeRef::from(ctx.index.get(type_name).ok_or_else(|| {
                             eyre!("Type targetted by inline fragment at {position} not found")
                         })?),
-                        type_index,
+                        ctx,
                         &mut false,
                     )?;
                     fragment_strings.push(fragment_buffer);
@@ -263,10 +262,10 @@ fn recursively_typescriptify_selected_field(
     selection_set: &SelectionSet<'_, String>,
     buffer: &mut String,
     type_ref: &TypeRef,
-    type_index: &TypeIndex,
+    ctx: &TypescriptContext,
     nullable: &mut bool,
 ) -> Result<()> {
-    let selected_field_type = type_index.type_from_ref(type_ref.clone())?;
+    let selected_field_type = ctx.index.type_from_ref(type_ref.clone())?;
     let mut local_buffer = String::new();
 
     match selected_field_type {
@@ -276,15 +275,14 @@ fn recursively_typescriptify_selected_field(
                     selection_set,
                     &mut local_buffer,
                     &fields,
-                    type_index,
+                    ctx,
                 )?;
             }
             leaf_field_type => {
                 write!(
                     local_buffer,
                     "{}",
-                    type_index
-                        .with(&TypeRef::from(&leaf_field_type))
+                    ctx.with(&TypeRef::from(&leaf_field_type))
                         .as_typescript_non_nullable()?
                 )?;
             }
@@ -296,7 +294,7 @@ fn recursively_typescriptify_selected_field(
                     selection_set,
                     &mut local_buffer,
                     &of_type,
-                    type_index,
+                    ctx,
                     nullable,
                 )?;
             }
@@ -305,7 +303,7 @@ fn recursively_typescriptify_selected_field(
                     selection_set,
                     &mut local_buffer,
                     &of_type,
-                    type_index,
+                    ctx,
                     nullable,
                 )?;
                 write!(local_buffer, "[]")?;

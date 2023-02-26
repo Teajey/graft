@@ -4,11 +4,13 @@ use eyre::Result;
 use graphql_parser::query::Document;
 
 use crate::app;
+use crate::app::config::DocumentImport;
 use crate::app::config::Glob;
 use crate::cross;
 use crate::debug_log;
 use crate::graphql::schema::Schema;
-use crate::typescript::{TypeIndex, TypescriptableWithBuffer, WithIndexable};
+use crate::typescript::TypescriptContext;
+use crate::typescript::{TypeIndex, TypescriptableWithBuffer};
 use crate::util::path_with_possible_prefix;
 
 pub struct Buffer {
@@ -65,6 +67,7 @@ impl Display for Buffer {
 }
 
 pub async fn generate_typescript_with_document(
+    document_import: DocumentImport,
     schema: &Schema,
     document: Option<Document<'_, String>>,
 ) -> Result<String> {
@@ -85,11 +88,18 @@ pub async fn generate_typescript_with_document(
         fragments: String::new(),
     };
 
-    let type_index = TypeIndex::try_new(schema)?;
+    let index = TypeIndex::try_new(schema)?;
+
+    let ctx = TypescriptContext {
+        index,
+        document_type_name: document_import.0.clone(),
+    };
 
     writeln!(
         buffer.imports,
-        r#"import type {{ TypedQueryDocumentNode }} from "graphql";"#
+        r#"import type {{ {type_name} }} from "{package}";"#,
+        type_name = document_import.0,
+        package = document_import.1,
     )?;
 
     writeln!(buffer.util_types, "export type Nullable<T> = T | null;")?;
@@ -100,12 +110,12 @@ pub async fn generate_typescript_with_document(
 
     if let Some(document) = document {
         for def in document.definitions {
-            def.with_index(&type_index).as_typescript_on(&mut buffer)?;
+            ctx.with(&def).as_typescript_on(&mut buffer)?;
         }
     }
 
     for t in &schema.types {
-        t.with_index(&type_index).as_typescript_on(&mut buffer)?;
+        ctx.with(t).as_typescript_on(&mut buffer)?;
     }
 
     Ok(buffer.to_string())
@@ -113,11 +123,15 @@ pub async fn generate_typescript_with_document(
 
 pub async fn generate_typescript(
     ctx: &app::Context,
+    document_import: Option<DocumentImport>,
     documents: Option<Glob>,
     schema: &Schema,
 ) -> Result<String> {
+    let document_import =
+        document_import.unwrap_or(("TypedQueryDocumentNode".to_owned(), "graphql".to_owned()));
+
     let Some(app::config::Glob(document_paths)) = documents else {
-        return generate_typescript_with_document(schema, None)
+        return generate_typescript_with_document(document_import, schema, None)
         .await;
     };
 
@@ -143,7 +157,7 @@ pub async fn generate_typescript(
     let document = graphql_parser::parse_query::<String>(&document_str)?;
     debug_log!("parsed document");
 
-    generate_typescript_with_document(schema, Some(document)).await
+    generate_typescript_with_document(document_import, schema, Some(document)).await
 }
 
 // Native test only for now...
@@ -175,6 +189,7 @@ mod test {
 
         let typescript = generate_typescript(
             &ctx,
+            None,
             Some(Glob(vec![PathBuf::from("../testing/document.graphql")])),
             &schema,
         )

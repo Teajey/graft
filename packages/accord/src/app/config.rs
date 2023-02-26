@@ -106,11 +106,14 @@ pub struct SchemaGenPlan {
     pub out: SchemaGenOut,
 }
 
+pub type DocumentImport = (String, String);
+
 #[derive(Deserialize)]
 pub struct TypescriptGenPlan {
     pub ast: PathBuf,
     pub documents: Option<Glob>,
     pub out: PathBuf,
+    pub document_import: Option<DocumentImport>,
 }
 
 #[derive(Deserialize)]

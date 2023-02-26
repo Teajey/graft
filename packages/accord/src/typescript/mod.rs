@@ -77,29 +77,21 @@ impl<'a> TypeIndex<'a> {
             subscription,
         })
     }
-
-    pub fn with<'b, 'c, T>(&'b self, target: &'c T) -> WithIndex<'c, 'b, 'a, T> {
-        WithIndex {
-            target,
-            type_index: self,
-        }
-    }
 }
 
-pub struct WithIndex<'a, 'b, 'c, T> {
+pub struct TypescriptContext<'a> {
+    pub index: TypeIndex<'a>,
+    pub document_type_name: String,
+}
+
+pub struct WithContext<'a, 'b, 'c, T> {
     target: &'a T,
-    type_index: &'b TypeIndex<'c>,
+    ctx: &'b TypescriptContext<'c>,
 }
 
-pub trait WithIndexable: Sized {
-    fn with_index<'a, 'b, 'c>(
-        &'a self,
-        type_index: &'b TypeIndex<'c>,
-    ) -> WithIndex<'a, 'b, 'c, Self> {
-        WithIndex {
-            target: self,
-            type_index,
-        }
+impl<'a> TypescriptContext<'a> {
+    pub fn with<'b, 'c, T>(&'b self, target: &'c T) -> WithContext<'c, 'b, 'a, T> {
+        WithContext { target, ctx: self }
     }
 }
 
