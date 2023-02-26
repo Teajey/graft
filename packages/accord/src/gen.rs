@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fmt::{Display, Write as FmtWrite};
 
 use eyre::Result;
@@ -67,6 +68,7 @@ impl Display for Buffer {
 }
 
 pub async fn generate_typescript_with_document(
+    scalar_newtypes: Option<HashMap<String, String>>,
     document_import: DocumentImport,
     schema: &Schema,
     document: Option<Document<'_, String>>,
@@ -93,6 +95,7 @@ pub async fn generate_typescript_with_document(
     let ctx = TypescriptContext {
         index,
         document_type_name: document_import.0.clone(),
+        scalar_newtypes,
     };
 
     writeln!(
@@ -123,6 +126,7 @@ pub async fn generate_typescript_with_document(
 
 pub async fn generate_typescript(
     ctx: &app::Context,
+    scalar_newtypes: Option<HashMap<String, String>>,
     document_import: Option<DocumentImport>,
     documents: Option<Glob>,
     schema: &Schema,
@@ -131,7 +135,7 @@ pub async fn generate_typescript(
         document_import.unwrap_or(("TypedQueryDocumentNode".to_owned(), "graphql".to_owned()));
 
     let Some(app::config::Glob(document_paths)) = documents else {
-        return generate_typescript_with_document(document_import, schema, None)
+        return generate_typescript_with_document(scalar_newtypes, document_import, schema, None)
         .await;
     };
 
@@ -157,7 +161,8 @@ pub async fn generate_typescript(
     let document = graphql_parser::parse_query::<String>(&document_str)?;
     debug_log!("parsed document");
 
-    generate_typescript_with_document(document_import, schema, Some(document)).await
+    generate_typescript_with_document(scalar_newtypes, document_import, schema, Some(document))
+        .await
 }
 
 // Native test only for now...

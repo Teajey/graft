@@ -114,6 +114,7 @@ pub struct TypescriptGenPlan {
     pub documents: Option<Glob>,
     pub out: PathBuf,
     pub document_import: Option<DocumentImport>,
+    pub scalar_newtypes: Option<HashMap<String, String>>,
 }
 
 #[derive(Deserialize)]

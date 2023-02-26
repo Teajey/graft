@@ -74,6 +74,7 @@ pub async fn run() -> Result<()> {
             print_info!(ctx, 1, "Generating typescript...");
             let ts = generate_typescript(
                 &ctx,
+                typescript_gen_plan.scalar_newtypes,
                 typescript_gen_plan.document_import,
                 typescript_gen_plan.documents,
                 &schema,

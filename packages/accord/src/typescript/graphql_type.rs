@@ -41,7 +41,15 @@ impl<'a, 'b, 'c> TypescriptableWithBuffer for WithContext<'a, 'b, 'c, NamedType>
                     "String" => "string".to_owned(),
                     "Int" | "Float" => "number".to_owned(),
                     "Boolean" => "boolean".to_owned(),
-                    name => format!(r#"NewType<string, "{name}">"#),
+                    name => {
+                        let default = format!(r#"NewType<unknown, "{name}">"#);
+                        match &ctx.scalar_newtypes {
+                            None => default,
+                            Some(scalar_newtypes) => {
+                                scalar_newtypes.get(name).cloned().unwrap_or(default)
+                            }
+                        }
+                    }
                 };
                 writeln!(buffer.scalars, "export type {} = {scalar_type};", ts_name)?;
             }

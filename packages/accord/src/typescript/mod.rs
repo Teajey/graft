@@ -82,6 +82,7 @@ impl<'a> TypeIndex<'a> {
 pub struct TypescriptContext<'a> {
     pub index: TypeIndex<'a>,
     pub document_type_name: String,
+    pub scalar_newtypes: Option<HashMap<String, String>>,
 }
 
 pub struct WithContext<'a, 'b, 'c, T> {
