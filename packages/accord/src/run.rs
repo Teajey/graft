@@ -41,8 +41,10 @@ pub async fn run() -> Result<()> {
 
     print_info!(ctx, 1, "Context generated!");
 
+    let mode = cli.mode.unwrap_or(cli::Mode::All);
+
     for (name, plans) in config.generates {
-        if let Some(schema_gen_plan) = plans.schema_gen_plan {
+        if let (cli::Mode::All, Some(schema_gen_plan)) = (&mode, plans.schema_gen_plan) {
             print_info!(ctx, 1, "Fetching schema for {name}...");
             let schema = introspection::Response::fetch(
                 &ctx,
