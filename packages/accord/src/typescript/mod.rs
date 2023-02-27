@@ -7,6 +7,7 @@ use std::fmt::Write;
 
 use eyre::{eyre, Result};
 
+use crate::app::config::TypescriptOptions;
 use crate::gen::Buffer;
 use crate::graphql::schema::{NamedType, Schema, Type, TypeRef};
 use crate::util::Named;
@@ -81,8 +82,7 @@ impl<'a> TypeIndex<'a> {
 
 pub struct TypescriptContext<'a> {
     pub index: TypeIndex<'a>,
-    pub document_type_name: String,
-    pub scalar_newtypes: Option<HashMap<String, String>>,
+    pub options: TypescriptOptions,
 }
 
 pub struct WithContext<'a, 'b, 'c, T> {

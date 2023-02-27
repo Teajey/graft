@@ -1,12 +1,11 @@
-use std::collections::HashMap;
 use std::fmt::{Display, Write as FmtWrite};
 
 use eyre::Result;
 use graphql_parser::query::Document;
 
 use crate::app;
-use crate::app::config::DocumentImport;
 use crate::app::config::Glob;
+use crate::app::config::TypescriptOptions;
 use crate::cross;
 use crate::debug_log;
 use crate::graphql::schema::Schema;
@@ -68,8 +67,7 @@ impl Display for Buffer {
 }
 
 pub async fn generate_typescript_with_document(
-    scalar_newtypes: Option<HashMap<String, String>>,
-    document_import: DocumentImport,
+    options: TypescriptOptions,
     schema: &Schema,
     document: Option<Document<'_, String>>,
 ) -> Result<String> {
@@ -92,17 +90,13 @@ pub async fn generate_typescript_with_document(
 
     let index = TypeIndex::try_new(schema)?;
 
-    let ctx = TypescriptContext {
-        index,
-        document_type_name: document_import.0.clone(),
-        scalar_newtypes,
-    };
+    let ctx = TypescriptContext { index, options };
 
     writeln!(
         buffer.imports,
         r#"import type {{ {type_name} }} from "{package}";"#,
-        type_name = document_import.0,
-        package = document_import.1,
+        type_name = ctx.options.document_import.type_name(),
+        package = ctx.options.document_import.package(),
     )?;
 
     writeln!(buffer.util_types, "export type Nullable<T> = T | null;")?;
@@ -126,16 +120,12 @@ pub async fn generate_typescript_with_document(
 
 pub async fn generate_typescript(
     ctx: &app::Context,
-    scalar_newtypes: Option<HashMap<String, String>>,
-    document_import: Option<DocumentImport>,
+    options: TypescriptOptions,
     documents: Option<Glob>,
     schema: &Schema,
 ) -> Result<String> {
-    let document_import =
-        document_import.unwrap_or(("TypedQueryDocumentNode".to_owned(), "graphql".to_owned()));
-
     let Some(app::config::Glob(document_paths)) = documents else {
-        return generate_typescript_with_document(scalar_newtypes, document_import, schema, None)
+        return generate_typescript_with_document(options, schema, None)
         .await;
     };
 
@@ -161,8 +151,7 @@ pub async fn generate_typescript(
     let document = graphql_parser::parse_query::<String>(&document_str)?;
     debug_log!("parsed document");
 
-    generate_typescript_with_document(scalar_newtypes, document_import, schema, Some(document))
-        .await
+    generate_typescript_with_document(options, schema, Some(document)).await
 }
 
 // Native test only for now...
@@ -174,6 +163,7 @@ mod test {
     use eyre::Result;
 
     use crate::app::config::Glob;
+    use crate::app::config::TypescriptOptions;
     use crate::introspection;
     use crate::{app, gen::generate_typescript};
 
@@ -194,7 +184,7 @@ mod test {
 
         let typescript = generate_typescript(
             &ctx,
-            None,
+            TypescriptOptions::default(),
             Some(Glob(vec![PathBuf::from("../testing/document.graphql")])),
             &schema,
         )

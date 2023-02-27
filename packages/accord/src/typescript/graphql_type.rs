@@ -43,7 +43,7 @@ impl<'a, 'b, 'c> TypescriptableWithBuffer for WithContext<'a, 'b, 'c, NamedType>
                     "Boolean" => "boolean".to_owned(),
                     name => {
                         let default = format!(r#"NewType<unknown, "{name}">"#);
-                        match &ctx.scalar_newtypes {
+                        match &ctx.options.scalar_newtypes {
                             None => default,
                             Some(scalar_newtypes) => {
                                 scalar_newtypes.get(name).cloned().unwrap_or(default)

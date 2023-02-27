@@ -88,15 +88,26 @@ impl<'a, 'b, 'c> TypescriptableWithBuffer for WithContext<'a, 'b, 'c, Definition
 
                 let document_json = serde_json::to_string(&document)?;
 
+                let operation_type_name = if ctx.options.documents_hide_operation_name {
+                    ""
+                } else {
+                    operation_type_name
+                };
+
                 let document_name = format!("{operation_name}{operation_type_name}Document");
-                let args_name = format!("{operation_name}{operation_type_name}Args");
-                let selection_set_name =
-                    format!("{operation_name}{operation_type_name}SelectionSet");
+                let args_name = format!(
+                    "{operation_name}{operation_type_name}{arguments_suffix}",
+                    arguments_suffix = ctx.options.arguments_suffix
+                );
+                let selection_set_name = format!(
+                    "{operation_name}{operation_type_name}{selection_set_suffix}",
+                    selection_set_suffix = ctx.options.selection_set_suffix
+                );
 
                 writeln!(
                     operation_buffer,
                     "export const {document_name} = {document_json} as unknown as {document_type_name}<{selection_set_name}, {args_name}>;",
-                    document_type_name = ctx.document_type_name
+                    document_type_name = ctx.options.document_import.type_name()
                 )?;
 
                 if variable_definitions.is_empty() {
@@ -147,13 +158,14 @@ impl<'a, 'b, 'c> TypescriptableWithBuffer for WithContext<'a, 'b, 'c, Definition
 
                 let document_json = serde_json::to_string(&document)?;
 
-                writeln!(buffer.fragments, "export const {name}FragmentDocument = {document_json} as unknown as TypedQueryDocumentNode<{name}FragmentSelectionSet, unknown>", name = fragment.name.to_case(Case::Pascal))?;
+                writeln!(buffer.fragments, "export const {name}FragmentDocument = {document_json} as unknown as TypedQueryDocumentNode<{name}Fragment{selection_set_suffix}, unknown>", name = fragment.name.to_case(Case::Pascal), selection_set_suffix = ctx.options.selection_set_suffix)?;
 
                 let TypeCondition::On(type_name) = &fragment.type_condition;
                 write!(
                     buffer.selection_sets,
-                    "export type {}FragmentSelectionSet = ",
-                    fragment.name.to_case(Case::Pascal)
+                    "export type {}Fragment{selection_set_suffix} = ",
+                    fragment.name.to_case(Case::Pascal),
+                    selection_set_suffix = ctx.options.selection_set_suffix
                 )?;
                 recursively_typescriptify_selected_field(
                     &fragment.selection_set,
@@ -219,8 +231,9 @@ fn recursively_typescriptify_selected_object_fields(
                 directives,
             }) => {
                 fragment_strings.push(format!(
-                    "{}FragmentSelectionSet",
-                    fragment_name.to_case(Case::Pascal)
+                    "{}Fragment{selection_set_suffix}",
+                    fragment_name.to_case(Case::Pascal),
+                    selection_set_suffix = ctx.options.selection_set_suffix
                 ));
             }
             Selection::InlineFragment(InlineFragment {

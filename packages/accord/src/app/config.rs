@@ -9,6 +9,7 @@ use url::Url;
 
 use crate::{cross, util};
 
+#[derive(Debug)]
 pub struct Glob(pub Vec<PathBuf>);
 
 struct GlobVisitor;
@@ -40,6 +41,7 @@ impl<'de> Deserialize<'de> for Glob {
     }
 }
 
+#[derive(Debug)]
 pub struct EnvvarUrl(pub Url);
 
 struct EnvvarUrlVisitor;
@@ -90,7 +92,8 @@ impl<'de> Deserialize<'de> for EnvvarUrl {
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
 pub struct SchemaGenOut {
     #[serde(rename = "ast")]
     pub ast_path: Option<PathBuf>,
@@ -98,7 +101,8 @@ pub struct SchemaGenOut {
     pub json_path: Option<PathBuf>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
 pub struct SchemaGenPlan {
     pub url: EnvvarUrl,
     #[serde(default)]
@@ -106,18 +110,73 @@ pub struct SchemaGenPlan {
     pub out: SchemaGenOut,
 }
 
-pub type DocumentImport = (String, String);
+#[derive(Deserialize, Debug)]
+pub struct DocumentImport(String, String);
 
-#[derive(Deserialize)]
+impl DocumentImport {
+    pub fn type_name(&self) -> &str {
+        &self.0
+    }
+
+    pub fn package(&self) -> &str {
+        &self.1
+    }
+}
+
+impl Default for DocumentImport {
+    fn default() -> Self {
+        Self("TypedQueryDocumentNode".to_owned(), "graphql".to_owned())
+    }
+}
+
+mod default_options {
+    pub fn selection_set_suffix() -> String {
+        "SelectionSet".to_owned()
+    }
+
+    pub fn arguments_suffix() -> String {
+        "Args".to_owned()
+    }
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub struct TypescriptOptions {
+    #[serde(default)]
+    pub document_import: DocumentImport,
+    pub scalar_newtypes: Option<HashMap<String, String>>,
+    #[serde(default)]
+    pub documents_hide_operation_name: bool,
+    #[serde(default = "default_options::selection_set_suffix")]
+    pub selection_set_suffix: String,
+    #[serde(default = "default_options::arguments_suffix")]
+    pub arguments_suffix: String,
+}
+
+impl Default for TypescriptOptions {
+    fn default() -> Self {
+        Self {
+            document_import: DocumentImport::default(),
+            scalar_newtypes: None,
+            documents_hide_operation_name: Default::default(),
+            selection_set_suffix: default_options::selection_set_suffix(),
+            arguments_suffix: default_options::arguments_suffix(),
+        }
+    }
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(deny_unknown_fields)]
 pub struct TypescriptGenPlan {
     pub ast: PathBuf,
     pub documents: Option<Glob>,
     pub out: PathBuf,
-    pub document_import: Option<DocumentImport>,
-    pub scalar_newtypes: Option<HashMap<String, String>>,
+    #[serde(default)]
+    pub options: TypescriptOptions,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
 pub struct GenPlans {
     #[serde(rename = "schema")]
     pub schema_gen_plan: Option<SchemaGenPlan>,
@@ -125,7 +184,8 @@ pub struct GenPlans {
     pub typescript_gen_plan: Option<TypescriptGenPlan>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
+#[serde(deny_unknown_fields)]
 pub struct Config {
     pub generates: HashMap<String, GenPlans>,
 }
