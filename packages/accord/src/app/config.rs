@@ -192,7 +192,7 @@ pub struct Config {
 
 impl Config {
     pub fn load(dir: Option<&Path>) -> Result<Self> {
-        let config_name = ".accord.yml";
+        let config_name = ".graft.yml";
 
         let path = util::path_with_possible_prefix(dir, &PathBuf::try_from(config_name)?);
 

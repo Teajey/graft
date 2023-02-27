@@ -9,7 +9,7 @@ pub enum Mode {
 }
 
 #[derive(Parser)]
-#[command(name = "Accord", author, version, about)]
+#[command(name = "Graft", author, version, about)]
 pub struct Base {
     #[clap(subcommand)]
     pub mode: Option<Mode>,

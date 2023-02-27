@@ -1,5 +1,5 @@
 {
-  "name": "@teajey/accord",
+  "name": "@teajey/graft",
   "version": "0.1.0",
   "description": "Generate Typescript according to a GraphQL schema.",
   "author": "Teajey <21069848+Teajey@users.noreply.github.com>",
@@ -10,13 +10,13 @@
     "codegen"
   ],
   "license": "MIT",
-  "homepage": "https://github.com/Teajey/accord",
-  "bin": "pkg/teajey_accord.js",
+  "homepage": "https://github.com/Teajey/graft",
+  "bin": "pkg/teajey_graft.js",
   "type": "module",
   "scripts": {
     "test": "cargo test --features native",
     "build": "yarn dlx wasm-pack build --target nodejs",
-    "postinstall": "sh -c \"if [ ! -f pkg/teajey_accord.js ]; then yarn build; fi\""
+    "postinstall": "sh -c \"if [ ! -f pkg/teajey_graft.js ]; then yarn build; fi\""
   },
   "files": [
     "pkg",

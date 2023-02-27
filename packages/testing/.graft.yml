@@ -1,7 +1,7 @@
 generates:
   mySchema:
     schema:
-      url: "{{ACCORD_DOMAIN}}"
+      url: "{{GRAFT_DOMAIN}}"
       no_ssl: true
       out:
         ast: schema.graphql

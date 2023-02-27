@@ -1,1 +1,1 @@
-[Link to main package](packages/accord)
+[Link to main package](packages/graft)

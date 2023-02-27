@@ -4,7 +4,7 @@
 
 </span>
 
-# Accord
+# Graft
 
 Generate GraphQL client Typescript **_bLaZiNgLy_** fast with Rust!
 
@@ -37,26 +37,26 @@ Hopefully soon
 
 ```sh
 # NPM package
-yarn add -D @teajey/accord
+yarn add -D @teajey/graft
 
 # Rust binary
-cargo install teajey-accord
+cargo install teajey-graft
 ```
 
 But for now
 
 ```sh
 # NPM package
-yarn add -D @teajey/accord@https://github.com/Teajey/accord#workspace=@teajey/accord
+yarn add -D @teajey/graft@https://github.com/Teajey/graft#workspace=@teajey/graft
 
 # Rust binary
-cargo install teajey-accord --git https://github.com/Teajey/accord
+cargo install teajey-graft --git https://github.com/Teajey/graft
 ```
 
 Yarn (or your package manager of choice) may hang for a while as the Rust is compiled; i.e.:
 
 ```
-➤ YN0007: │ @teajey/accord@https://github.com/Teajey/accord.git#workspace=%40teajey%2Faccord&commit=b7aa83a082f10be8df25f3ac48d622c3b575c9cf must be built because it never has been before or the last one failed
+➤ YN0007: │ @teajey/graft@https://github.com/Teajey/graft.git#workspace=%40teajey%2Fgraft&commit=b7aa83a082f10be8df25f3ac48d622c3b575c9cf must be built because it never has been before or the last one failed
 ```
 
 ## Configuration
@@ -64,7 +64,7 @@ Yarn (or your package manager of choice) may hang for a while as the Rust is com
 Example config
 
 ```yml
-# .accord.yml
+# .graft.yml
 generates:
   mySchema:
     schema:
@@ -82,5 +82,5 @@ generates:
 ## Usage
 
 ```
-yarn run accord
+yarn run graft
 ```

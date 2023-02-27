@@ -1,4 +1,4 @@
-schema: ${ACCORD_DOMAIN}
+schema: ${GRAFT_DOMAIN}
 generates:
   ./codegen-schema.graphql:
     documents: ./document.graphql
