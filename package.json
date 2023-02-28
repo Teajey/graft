@@ -1,7 +1,7 @@
 {
   "private": true,
   "workspaces": [
-    "packages/accord"
+    "packages/graft"
   ],
   "dependencies": {
     "typescript": "^4.8.4"
