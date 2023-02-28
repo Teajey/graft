@@ -24,3 +24,24 @@ dist-ssr
 *.sw?
 
 typed-document-nodes.ts
+target/
+
+node_modules/
+
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
+g2t-config.yml
+
+generated.ts
+schema.json
+*schema.graphql
+
+*.snap.new
+
+.env*.local

@@ -21,7 +21,7 @@
     "@graphql-codegen/typed-document-node": "^3.0.1",
     "@graphql-codegen/typescript": "^3.0.1",
     "@graphql-codegen/typescript-operations": "^3.0.1",
-    "@teajey/graft": "workspace:*",
+    "@teajey/graft": "file:./../../packages/graft",
     "@types/react": "^18.0.22",
     "@types/react-dom": "^18.0.7",
     "@vitejs/plugin-react": "^2.2.0",
