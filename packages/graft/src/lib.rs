@@ -95,3 +95,11 @@ pub async fn run() -> Result<()> {
 
     Ok(())
 }
+
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen::prelude::wasm_bindgen(start)]
+pub async fn node_main() -> eyre::Result<(), wasm_bindgen::JsValue> {
+    run()
+        .await
+        .map_err(|err| wasm_bindgen::JsValue::from_str(&err.to_string()))
+}
