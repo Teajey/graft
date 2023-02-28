@@ -1,10 +1,10 @@
 [package]
-name = "teajey-accord"
+name = "teajey-graft"
 version = "0.1.0"
 edition = "2021"
-description = "Generate Typescript according to a GraphQL schema."
+description = "Generate Typescript grafting to a GraphQL schema."
 license = "MIT"
-repository = "https://github.com/Teajey/accord"
+repository = "https://github.com/Teajey/graft"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

@@ -71,15 +71,15 @@ pub mod debug {
     }
 
     fn init() -> Result<bool> {
-        let Some(accord_debug) = cross::env::option_var("ACCORD_DEBUG")? else {
+        let Some(graft_debug) = cross::env::option_var("GRAFT_DEBUG")? else {
             return Ok(false);
         };
 
-        let result = match accord_debug.as_str() {
+        let result = match graft_debug.as_str() {
             "true" => Ok(true),
             "false" => Ok(false),
             value => Err(eyre!(
-                "Invalid ACCORD_DEBUG value '{value}'. Must be 'true' or 'false'"
+                "Invalid GRAFT_DEBUG value '{value}'. Must be 'true' or 'false'"
             )),
         };
 

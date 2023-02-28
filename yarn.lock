@@ -1734,15 +1734,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@teajey/accord@workspace:*, @teajey/accord@workspace:packages/accord":
+"@teajey/graft@workspace:*, @teajey/graft@workspace:packages/graft":
   version: 0.0.0-use.local
-  resolution: "@teajey/accord@workspace:packages/accord"
+  resolution: "@teajey/graft@workspace:packages/graft"
   dependencies:
     glob: ^8.1.0
     node-fetch: ^3.2.10
     wasm-pack: ^0.10.3
   bin:
-    accord: pkg/teajey_accord.js
+    graft: pkg/teajey_graft.js
   languageName: unknown
   linkType: soft
 
@@ -5275,7 +5275,7 @@ __metadata:
     "@graphql-codegen/typed-document-node": ^3.0.1
     "@graphql-codegen/typescript": ^3.0.1
     "@graphql-codegen/typescript-operations": ^3.0.1
-    "@teajey/accord": "workspace:*"
+    "@teajey/graft": "workspace:*"
     "@types/react": ^18.0.22
     "@types/react-dom": ^18.0.7
     "@vitejs/plugin-react": ^2.2.0
