@@ -88,15 +88,16 @@ impl<'a, 'b, 'c> TypescriptableWithBuffer for WithContext<'a, 'b, 'c, Definition
 
                 let document_json = serde_json::to_string(&document)?;
 
-                let operation_type_name = if ctx.options.documents_hide_operation_name {
+                let document_operation_type_name = if ctx.options.documents_hide_operation_name {
                     ""
                 } else {
                     operation_type_name
                 };
 
-                let document_name = format!("{operation_name}{operation_type_name}Document");
+                let document_name =
+                    format!("{operation_name}{document_operation_type_name}Document");
                 let args_name = format!(
-                    "{operation_name}{operation_type_name}{arguments_suffix}",
+                    "{operation_name}{document_operation_type_name}{arguments_suffix}",
                     arguments_suffix = ctx.options.arguments_suffix
                 );
                 let selection_set_name = format!(
