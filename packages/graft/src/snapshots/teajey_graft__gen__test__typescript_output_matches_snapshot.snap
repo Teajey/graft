@@ -1,5 +1,5 @@
 ---
-source: packages/accord/src/gen.rs
+source: packages/graft/src/gen.rs
 expression: typescript
 ---
 import type { TypedQueryDocumentNode } from "graphql";
