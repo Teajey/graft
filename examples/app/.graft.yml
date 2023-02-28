@@ -2,7 +2,7 @@ generates:
   mySchema:
     schema:
       url: "{{GRAFT_DOMAIN}}"
-      no_ssl: true
+      noSsl: true
       out:
         ast: schema.graphql
         json: schema.json
