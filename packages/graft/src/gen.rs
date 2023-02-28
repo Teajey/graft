@@ -185,7 +185,9 @@ mod test {
         let typescript = generate_typescript(
             &ctx,
             TypescriptOptions::default(),
-            Some(Glob(vec![PathBuf::from("../testing/document.graphql")])),
+            Some(Glob(vec![PathBuf::from(
+                "../../examples/app/document.graphql",
+            )])),
             &schema,
         )
         .await?;
