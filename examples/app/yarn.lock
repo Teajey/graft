@@ -1453,13 +1453,13 @@ __metadata:
 
 "@teajey/graft@file:./../../packages/graft::locator=testing%40workspace%3A.":
   version: 0.1.0
-  resolution: "@teajey/graft@file:./../../packages/graft#./../../packages/graft::hash=f31e36&locator=testing%40workspace%3A."
+  resolution: "@teajey/graft@file:./../../packages/graft#./../../packages/graft::hash=c013a5&locator=testing%40workspace%3A."
   dependencies:
     glob: ^8.1.0
     node-fetch: ^3.2.10
   bin:
     graft: pkg/teajey_graft.js
-  checksum: 87aae142361cee282fe4ec248958d492c2aa5f1f7d5b851e07ee8f90e6d058ed40ee8bfaf987e35dad719a34e8f987fba4eda9aec88e386bf7a3f20056c1ad71
+  checksum: d1aa6ebfe10db2b78c7c412d7367714238aa70a2c96968cff7fdd42c800305b985c1799af779f89a892414a9b9885a14a24b90a27889843dc4bc5131c347295d
   languageName: node
   linkType: hard
 
