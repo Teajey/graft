@@ -162,13 +162,17 @@ mod test {
 
     use eyre::Result;
 
-    use crate::app::config::Glob;
-    use crate::app::config::TypescriptOptions;
-    use crate::introspection;
-    use crate::{app, gen::generate_typescript};
+    use crate::{
+        app::{
+            self,
+            config::{DocumentImport, Glob, TypescriptOptions},
+        },
+        gen::generate_typescript,
+        graphql::schema::Schema,
+        introspection,
+    };
 
-    #[tokio::test]
-    async fn typescript_output_matches_snapshot() -> Result<()> {
+    async fn context_and_schema() -> Result<(app::Context, Schema)> {
         let ctx = app::Context {
             verbose: 0,
             config_location: None,
@@ -182,9 +186,41 @@ mod test {
         .await?
         .schema();
 
+        Ok((ctx, schema))
+    }
+
+    #[tokio::test]
+    async fn standard_typescript() -> Result<()> {
+        let (ctx, schema) = context_and_schema().await?;
+
         let typescript = generate_typescript(
             &ctx,
             TypescriptOptions::default(),
+            Some(Glob(vec![PathBuf::from(
+                "../../examples/app/document.graphql",
+            )])),
+            &schema,
+        )
+        .await?;
+
+        insta::assert_snapshot!(typescript);
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn codegen_like_typescript() -> Result<()> {
+        let (ctx, schema) = context_and_schema().await?;
+
+        let typescript = generate_typescript(
+            &ctx,
+            TypescriptOptions {
+                document_import: DocumentImport::default(),
+                scalar_newtypes: None,
+                documents_hide_operation_name: true,
+                selection_set_suffix: "".to_owned(),
+                arguments_suffix: "Variables".to_owned(),
+            },
             Some(Glob(vec![PathBuf::from(
                 "../../examples/app/document.graphql",
             )])),
