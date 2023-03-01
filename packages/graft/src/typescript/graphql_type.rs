@@ -51,7 +51,7 @@ impl<'a, 'b, 'c> TypescriptableWithBuffer for WithContext<'a, 'b, 'c, NamedType>
                         }
                     }
                 };
-                writeln!(buffer.scalars, "export type {} = {scalar_type};", ts_name)?;
+                writeln!(buffer.scalars, "export type {ts_name} = {scalar_type};")?;
             }
             NamedType::Object {
                 name: _,
@@ -60,7 +60,7 @@ impl<'a, 'b, 'c> TypescriptableWithBuffer for WithContext<'a, 'b, 'c, NamedType>
                 interfaces,
             } => {
                 possibly_write_description(&mut buffer.objects, description.as_ref())?;
-                write!(buffer.objects, "export type {} = ", ts_name)?;
+                write!(buffer.objects, "export type {ts_name} = ")?;
                 for interface in interfaces {
                     let interface = ctx
                         .index
@@ -84,11 +84,12 @@ impl<'a, 'b, 'c> TypescriptableWithBuffer for WithContext<'a, 'b, 'c, NamedType>
                 name: _,
                 description,
                 fields,
-                possible_types,
+                // I don't think this would be very useful here
+                possible_types: _,
                 interfaces,
             } => {
                 possibly_write_description(&mut buffer.interfaces, description.as_ref())?;
-                write!(buffer.interfaces, "export type {} = ", ts_name)?;
+                write!(buffer.interfaces, "export type {ts_name} = ")?;
                 for interface in interfaces {
                     let interface = ctx
                         .index
@@ -124,8 +125,7 @@ impl<'a, 'b, 'c> TypescriptableWithBuffer for WithContext<'a, 'b, 'c, NamedType>
                     .join(" | ");
                 writeln!(
                     buffer.unions,
-                    "export type {} = {};",
-                    ts_name, possible_types
+                    "export type {ts_name} = {possible_types};",
                 )?;
             }
             NamedType::Enum {
@@ -134,7 +134,7 @@ impl<'a, 'b, 'c> TypescriptableWithBuffer for WithContext<'a, 'b, 'c, NamedType>
                 enum_values,
             } => {
                 possibly_write_description(&mut buffer.enums, description.as_ref())?;
-                writeln!(buffer.enums, "export enum {} {{", ts_name)?;
+                writeln!(buffer.enums, "export enum {ts_name} {{")?;
                 for v in enum_values {
                     possibly_write_description(&mut buffer.enums, v.description.as_ref())?;
                     writeln!(
@@ -152,7 +152,7 @@ impl<'a, 'b, 'c> TypescriptableWithBuffer for WithContext<'a, 'b, 'c, NamedType>
                 input_fields,
             } => {
                 possibly_write_description(&mut buffer.objects, description.as_ref())?;
-                writeln!(buffer.input_objects, "export type {} = {{", ts_name)?;
+                writeln!(buffer.input_objects, "export type {ts_name} = {{")?;
                 for f in input_fields {
                     possibly_write_description(&mut buffer.input_objects, f.description.as_ref())?;
                     if let TypeRef::Container(TypeRefContainer::NonNull { .. }) = f.of_type {
