@@ -23,10 +23,9 @@ jobs:
             ~/.cargo
             target
           # An explicit key for restoring and saving the cache
-          key: build-graft-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}-${{ hashFiles('packages/graft/src/**/*') }}
+          key: build-graft-${{ runner.os }}
           restore-keys: |
-            build-graft-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}-
-            build-graft-${{ runner.os }}-
+            build-graft-${{ runner.os }}
           # An ordered list of keys to use for restoring stale cache if no cache hit occurred for key. Note `cache-hit` returns false in this case.
       #         restore-keys: # optional
       # The chunk size used to split up large files during upload, in bytes
@@ -39,7 +38,7 @@ jobs:
         run: rustup component add clippy
       - name: Lint with Clippy
         run: cargo clippy --all-targets
-      - name: Build binary version
+      - name: Build native version
         run: cargo build
-      - name: Test binary version
+      - name: Test native version
         run: cargo test
