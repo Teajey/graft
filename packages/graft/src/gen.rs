@@ -59,7 +59,7 @@ impl Display for Buffer {
         writeln!(buffer_buffer, "// Fragments")?;
         write!(buffer_buffer, "{}", self.fragments)?;
 
-        write!(f, "{}", buffer_buffer)
+        write!(f, "{buffer_buffer}")
     }
 }
 
@@ -203,7 +203,7 @@ mod test {
                 document_import: DocumentImport::default(),
                 scalar_newtypes: None,
                 documents_hide_operation_name: true,
-                selection_set_suffix: "".to_owned(),
+                selection_set_suffix: String::new(),
                 arguments_suffix: "Variables".to_owned(),
             },
             Some(DocumentPaths::from([

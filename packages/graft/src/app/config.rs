@@ -27,16 +27,17 @@ impl<'de> Visitor<'de> for EnvvarUrlVisitor {
     where
         E: serde::de::Error,
     {
-        let envvar_interpolator = regex!(r#"\{\{(\w+)\}\}"#);
-
         // FIXME: This' pretty hacky, but I can't think of a better way to deal with `std::env::var`s `Result` inside `replace_all` right now
         const ENVVAR_NOT_FOUND: &str = "{{ENVVAR NOT FOUND}}";
+
+        let envvar_interpolator = regex!(r#"\{\{(\w+)\}\}"#);
+
 
         let url = envvar_interpolator.replace_all(st, |captures: &Captures<'_>| {
             let envvar_key = captures.get(1).expect("first capture defined in envvar_interpolator");
             let envvar_key = envvar_key.as_str();
             cross::env::var(envvar_key).unwrap_or_else(|_| {
-                eprintln!("Couldn't find environment variable with name \"{}\" while interpolating schema", envvar_key);
+                eprintln!("Couldn't find environment variable with name \"{envvar_key}\" while interpolating schema");
                 ENVVAR_NOT_FOUND.to_owned()
             })
         });

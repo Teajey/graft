@@ -20,7 +20,7 @@ pub(in crate::typescript) fn possibly_write_description<W: Write>(
         if description.contains('\n') {
             writeln!(out, "/**\n * {}\n */", description.replace('\n', "\n * "))?;
         } else {
-            writeln!(out, "/** {} */", description)?;
+            writeln!(out, "/** {description} */")?;
         }
     };
 

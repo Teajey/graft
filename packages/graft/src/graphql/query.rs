@@ -304,7 +304,7 @@ mod tests {
 
         insta::assert_snapshot!(
             serde_json::to_string_pretty(&re_json).expect("failed to pretty print re_json")
-        )
+        );
     }
 
     #[test]
