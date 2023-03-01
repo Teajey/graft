@@ -7,8 +7,8 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "gen": "dotenv -e .env.local -- yarn graft",
-    "codegen": "dotenv -e .env.local -- graphql-codegen"
+    "gen": "dotenv -- graft",
+    "codegen": "dotenv -- graphql-codegen"
   },
   "dependencies": {
     "graphql": "^16.6.0",

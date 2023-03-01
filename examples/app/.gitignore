@@ -45,3 +45,5 @@ schema.json
 *.snap.new
 
 .env*.local
+
+yarn.lock

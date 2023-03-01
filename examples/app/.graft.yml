@@ -8,5 +8,5 @@ generates:
         json: schema.json
     typescript:
       ast: schema.graphql
-      documents: document.graphql
+      documents: ["fragments.graphql", "queries.graphql"]
       out: generated.ts

@@ -1,0 +1,20 @@
+fragment starshipFragment on Starship {
+  id
+  name
+  model
+  costInCredits
+  pilotConnection {
+    edges {
+      node {
+        ...pilotFragment
+      }
+    }
+  }
+}
+
+fragment pilotFragment on Person {
+  name
+  homeworld {
+    name
+  }
+}
