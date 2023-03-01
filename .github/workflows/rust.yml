@@ -8,7 +8,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  CARGO_HOME: /cargo
+  CARGO_HOME: ${HOME}/cargo
 
 jobs:
   build:
