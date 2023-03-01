@@ -4,7 +4,7 @@
     "**/.pnp.*": true
   },
   "typescript.enablePromptUseWorkspaceTsdk": true,
-  "typescript.tsdk": ".yarn/sdks/typescript/lib",
+  "typescript.tsdk": "node_modules/typescript/lib",
   "rust-analyzer.cargo.features": ["debug"],
   "rust-analyzer.cargo.target": "wasm32-unknown-unknown"
 }
