@@ -22,7 +22,11 @@ jobs:
             ~/.cargo
             target
           # An explicit key for restoring and saving the cache
-          key: graft-cargo-cache
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('Cargo.lock') }}-${{ hashFiles('packages/graft/**/*') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('Cargo.lock') }}-
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
           # An ordered list of keys to use for restoring stale cache if no cache hit occurred for key. Note `cache-hit` returns false in this case.
       #         restore-keys: # optional
       # The chunk size used to split up large files during upload, in bytes
