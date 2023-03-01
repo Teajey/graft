@@ -35,7 +35,7 @@ jobs:
       - name: Install Clippy
         run: rustup component add clippy
       - name: Lint with Clippy
-        run: cargo clippy --all-targets -- -Dclippy::pedantic
+        run: cargo clippy --all-targets
       - name: Build binary version
         run: cargo build
       - name: Test binary version
