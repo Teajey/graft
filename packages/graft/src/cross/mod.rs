@@ -133,32 +133,9 @@ pub mod env {
 }
 
 pub mod fs {
-    use std::path::{Path, PathBuf};
+    use std::path::Path;
 
     use eyre::Result;
-
-    pub fn glob(pattern: &str) -> Result<Vec<PathBuf>> {
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            Ok(glob::glob(pattern)?.collect::<Result<Vec<_>, _>>()?)
-        }
-        #[cfg(target_arch = "wasm32")]
-        {
-            let paths = super::node::glob(pattern)
-                .map_err(|err| eyre::eyre!("{err:?}"))?
-                .into_iter()
-                .map(|p| -> Result<PathBuf> {
-                    let string = p
-                        .as_string()
-                        .ok_or_else(|| eyre::eyre!("Couldn't convert {p:?} to String"))?;
-
-                    Ok(string.try_into()?)
-                })
-                .collect::<Result<Vec<_>>>()?;
-
-            Ok(paths)
-        }
-    }
 
     pub fn read_to_string<P: AsRef<Path>>(path: P) -> Result<String> {
         #[cfg(not(target_arch = "wasm32"))]

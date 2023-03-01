@@ -19,7 +19,3 @@ module.exports.fetchJson = async function (url, noSsl, options) {
 module.exports.readFileToString = function (path) {
   return fs.readFileSync(path, { encoding: "utf8" });
 };
-
-module.exports.glob = function (pattern) {
-  return glob.sync(pattern);
-};

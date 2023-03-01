@@ -84,7 +84,7 @@ pub async fn run() -> Result<()> {
             let ts = generate_typescript(
                 &ctx,
                 typescript_gen_plan.options,
-                typescript_gen_plan.documents,
+                typescript_gen_plan.document_paths,
                 &schema,
             )
             .await?;

@@ -83,7 +83,4 @@ extern "C" {
 
     #[wasm_bindgen(js_name = "readFileToString", catch)]
     pub fn read_file_to_string(path: &str) -> Result<String, JsValue>;
-
-    #[wasm_bindgen(catch)]
-    pub fn glob(pattern: &str) -> Result<Vec<JsValue>, JsValue>;
 }

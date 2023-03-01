@@ -10,38 +10,6 @@ use url::Url;
 use crate::{cross, util};
 
 #[derive(Debug)]
-pub struct Glob(pub Vec<PathBuf>);
-
-struct GlobVisitor;
-
-impl<'de> Visitor<'de> for GlobVisitor {
-    type Value = Glob;
-
-    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-        formatter.write_str("a glob path string")
-    }
-
-    fn visit_str<E>(self, st: &str) -> std::result::Result<Self::Value, E>
-    where
-        E: serde::de::Error,
-    {
-        match crate::cross::fs::glob(st) {
-            Ok(paths) => Ok(Glob(paths)),
-            Err(err) => Err(E::custom(err)),
-        }
-    }
-}
-
-impl<'de> Deserialize<'de> for Glob {
-    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        deserializer.deserialize_string(GlobVisitor)
-    }
-}
-
-#[derive(Debug)]
 pub struct EnvvarUrl(pub Url);
 
 struct EnvvarUrlVisitor;
@@ -166,10 +134,33 @@ impl Default for TypescriptOptions {
 }
 
 #[derive(Deserialize, Debug)]
+pub struct DocumentPaths(Vec<PathBuf>);
+
+impl DocumentPaths {
+    pub fn resolve_to_full_document_string<'a>(self, config_location: Option<&Path>) -> Result<Option<String>> {
+        if self.0.is_empty() {
+            return Ok(None);
+        }
+
+        let full_document_string = self.0.into_iter().map(|document_path| -> Result<String> {
+            let document_path =
+            crate::util::path_with_possible_prefix(config_location, document_path.as_path());
+
+            let document_string = cross::fs::read_to_string(document_path)?;
+
+            Ok(document_string)
+        }).collect::<Result<Vec<_>>>()?.join("\n");
+
+        Ok(Some(full_document_string))
+    }
+}
+
+#[derive(Deserialize, Debug)]
 #[serde(deny_unknown_fields)]
 pub struct TypescriptGenPlan {
     pub ast: PathBuf,
-    pub documents: Option<Glob>,
+    #[serde(rename = "documents")]
+    pub document_paths: Option<DocumentPaths>,
     pub out: PathBuf,
     #[serde(default)]
     pub options: TypescriptOptions,

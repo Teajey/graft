@@ -4,14 +4,11 @@ use eyre::Result;
 use graphql_parser::query::Document;
 
 use crate::app;
-use crate::app::config::Glob;
-use crate::app::config::TypescriptOptions;
-use crate::cross;
+use crate::app::config::{TypescriptOptions, DocumentPaths};
 use crate::debug_log;
 use crate::graphql::schema::Schema;
 use crate::typescript::TypescriptContext;
 use crate::typescript::{TypeIndex, TypescriptableWithBuffer};
-use crate::util::path_with_possible_prefix;
 
 pub struct Buffer {
     pub imports: String,
@@ -121,35 +118,24 @@ pub async fn generate_typescript_with_document(
 pub async fn generate_typescript(
     ctx: &app::Context,
     options: TypescriptOptions,
-    documents: Option<Glob>,
+    document_paths: Option<DocumentPaths>,
     schema: &Schema,
 ) -> Result<String> {
-    let Some(app::config::Glob(document_paths)) = documents else {
-        return generate_typescript_with_document(options, schema, None)
-        .await;
-    };
-
     debug_log!("current dir files: {:?}", std::fs::read_dir("./"));
 
-    debug_log!("document_paths: {:?}", document_paths);
+    let Some(document_paths) = document_paths else {
+        return generate_typescript_with_document(options, schema, None).await;
+    };
+    
+    let Some(full_document_string) = document_paths.resolve_to_full_document_string(ctx.config_location.as_deref())? else {
+        return generate_typescript_with_document(options, schema, None).await;
+    };
 
-    let document_str = document_paths
-        .iter()
-        .map(|document_path| {
-            let document_path =
-                path_with_possible_prefix(ctx.config_location.as_deref(), document_path.as_path());
+    debug_log!("AST: {}", full_document_string);
 
-            let document_str = cross::fs::read_to_string(document_path)?;
 
-            Ok(document_str)
-        })
-        .collect::<Result<Vec<_>>>()?
-        .join("\n");
-
-    debug_log!("AST: {}", document_str);
-
-    let document = graphql_parser::parse_query::<String>(&document_str)?;
-    debug_log!("parsed document");
+    let document = graphql_parser::parse_query::<String>(&full_document_string)?;
+    debug_log!("Parsed document!");
 
     generate_typescript_with_document(options, schema, Some(document)).await
 }
