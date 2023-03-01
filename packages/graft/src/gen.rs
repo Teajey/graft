@@ -7,8 +7,7 @@ use crate::app;
 use crate::app::config::{TypescriptOptions, DocumentPaths};
 use crate::debug_log;
 use crate::graphql::schema::Schema;
-use crate::typescript::TypescriptContext;
-use crate::typescript::{TypeIndex, TypescriptableWithBuffer};
+use crate::typescript::{self, TypeIndex, TypescriptableWithBuffer};
 
 pub struct Buffer {
     pub imports: String,
@@ -63,7 +62,7 @@ impl Display for Buffer {
     }
 }
 
-pub async fn generate_typescript_with_document(
+pub fn generate_typescript_with_document(
     options: TypescriptOptions,
     schema: &Schema,
     document: Option<Document<'_, String>>,
@@ -87,7 +86,7 @@ pub async fn generate_typescript_with_document(
 
     let index = TypeIndex::try_new(schema)?;
 
-    let ctx = TypescriptContext { index, options };
+    let ctx = typescript::Context { index, options };
 
     writeln!(
         buffer.imports,
@@ -115,7 +114,7 @@ pub async fn generate_typescript_with_document(
     Ok(buffer.to_string())
 }
 
-pub async fn generate_typescript(
+pub fn generate_typescript(
     ctx: &app::Context,
     options: TypescriptOptions,
     document_paths: Option<DocumentPaths>,
@@ -124,11 +123,11 @@ pub async fn generate_typescript(
     debug_log!("current dir files: {:?}", std::fs::read_dir("./"));
 
     let Some(document_paths) = document_paths else {
-        return generate_typescript_with_document(options, schema, None).await;
+        return generate_typescript_with_document(options, schema, None);
     };
     
     let Some(full_document_string) = document_paths.resolve_to_full_document_string(ctx.config_location.as_deref())? else {
-        return generate_typescript_with_document(options, schema, None).await;
+        return generate_typescript_with_document(options, schema, None);
     };
 
     debug_log!("AST: {}", full_document_string);
@@ -137,7 +136,7 @@ pub async fn generate_typescript(
     let document = graphql_parser::parse_query::<String>(&full_document_string)?;
     debug_log!("Parsed document!");
 
-    generate_typescript_with_document(options, schema, Some(document)).await
+    generate_typescript_with_document(options, schema, Some(document))
 }
 
 // Native test only for now...
@@ -185,8 +184,7 @@ mod test {
                 "../../examples/app/queries.graphql",
             ])),
             &schema,
-        )
-        .await?;
+        )?;
 
         insta::assert_snapshot!(typescript);
 
@@ -211,8 +209,7 @@ mod test {
                 "../../examples/app/queries.graphql",
             ])),
             &schema,
-        )
-        .await?;
+        )?;
 
         insta::assert_snapshot!(typescript);
 

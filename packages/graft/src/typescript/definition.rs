@@ -6,9 +6,9 @@ use graphql_parser::query::{
     Definition, FragmentSpread, InlineFragment, OperationDefinition, TypeCondition,
 };
 
-use super::{TypescriptContext, Typescriptable, TypescriptableWithBuffer, WithContext};
 use crate::{
     gen::Buffer,
+    typescript::{self, Typescriptable, TypescriptableWithBuffer, WithContext},
     graphql::{
         query::{self as ac, Operation},
         schema::{Field, NamedType, Type, TypeRef, TypeRefContainer},
@@ -139,11 +139,10 @@ impl<'a, 'b, 'c> TypescriptableWithBuffer for WithContext<'a, 'b, 'c, Definition
                     writeln!(buffer.args, "}}")?;
                 }
 
-                let operation_fields = if let NamedType::Object { fields, .. } = operation_type {
-                    fields
-                } else {
+                let NamedType::Object { fields: operation_fields, .. } = operation_type else {
                     return Err(eyre!("Top-level operation must be an object"));
                 };
+
                 write!(buffer.selection_sets, "export type {selection_set_name} = ",)?;
                 recursively_typescriptify_selected_object_fields(
                     selection_set,
@@ -192,7 +191,7 @@ fn recursively_typescriptify_selected_object_fields(
     selection_set: &SelectionSet<'_, String>,
     buffer: &mut String,
     selectable_fields: &[Field],
-    ctx: &TypescriptContext,
+    ctx: &typescript::Context,
 ) -> Result<()> {
     let mut fragment_strings = Vec::<String>::new();
     write!(buffer, "{{ ")?;
@@ -203,7 +202,8 @@ fn recursively_typescriptify_selected_object_fields(
                 alias,
                 name,
                 arguments: _,
-                directives,
+                // TODO: Think about including directives in the Typescript
+                directives: _,
                 selection_set,
             }) => {
                 let selected_field = selectable_fields
@@ -229,7 +229,7 @@ fn recursively_typescriptify_selected_object_fields(
             Selection::FragmentSpread(FragmentSpread {
                 position: _,
                 fragment_name,
-                directives,
+                directives: _,
             }) => {
                 fragment_strings.push(format!(
                     "{}Fragment{selection_set_suffix}",
@@ -240,7 +240,7 @@ fn recursively_typescriptify_selected_object_fields(
             Selection::InlineFragment(InlineFragment {
                 position,
                 type_condition,
-                directives,
+                directives: _,
                 selection_set,
             }) => {
                 if let Some(TypeCondition::On(type_name)) = type_condition {
@@ -276,7 +276,7 @@ fn recursively_typescriptify_selected_field(
     selection_set: &SelectionSet<'_, String>,
     buffer: &mut String,
     type_ref: &TypeRef,
-    ctx: &TypescriptContext,
+    ctx: &typescript::Context,
     nullable: &mut bool,
 ) -> Result<()> {
     let selected_field_type = ctx.index.type_from_ref(type_ref.clone())?;

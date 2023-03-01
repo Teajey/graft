@@ -15,6 +15,7 @@ use crate::{
     app::cli,
 };
 
+#[allow(clippy::missing_errors_doc)]
 pub async fn run() -> Result<()> {
     debug_log!("Collecting argv");
     let argv: Result<Vec<_>> = cross::env::argv().collect();
@@ -86,8 +87,7 @@ pub async fn run() -> Result<()> {
                 typescript_gen_plan.options,
                 typescript_gen_plan.document_paths,
                 &schema,
-            )
-            .await?;
+            )?;
 
             cross::fs::write_to_file(typescript_gen_plan.out, &ts)?;
         }
@@ -97,6 +97,7 @@ pub async fn run() -> Result<()> {
 }
 
 #[cfg(target_arch = "wasm32")]
+#[allow(clippy::missing_errors_doc)]
 #[wasm_bindgen::prelude::wasm_bindgen(start)]
 pub async fn node_main() -> eyre::Result<(), wasm_bindgen::JsValue> {
     run()

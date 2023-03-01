@@ -63,12 +63,13 @@ fn path_to_string<P: AsRef<std::path::Path>>(path: P) -> eyre::Result<String> {
 pub mod env {
     use std::{
         ffi::OsString,
-        path::{Path, PathBuf},
+        path::Path,
     };
 
     use eyre::Result;
 
-    pub fn current_dir() -> Result<PathBuf> {
+    #[cfg(feature = "debug")]
+    pub fn current_dir() -> Result<std::path::PathBuf> {
         #[cfg(not(target_arch = "wasm32"))]
         {
             Ok(std::env::current_dir()?)
@@ -76,7 +77,7 @@ pub mod env {
         #[cfg(target_arch = "wasm32")]
         {
             super::node::process_cwd()
-                .map(PathBuf::from)
+                .map(std::path::PathBuf::from)
                 .map_err(|err| eyre::eyre!("{err:?}"))
         }
     }
@@ -97,6 +98,7 @@ pub mod env {
         option_var(key)?.ok_or(std::env::VarError::NotPresent)
     }
 
+    #[allow(clippy::unnecessary_wraps)]
     pub fn option_var(key: &str) -> Result<Option<String>, std::env::VarError> {
         #[cfg(not(target_arch = "wasm32"))]
         {
