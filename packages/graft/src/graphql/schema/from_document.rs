@@ -20,12 +20,13 @@ impl From<gp::Type<'_, String>> for ac::TypeRef {
 impl From<gp::InputValue<'_, String>> for ac::InputValue {
     fn from(
         gp::InputValue {
-            position,
+            position: _,
             description,
             name,
             value_type,
             default_value: _,
-            directives,
+            // Reading directives with introspection not supported: https://stackoverflow.com/a/65064958/2269124
+            directives: _,
         }: gp::InputValue<'_, String>,
     ) -> Self {
         Self {
@@ -44,7 +45,7 @@ impl From<gp::Field<'_, String>> for ac::Field {
             name,
             arguments,
             field_type,
-            directives,
+            directives: _,
         }: gp::Field<'_, String>,
     ) -> Self {
         Self {
@@ -61,10 +62,10 @@ impl From<gp::Field<'_, String>> for ac::Field {
 impl From<gp::EnumValue<'_, String>> for ac::EnumValue {
     fn from(
         gp::EnumValue {
-            position,
+            position: _,
             description,
             name,
-            directives,
+            directives: _,
         }: gp::EnumValue<'_, String>,
     ) -> Self {
         Self {
@@ -86,11 +87,11 @@ impl From<gp::TypeDefinition<'_, String>> for ac::NamedType {
                 directives: _,
             }) => ac::NamedType::Scalar { name, description },
             gp::TypeDefinition::Object(gp::ObjectType {
-                position,
+                position: _,
                 description,
                 name,
                 implements_interfaces,
-                directives,
+                directives: _,
                 fields,
             }) => ac::NamedType::Object {
                 name,
@@ -102,11 +103,11 @@ impl From<gp::TypeDefinition<'_, String>> for ac::NamedType {
                     .collect(),
             },
             gp::TypeDefinition::Interface(gp::InterfaceType {
-                position,
+                position: _,
                 description,
                 name,
                 implements_interfaces,
-                directives,
+                directives: _,
                 fields,
             }) => ac::NamedType::Interface {
                 name,
@@ -119,10 +120,10 @@ impl From<gp::TypeDefinition<'_, String>> for ac::NamedType {
                     .collect(),
             },
             gp::TypeDefinition::Union(gp::UnionType {
-                position,
+                position: _,
                 description,
                 name,
-                directives,
+                directives: _,
                 types,
             }) => ac::NamedType::Union {
                 name,
@@ -133,10 +134,10 @@ impl From<gp::TypeDefinition<'_, String>> for ac::NamedType {
                     .collect(),
             },
             gp::TypeDefinition::Enum(gp::EnumType {
-                position,
+                position: _,
                 description,
                 name,
-                directives,
+                directives: _,
                 values,
             }) => ac::NamedType::Enum {
                 name,
@@ -144,10 +145,10 @@ impl From<gp::TypeDefinition<'_, String>> for ac::NamedType {
                 enum_values: values.into_iter().map(Into::into).collect(),
             },
             gp::TypeDefinition::InputObject(gp::InputObjectType {
-                position,
+                position: _,
                 description,
                 name,
-                directives,
+                directives: _,
                 fields,
             }) => ac::NamedType::InputObject {
                 name,
@@ -188,7 +189,7 @@ impl From<gp::DirectiveLocation> for ac::DirectiveLocation {
 impl From<gp::DirectiveDefinition<'_, String>> for ac::Directive {
     fn from(
         gp::DirectiveDefinition {
-            position,
+            position: _,
             description,
             name,
             arguments,
