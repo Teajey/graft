@@ -136,11 +136,23 @@ impl Default for TypescriptOptions {
 #[derive(Deserialize, Debug)]
 pub struct DocumentPaths(Vec<PathBuf>);
 
+#[cfg(test)]
+impl<const N: usize> From<[&str; N]> for DocumentPaths {
+    fn from(paths: [&str; N]) -> Self {
+        Self(
+            paths.into_iter().map(PathBuf::from).collect()
+        )
+    }
+}
+
 impl DocumentPaths {
-    pub fn resolve_to_full_document_string<'a>(self, config_location: Option<&Path>) -> Result<Option<String>> {
+    pub fn resolve_to_full_document_string<'a>(mut self, config_location: Option<&Path>) -> Result<Option<String>> {
         if self.0.is_empty() {
             return Ok(None);
         }
+
+        self.0.sort();
+        self.0.reverse();
 
         let full_document_string = self.0.into_iter().map(|document_path| -> Result<String> {
             let document_path =

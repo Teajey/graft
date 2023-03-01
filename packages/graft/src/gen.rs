@@ -144,14 +144,12 @@ pub async fn generate_typescript(
 #[cfg(not(target_arch = "wasm32"))]
 #[cfg(test)]
 mod test {
-    use std::path::PathBuf;
-
     use eyre::Result;
 
     use crate::{
         app::{
             self,
-            config::{DocumentImport, Glob, TypescriptOptions},
+            config::{DocumentImport, TypescriptOptions, DocumentPaths},
         },
         gen::generate_typescript,
         graphql::schema::Schema,
@@ -182,9 +180,10 @@ mod test {
         let typescript = generate_typescript(
             &ctx,
             TypescriptOptions::default(),
-            Some(Glob(vec![PathBuf::from(
-                "../../examples/app/document.graphql",
-            )])),
+            Some(DocumentPaths::from([
+                "../../examples/app/fragments.graphql",
+                "../../examples/app/queries.graphql",
+            ])),
             &schema,
         )
         .await?;
@@ -207,9 +206,10 @@ mod test {
                 selection_set_suffix: "".to_owned(),
                 arguments_suffix: "Variables".to_owned(),
             },
-            Some(Glob(vec![PathBuf::from(
-                "../../examples/app/document.graphql",
-            )])),
+            Some(DocumentPaths::from([
+                "../../examples/app/fragments.graphql",
+                "../../examples/app/queries.graphql",
+            ])),
             &schema,
         )
         .await?;
