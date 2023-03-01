@@ -193,7 +193,8 @@ impl From<gp::DirectiveDefinition<'_, String>> for ac::Directive {
             description,
             name,
             arguments,
-            repeatable,
+            // Not supported in GraphQL 2018
+            repeatable: _,
             locations,
         }: gp::DirectiveDefinition<'_, String>,
     ) -> Self {

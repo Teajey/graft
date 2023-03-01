@@ -61,7 +61,7 @@ pub async fn run() -> Result<()> {
                 schema_gen_plan.no_ssl,
             )
             .await?
-            .schema();
+            .schema()?;
             print_info!(ctx, 1, "Schema fetched!");
 
             if let Some(json_path) = schema_gen_plan.out.json_path {
