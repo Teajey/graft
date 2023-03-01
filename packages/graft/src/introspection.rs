@@ -62,25 +62,16 @@ impl Response {
 #[cfg(not(target_arch = "wasm32"))]
 #[cfg(test)]
 mod tests {
-    use super::{app, Response};
+    use super::Response;
 
     #[tokio::test]
-    async fn schema_json_output() {
-        let ctx = app::Context {
-            verbose: 0,
-            config_location: None,
-        };
+    async fn response_json() {
+        let response_json = include_str!("../fixtures/star-wars-introspection-response.json");
 
-        let schema = Response::fetch(
-            &ctx,
-            "https://swapi-graphql.netlify.app/.netlify/functions/index",
-            false,
-        )
-        .await
-        .expect("schema fetch error")
-        .schema()
-        .unwrap();
+        let response: Response = serde_json::from_str(response_json).expect("response deserialization");
 
-        insta::assert_snapshot!(serde_json::to_string_pretty(&schema).expect("fail to pretty string schema"));
+        let serded_response = serde_json::to_string_pretty(&response).expect("failed to pretty-string response");
+
+        insta::assert_snapshot!(serded_response);
     }
 }

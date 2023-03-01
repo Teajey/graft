@@ -151,30 +151,27 @@ mod test {
             config::{DocumentImport, TypescriptOptions, DocumentPaths},
         },
         gen::generate_typescript,
-        graphql::schema::Schema,
-        introspection,
+        graphql::schema::Schema, introspection::Response,
     };
 
-    async fn context_and_schema() -> Result<(app::Context, Schema)> {
+    fn context_and_schema() -> (app::Context, Schema) {
+        let schema_fetch_json = include_str!("../fixtures/star-wars-introspection-response.json");
+
         let ctx = app::Context {
             verbose: 0,
             config_location: None,
         };
 
-        let schema = introspection::Response::fetch(
-            &ctx,
-            "https://swapi-graphql.netlify.app/.netlify/functions/index",
-            false,
-        )
-        .await?
-        .schema()?;
+        let response: Response = serde_json::from_str(schema_fetch_json).expect("deserialing schema");
 
-        Ok((ctx, schema))
+        let schema = response.schema().expect("response must have schema");
+
+        (ctx, schema)
     }
 
-    #[tokio::test]
-    async fn standard_typescript() -> Result<()> {
-        let (ctx, schema) = context_and_schema().await?;
+    #[test]
+    fn standard_typescript() -> Result<()> {
+        let (ctx, schema) = context_and_schema();
 
         let typescript = generate_typescript(
             &ctx,
@@ -191,9 +188,9 @@ mod test {
         Ok(())
     }
 
-    #[tokio::test]
-    async fn codegen_like_typescript() -> Result<()> {
-        let (ctx, schema) = context_and_schema().await?;
+    #[test]
+    fn codegen_like_typescript() -> Result<()> {
+        let (ctx, schema) = context_and_schema();
 
         let typescript = generate_typescript(
             &ctx,
