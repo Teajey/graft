@@ -10,7 +10,7 @@ use eyre::{eyre, Result};
 use crate::app::config::TypescriptOptions;
 use crate::gen::Buffer;
 use crate::graphql::schema::{NamedType, Schema, Type, TypeRef};
-use crate::util::Named;
+use crate::{util::Named, typescript};
 
 pub(in crate::typescript) fn possibly_write_description<W: Write>(
     out: &mut W,
@@ -80,17 +80,17 @@ impl<'a> TypeIndex<'a> {
     }
 }
 
-pub struct TypescriptContext<'a> {
+pub struct Context<'a> {
     pub index: TypeIndex<'a>,
     pub options: TypescriptOptions,
 }
 
 pub struct WithContext<'a, 'b, 'c, T> {
     target: &'a T,
-    ctx: &'b TypescriptContext<'c>,
+    ctx: &'b typescript::Context<'c>,
 }
 
-impl<'a> TypescriptContext<'a> {
+impl<'a> typescript::Context<'a> {
     pub fn with<'b, 'c, T>(&'b self, target: &'c T) -> WithContext<'c, 'b, 'a, T> {
         WithContext { target, ctx: self }
     }

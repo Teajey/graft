@@ -6,9 +6,9 @@ use graphql_parser::query::{
     Definition, FragmentSpread, InlineFragment, OperationDefinition, TypeCondition,
 };
 
-use super::{TypescriptContext, Typescriptable, TypescriptableWithBuffer, WithContext};
 use crate::{
     gen::Buffer,
+    typescript::{self, Typescriptable, TypescriptableWithBuffer, WithContext},
     graphql::{
         query::{self as ac, Operation},
         schema::{Field, NamedType, Type, TypeRef, TypeRefContainer},
@@ -191,7 +191,7 @@ fn recursively_typescriptify_selected_object_fields(
     selection_set: &SelectionSet<'_, String>,
     buffer: &mut String,
     selectable_fields: &[Field],
-    ctx: &TypescriptContext,
+    ctx: &typescript::Context,
 ) -> Result<()> {
     let mut fragment_strings = Vec::<String>::new();
     write!(buffer, "{{ ")?;
@@ -276,7 +276,7 @@ fn recursively_typescriptify_selected_field(
     selection_set: &SelectionSet<'_, String>,
     buffer: &mut String,
     type_ref: &TypeRef,
-    ctx: &TypescriptContext,
+    ctx: &typescript::Context,
     nullable: &mut bool,
 ) -> Result<()> {
     let selected_field_type = ctx.index.type_from_ref(type_ref.clone())?;

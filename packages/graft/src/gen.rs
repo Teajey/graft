@@ -7,8 +7,7 @@ use crate::app;
 use crate::app::config::{TypescriptOptions, DocumentPaths};
 use crate::debug_log;
 use crate::graphql::schema::Schema;
-use crate::typescript::TypescriptContext;
-use crate::typescript::{TypeIndex, TypescriptableWithBuffer};
+use crate::typescript::{self, TypeIndex, TypescriptableWithBuffer};
 
 pub struct Buffer {
     pub imports: String,
@@ -87,7 +86,7 @@ pub fn generate_typescript_with_document(
 
     let index = TypeIndex::try_new(schema)?;
 
-    let ctx = TypescriptContext { index, options };
+    let ctx = typescript::Context { index, options };
 
     writeln!(
         buffer.imports,

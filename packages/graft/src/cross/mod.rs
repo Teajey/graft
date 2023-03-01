@@ -63,23 +63,10 @@ fn path_to_string<P: AsRef<std::path::Path>>(path: P) -> eyre::Result<String> {
 pub mod env {
     use std::{
         ffi::OsString,
-        path::{Path, PathBuf},
+        path::Path,
     };
 
     use eyre::Result;
-
-    pub fn current_dir() -> Result<PathBuf> {
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            Ok(std::env::current_dir()?)
-        }
-        #[cfg(target_arch = "wasm32")]
-        {
-            super::node::process_cwd()
-                .map(PathBuf::from)
-                .map_err(|err| eyre::eyre!("{err:?}"))
-        }
-    }
 
     pub fn set_current_dir<P: AsRef<Path>>(path: P) -> Result<()> {
         #[cfg(not(target_arch = "wasm32"))]
