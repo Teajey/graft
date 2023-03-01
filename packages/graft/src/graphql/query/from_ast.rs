@@ -69,7 +69,7 @@ impl From<gp::VariableDefinition<'_, String>> for ac::VariableDefinition {
                 name: ac::Name(name),
             },
             of_type: var_type.into(),
-            default_value: default_value.map(|dv| dv.into()),
+            default_value: default_value.map(Into::into),
             directives: vec![],
         }
     }

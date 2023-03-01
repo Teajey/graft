@@ -214,7 +214,7 @@ fn recursively_typescriptify_selected_object_fields(
                     })?;
                 let field_name = alias.as_ref().unwrap_or(&selected_field.name);
 
-                write!(buffer, "{}: ", field_name)?;
+                write!(buffer, "{field_name}: ")?;
 
                 recursively_typescriptify_selected_field(
                     selection_set,
@@ -326,9 +326,9 @@ fn recursively_typescriptify_selected_field(
     };
 
     if *nullable {
-        write!(buffer, "Nullable<{}>", local_buffer)?;
+        write!(buffer, "Nullable<{local_buffer}>")?;
     } else {
-        write!(buffer, "{}", local_buffer)?;
+        write!(buffer, "{local_buffer}")?;
     }
 
     Ok(())

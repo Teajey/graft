@@ -2,6 +2,7 @@
 pub mod node;
 
 #[macro_export]
+#[allow(clippy::module_name_repetitions)]
 macro_rules! cross_print {
     ($($t:tt)*) => {
         #[cfg(not(target_arch = "wasm32"))]
@@ -12,6 +13,7 @@ macro_rules! cross_print {
 }
 
 #[macro_export]
+#[allow(clippy::module_name_repetitions)]
 macro_rules! cross_eprint {
     ($($t:tt)*) => {
         #[cfg(not(target_arch = "wasm32"))]
@@ -22,6 +24,7 @@ macro_rules! cross_eprint {
 }
 
 #[macro_export]
+#[allow(clippy::module_name_repetitions)]
 macro_rules! cross_println {
     ($($t:tt)*) => {
         #[cfg(not(target_arch = "wasm32"))]
@@ -35,6 +38,7 @@ macro_rules! cross_println {
 }
 
 #[macro_export]
+#[allow(clippy::module_name_repetitions)]
 macro_rules! cross_eprintln {
     ($($t:tt)*) => {
         #[cfg(not(target_arch = "wasm32"))]
@@ -100,7 +104,7 @@ pub mod env {
                 Ok(value) => Ok(Some(value)),
                 Err(err) => match err {
                     std::env::VarError::NotPresent => Ok(None),
-                    err => Err(err),
+                    err @ std::env::VarError::NotUnicode(_) => Err(err),
                 },
             }
         }

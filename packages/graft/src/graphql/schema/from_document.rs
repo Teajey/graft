@@ -50,7 +50,7 @@ impl From<gp::Field<'_, String>> for ac::Field {
         Self {
             name,
             description,
-            args: arguments.into_iter().map(|a| a.into()).collect(),
+            args: arguments.into_iter().map(Into::into).collect(),
             of_type: field_type.into(),
             is_deprecated: false,
             deprecation_reason: None,
@@ -95,7 +95,7 @@ impl From<gp::TypeDefinition<'_, String>> for ac::NamedType {
             }) => ac::NamedType::Object {
                 name,
                 description,
-                fields: fields.into_iter().map(|f| f.into()).collect(),
+                fields: fields.into_iter().map(Into::into).collect(),
                 interfaces: implements_interfaces
                     .into_iter()
                     .map(|name| ac::TypeRef::To { name })
@@ -111,7 +111,7 @@ impl From<gp::TypeDefinition<'_, String>> for ac::NamedType {
             }) => ac::NamedType::Interface {
                 name,
                 description,
-                fields: fields.into_iter().map(|f| f.into()).collect(),
+                fields: fields.into_iter().map(Into::into).collect(),
                 possible_types: vec![],
                 interfaces: implements_interfaces
                     .into_iter()
@@ -141,7 +141,7 @@ impl From<gp::TypeDefinition<'_, String>> for ac::NamedType {
             }) => ac::NamedType::Enum {
                 name,
                 description,
-                enum_values: values.into_iter().map(|v| v.into()).collect(),
+                enum_values: values.into_iter().map(Into::into).collect(),
             },
             gp::TypeDefinition::InputObject(gp::InputObjectType {
                 position,
@@ -152,7 +152,7 @@ impl From<gp::TypeDefinition<'_, String>> for ac::NamedType {
             }) => ac::NamedType::InputObject {
                 name,
                 description,
-                input_fields: fields.into_iter().map(|f| f.into()).collect(),
+                input_fields: fields.into_iter().map(Into::into).collect(),
             },
         }
     }
@@ -199,8 +199,8 @@ impl From<gp::DirectiveDefinition<'_, String>> for ac::Directive {
         Self {
             description,
             name,
-            locations: locations.into_iter().map(|l| l.into()).collect(),
-            args: arguments.into_iter().map(|a| a.into()).collect(),
+            locations: locations.into_iter().map(Into::into).collect(),
+            args: arguments.into_iter().map(Into::into).collect(),
         }
     }
 }

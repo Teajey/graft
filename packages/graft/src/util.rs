@@ -31,7 +31,7 @@ impl MaybeNamed for TypeRef {
     fn maybe_name(&self) -> Option<&str> {
         match self {
             TypeRef::To { name } => Some(name),
-            _ => None,
+            TypeRef::Container(_) => None,
         }
     }
 }
@@ -51,9 +51,7 @@ impl MaybeNamed for TypeRef {
 // }
 
 pub fn path_with_possible_prefix(prefix: Option<&Path>, path: &Path) -> PathBuf {
-    prefix
-        .map(|p| p.join(path))
-        .unwrap_or_else(|| PathBuf::from(path))
+    prefix.map_or_else(|| PathBuf::from(path), |p| p.join(path))
 }
 
 #[cfg(feature = "debug")]
