@@ -68,6 +68,20 @@ pub mod env {
 
     use eyre::Result;
 
+    #[cfg(feature = "debug")]
+    pub fn current_dir() -> Result<std::path::PathBuf> {
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            Ok(std::env::current_dir()?)
+        }
+        #[cfg(target_arch = "wasm32")]
+        {
+            super::node::process_cwd()
+                .map(std::path::PathBuf::from)
+                .map_err(|err| eyre::eyre!("{err:?}"))
+        }
+    }
+
     pub fn set_current_dir<P: AsRef<Path>>(path: P) -> Result<()> {
         #[cfg(not(target_arch = "wasm32"))]
         {
