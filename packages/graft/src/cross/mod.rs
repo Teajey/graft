@@ -97,6 +97,7 @@ pub mod env {
         option_var(key)?.ok_or(std::env::VarError::NotPresent)
     }
 
+    #[allow(clippy::unnecessary_wraps)]
     pub fn option_var(key: &str) -> Result<Option<String>, std::env::VarError> {
         #[cfg(not(target_arch = "wasm32"))]
         {

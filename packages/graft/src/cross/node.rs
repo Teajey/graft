@@ -67,11 +67,13 @@ macro_rules! console_error {
 }
 
 #[macro_export]
+#[allow(clippy::module_name_repetitions)]
 macro_rules! node_stdout {
     ($($t:tt)*) => ($crate::cross::node::process_stdout_write(&format_args!($($t)*).to_string()))
 }
 
 #[macro_export]
+#[allow(clippy::module_name_repetitions)]
 macro_rules! node_stderr {
     ($($t:tt)*) => ($crate::cross::node::process_stderr_write(&format_args!($($t)*).to_string()))
 }
