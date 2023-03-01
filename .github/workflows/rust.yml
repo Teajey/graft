@@ -38,7 +38,5 @@ jobs:
         run: rustup component add clippy
       - name: Lint with Clippy
         run: cargo clippy --all-targets
-      - name: Build native version
-        run: cargo build
       - name: Test native version
         run: cargo test
