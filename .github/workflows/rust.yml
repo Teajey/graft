@@ -10,7 +10,7 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+  build-graft:
     runs-on: ubuntu-latest
 
     steps:
@@ -22,11 +22,10 @@ jobs:
             ~/.cargo
             target
           # An explicit key for restoring and saving the cache
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('Cargo.lock') }}-${{ hashFiles('packages/graft/**/*') }}
+          key: build-graft-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}-${{ hashFiles('packages/graft/**/*') }}
           restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('Cargo.lock') }}-
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-            ${{ runner.os }}-build-
+            build-graft-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}-
+            build-graft-${{ runner.os }}-
           # An ordered list of keys to use for restoring stale cache if no cache hit occurred for key. Note `cache-hit` returns false in this case.
       #         restore-keys: # optional
       # The chunk size used to split up large files during upload, in bytes
