@@ -1,8 +1,8 @@
-use eyre::Result;
+use eyre::{Result, eyre};
 use graphql_client::GraphQLQuery;
 use serde::{Deserialize, Serialize};
 
-use crate::{app, cross, graphql::schema::Schema, print_info};
+use crate::{app, cross, graphql::schema::Schema, print_info, cross_eprintln};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Data {
@@ -20,8 +20,15 @@ pub struct Data {
 struct IntrospectionQuery;
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct Response {
-    pub data: Data,
+#[serde(untagged)]
+pub enum Response {
+    Successful {
+        data: Data,
+    },
+    Error {
+        data: Option<Data>,
+        errors: serde_json::Value,
+    }
 }
 
 impl Response {
@@ -35,7 +42,45 @@ impl Response {
         Ok(serde_json::from_value(json)?)
     }
 
-    pub fn schema(self) -> Schema {
-        self.data.schema
+    pub fn schema(self) -> Result<Schema> {
+        match self {
+            Self::Successful { data } => {
+                Ok(data.schema)
+            },
+            Self::Error { data: Some(data), errors } => {
+                // FIXME: Need some proper logging. Maybe tracing?
+                cross_eprintln!("{}", console::style(format!("GraphQL data came with errors: {errors}")).yellow());
+                Ok(data.schema)
+            }
+            Self::Error { data: None, errors } => {
+                Err(eyre!("GraphQL error: {errors}"))
+            }
+        }
+    }
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+#[cfg(test)]
+mod tests {
+    use super::{app, Response};
+
+    #[tokio::test]
+    async fn schema_json_output() {
+        let ctx = app::Context {
+            verbose: 0,
+            config_location: None,
+        };
+
+        let schema = Response::fetch(
+            &ctx,
+            "https://swapi-graphql.netlify.app/.netlify/functions/index",
+            false,
+        )
+        .await
+        .expect("schema fetch error")
+        .schema()
+        .unwrap();
+
+        insta::assert_snapshot!(serde_json::to_string_pretty(&schema).expect("fail to pretty string schema"));
     }
 }

@@ -167,7 +167,7 @@ mod test {
             false,
         )
         .await?
-        .schema();
+        .schema()?;
 
         Ok((ctx, schema))
     }
