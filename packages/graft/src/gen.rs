@@ -185,8 +185,7 @@ mod test {
                 "../../examples/app/queries.graphql",
             ])),
             &schema,
-        )
-        .await?;
+        )?;
 
         insta::assert_snapshot!(typescript);
 
@@ -211,8 +210,7 @@ mod test {
                 "../../examples/app/queries.graphql",
             ])),
             &schema,
-        )
-        .await?;
+        )?;
 
         insta::assert_snapshot!(typescript);
 
