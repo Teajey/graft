@@ -89,9 +89,9 @@ impl Type {
 }
 
 pub mod named_type {
-    use serde::{Serialize, Deserialize};
+    use serde::{Deserialize, Serialize};
 
-    use super::{Field, TypeRef, EnumValue, InputValue};
+    use super::{EnumValue, Field, InputValue, TypeRef};
 
     #[derive(Serialize, Deserialize, Debug, Clone)]
     #[serde(rename_all = "camelCase")]

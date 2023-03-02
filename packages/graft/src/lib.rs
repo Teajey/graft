@@ -10,10 +10,8 @@ use clap::Parser;
 use eyre::Result;
 use graphql_parser::schema::{parse_schema, Document};
 
+use crate::app::cli;
 use crate::gen::generate_typescript;
-use crate::{
-    app::cli,
-};
 
 #[allow(clippy::missing_errors_doc)]
 pub async fn run() -> Result<()> {

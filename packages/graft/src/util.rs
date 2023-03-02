@@ -16,7 +16,9 @@ pub trait Named {
 
 impl Named for NamedType {
     fn name(&self) -> &str {
-        use crate::graphql::schema::named_type::{Enum, InputObject, Interface, Object, Scalar, Union};
+        use crate::graphql::schema::named_type::{
+            Enum, InputObject, Interface, Object, Scalar, Union,
+        };
         match self {
             NamedType::Scalar(Scalar { name, .. })
             | NamedType::Object(Object { name, .. })

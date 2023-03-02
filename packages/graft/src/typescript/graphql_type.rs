@@ -3,10 +3,16 @@ use std::fmt::Write;
 use convert_case::{Case, Casing};
 use eyre::{eyre, Result};
 
-use super::{possibly_write_description, Typescriptable, TypescriptableWithBuffer, WithContext, TypescriptName};
+use super::{
+    possibly_write_description, TypescriptName, Typescriptable, TypescriptableWithBuffer,
+    WithContext,
+};
 use crate::gen::Buffer;
-use crate::graphql::schema::{NamedType, TypeRef, TypeRefContainer, named_type::{Enum, InputObject, Interface, Object, Scalar, Union}};
-use crate::util::{Named, MaybeNamed};
+use crate::graphql::schema::{
+    named_type::{Enum, InputObject, Interface, Object, Scalar, Union},
+    NamedType, TypeRef, TypeRefContainer,
+};
+use crate::util::{MaybeNamed, Named};
 
 impl TypescriptName for Scalar {
     fn typescript_name(&self) -> String {
@@ -29,15 +35,9 @@ impl TypescriptName for Union {
 impl TypescriptName for NamedType {
     fn typescript_name(&self) -> String {
         match self {
-            NamedType::Scalar(scalar) => {
-                scalar.typescript_name()
-            }
-            NamedType::Interface(interface) => {
-                interface.typescript_name()
-            }
-            NamedType::Union(uni) => {
-                uni.typescript_name()
-            }
+            NamedType::Scalar(scalar) => scalar.typescript_name(),
+            NamedType::Interface(interface) => interface.typescript_name(),
+            NamedType::Union(uni) => uni.typescript_name(),
             other_type => other_type.name().to_owned(),
         }
     }
@@ -45,7 +45,10 @@ impl TypescriptName for NamedType {
 
 impl<'a, 'b, 'c> Typescriptable for WithContext<'a, 'b, 'c, Scalar> {
     fn as_typescript(&self) -> Result<String> {
-        let Self { target: scalar, ctx } = self;
+        let Self {
+            target: scalar,
+            ctx,
+        } = self;
 
         let mut buf = String::new();
         possibly_write_description(&mut buf, scalar.description.as_ref())?;
@@ -58,20 +61,25 @@ impl<'a, 'b, 'c> Typescriptable for WithContext<'a, 'b, 'c, Scalar> {
                 let default = format!(r#"NewType<unknown, "{name}">"#);
                 match &ctx.options.scalar_newtypes {
                     None => default,
-                    Some(scalar_newtypes) => {
-                        scalar_newtypes.get(name).cloned().unwrap_or(default)
-                    }
+                    Some(scalar_newtypes) => scalar_newtypes.get(name).cloned().unwrap_or(default),
                 }
             }
         };
-        writeln!(buf, "export type {ts_name} = {scalar_type};", ts_name = scalar.typescript_name())?;
+        writeln!(
+            buf,
+            "export type {ts_name} = {scalar_type};",
+            ts_name = scalar.typescript_name()
+        )?;
         Ok(buf)
     }
 }
 
 impl<'a, 'b, 'c> Typescriptable for WithContext<'a, 'b, 'c, Object> {
     fn as_typescript(&self) -> Result<String> {
-        let Self { target: object, ctx } = self;
+        let Self {
+            target: object,
+            ctx,
+        } = self;
 
         let mut buf = String::new();
         possibly_write_description(&mut buf, object.description.as_ref())?;
@@ -100,11 +108,18 @@ impl<'a, 'b, 'c> Typescriptable for WithContext<'a, 'b, 'c, Object> {
 
 impl<'a, 'b, 'c> Typescriptable for WithContext<'a, 'b, 'c, Interface> {
     fn as_typescript(&self) -> Result<String> {
-        let Self { target: interface, ctx } = self;
+        let Self {
+            target: interface,
+            ctx,
+        } = self;
 
         let mut buf = String::new();
         possibly_write_description(&mut buf, interface.description.as_ref())?;
-        write!(buf, "export type {ts_name} = ", ts_name = interface.typescript_name())?;
+        write!(
+            buf,
+            "export type {ts_name} = ",
+            ts_name = interface.typescript_name()
+        )?;
         for interface in &interface.interfaces {
             let interface = ctx
                 .index
@@ -131,7 +146,8 @@ impl Typescriptable for Union {
     fn as_typescript(&self) -> Result<String> {
         let mut buf = String::new();
         possibly_write_description(&mut buf, self.description.as_ref())?;
-        let possible_types = self.possible_types
+        let possible_types = self
+            .possible_types
             .iter()
             .map(|t| {
                 t.maybe_name()
@@ -141,7 +157,8 @@ impl Typescriptable for Union {
             .join(" | ");
         writeln!(
             buf,
-            "export type {ts_name} = {possible_types};", ts_name = self.typescript_name(),
+            "export type {ts_name} = {possible_types};",
+            ts_name = self.typescript_name(),
         )?;
         Ok(buf)
     }
@@ -154,12 +171,7 @@ impl Typescriptable for Enum {
         writeln!(buf, "export enum {ts_name} {{", ts_name = self.name)?;
         for v in &self.enum_values {
             possibly_write_description(&mut buf, v.description.as_ref())?;
-            writeln!(
-                buf,
-                "  {} = \"{}\",",
-                v.name.to_case(Case::Pascal),
-                v.name
-            )?;
+            writeln!(buf, "  {} = \"{}\",", v.name.to_case(Case::Pascal), v.name)?;
         }
         writeln!(buf, "}}")?;
         Ok(buf)
@@ -168,19 +180,29 @@ impl Typescriptable for Enum {
 
 impl<'a, 'b, 'c> Typescriptable for WithContext<'a, 'b, 'c, InputObject> {
     fn as_typescript(&self) -> Result<String> {
-        let Self { target: input_object, ctx } = self;
+        let Self {
+            target: input_object,
+            ctx,
+        } = self;
 
         let mut buf = String::new();
         possibly_write_description(&mut buf, input_object.description.as_ref())?;
-        writeln!(buf, "export type {ts_name} = {{", ts_name = input_object.name)?;
+        writeln!(
+            buf,
+            "export type {ts_name} = {{",
+            ts_name = input_object.name
+        )?;
         for f in &input_object.input_fields {
             possibly_write_description(&mut buf, f.description.as_ref())?;
-            let is_non_null = matches!(f.of_type, TypeRef::Container(TypeRefContainer::NonNull { .. }));
+            let is_non_null = matches!(
+                f.of_type,
+                TypeRef::Container(TypeRefContainer::NonNull { .. })
+            );
             writeln!(
                 buf,
                 "  {}{}: {},",
                 f.name,
-                if is_non_null {""} else {"?"},
+                if is_non_null { "" } else { "?" },
                 ctx.with(&f.of_type).as_typescript()?
             )?;
         }
@@ -188,7 +210,6 @@ impl<'a, 'b, 'c> Typescriptable for WithContext<'a, 'b, 'c, InputObject> {
         Ok(buf)
     }
 }
-
 
 impl<'a, 'b, 'c> TypescriptableWithBuffer for WithContext<'a, 'b, 'c, NamedType> {
     fn as_typescript_on(&self, buffer: &mut Buffer) -> Result<()> {

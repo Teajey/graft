@@ -8,11 +8,11 @@ use graphql_parser::query::{
 
 use crate::{
     gen::Buffer,
-    typescript::{self, Typescriptable, TypescriptableWithBuffer, WithContext},
     graphql::{
         query::{self as ac, Operation},
-        schema::{Field, NamedType, Type, TypeRef, TypeRefContainer, named_type},
+        schema::{named_type, Field, NamedType, Type, TypeRef, TypeRefContainer},
     },
+    typescript::{self, Typescriptable, TypescriptableWithBuffer, WithContext},
 };
 
 use graphql_parser::query::{Field as SelectedField, Selection, SelectionSet};

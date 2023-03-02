@@ -80,7 +80,7 @@ impl From<gp::EnumValue<'_, String>> for ac::EnumValue {
 impl From<gp::TypeDefinition<'_, String>> for ac::NamedType {
     fn from(value: gp::TypeDefinition<'_, String>) -> Self {
         use ac::named_type::{Enum, InputObject, Interface, Object, Scalar, Union};
-        
+
         match value {
             gp::TypeDefinition::Scalar(gp::ScalarType {
                 position: _,
