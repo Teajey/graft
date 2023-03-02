@@ -10,7 +10,7 @@ use eyre::{eyre, Result};
 use crate::app::config::TypescriptOptions;
 use crate::gen::Buffer;
 use crate::graphql::schema::{NamedType, Schema, Type, TypeRef};
-use crate::{util::Named, typescript};
+use crate::{typescript, util::Named};
 
 pub(in crate::typescript) fn possibly_write_description<W: Write>(
     out: &mut W,

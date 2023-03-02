@@ -123,10 +123,7 @@ impl<'a, 'b, 'c> TypescriptableWithBuffer for WithContext<'a, 'b, 'c, NamedType>
                     })
                     .collect::<Result<Vec<_>>>()?
                     .join(" | ");
-                writeln!(
-                    buffer.unions,
-                    "export type {ts_name} = {possible_types};",
-                )?;
+                writeln!(buffer.unions, "export type {ts_name} = {possible_types};",)?;
             }
             NamedType::Enum {
                 name: _,
