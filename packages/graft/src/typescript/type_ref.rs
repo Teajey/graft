@@ -1,6 +1,6 @@
 use eyre::Result;
 
-use super::{Typescriptable, WithContext};
+use super::{Typescriptable, WithContext, TypescriptName};
 use crate::graphql::schema::{Type, TypeRef, TypeRefContainer};
 
 impl<'a, 'b, 'c> Typescriptable for WithContext<'a, 'b, 'c, TypeRef> {

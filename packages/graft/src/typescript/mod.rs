@@ -107,3 +107,8 @@ pub trait Typescriptable {
 pub(crate) trait TypescriptableWithBuffer {
     fn as_typescript_on(&self, buffer: &mut Buffer) -> Result<()>;
 }
+
+#[allow(clippy::module_name_repetitions)]
+pub trait TypescriptName {
+    fn typescript_name(&self) -> String;
+}
