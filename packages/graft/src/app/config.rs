@@ -32,7 +32,6 @@ impl<'de> Visitor<'de> for EnvvarUrlVisitor {
 
         let envvar_interpolator = regex!(r#"\{\{(\w+)\}\}"#);
 
-
         let url = envvar_interpolator.replace_all(st, |captures: &Captures<'_>| {
             let envvar_key = captures.get(1).expect("first capture defined in envvar_interpolator");
             let envvar_key = envvar_key.as_str();
@@ -140,14 +139,15 @@ pub struct DocumentPaths(Vec<PathBuf>);
 #[cfg(test)]
 impl<const N: usize> From<[&str; N]> for DocumentPaths {
     fn from(paths: [&str; N]) -> Self {
-        Self(
-            paths.into_iter().map(PathBuf::from).collect()
-        )
+        Self(paths.into_iter().map(PathBuf::from).collect())
     }
 }
 
 impl DocumentPaths {
-    pub fn resolve_to_full_document_string(mut self, config_location: Option<&Path>) -> Result<Option<String>> {
+    pub fn resolve_to_full_document_string(
+        mut self,
+        config_location: Option<&Path>,
+    ) -> Result<Option<String>> {
         if self.0.is_empty() {
             return Ok(None);
         }
@@ -155,14 +155,21 @@ impl DocumentPaths {
         self.0.sort();
         self.0.reverse();
 
-        let full_document_string = self.0.into_iter().map(|document_path| -> Result<String> {
-            let document_path =
-            crate::util::path_with_possible_prefix(config_location, document_path.as_path());
+        let full_document_string = self
+            .0
+            .into_iter()
+            .map(|document_path| -> Result<String> {
+                let document_path = crate::util::path_with_possible_prefix(
+                    config_location,
+                    document_path.as_path(),
+                );
 
-            let document_string = cross::fs::read_to_string(document_path)?;
+                let document_string = cross::fs::read_to_string(document_path)?;
 
-            Ok(document_string)
-        }).collect::<Result<Vec<_>>>()?.join("\n");
+                Ok(document_string)
+            })
+            .collect::<Result<Vec<_>>>()?
+            .join("\n");
 
         Ok(Some(full_document_string))
     }

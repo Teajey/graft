@@ -4,7 +4,7 @@ use eyre::Result;
 use graphql_parser::query::Document;
 
 use crate::app;
-use crate::app::config::{TypescriptOptions, DocumentPaths};
+use crate::app::config::{DocumentPaths, TypescriptOptions};
 use crate::debug_log;
 use crate::graphql::schema::Schema;
 use crate::typescript::{self, TypeIndex, TypescriptableWithBuffer};
@@ -125,13 +125,12 @@ pub fn generate_typescript(
     let Some(document_paths) = document_paths else {
         return generate_typescript_with_document(options, schema, None);
     };
-    
+
     let Some(full_document_string) = document_paths.resolve_to_full_document_string(ctx.config_location.as_deref())? else {
         return generate_typescript_with_document(options, schema, None);
     };
 
     debug_log!("AST: {}", full_document_string);
-
 
     let document = graphql_parser::parse_query::<String>(&full_document_string)?;
     debug_log!("Parsed document!");
@@ -148,10 +147,11 @@ mod test {
     use crate::{
         app::{
             self,
-            config::{DocumentImport, TypescriptOptions, DocumentPaths},
+            config::{DocumentImport, DocumentPaths, TypescriptOptions},
         },
         gen::generate_typescript,
-        graphql::schema::Schema, introspection::Response,
+        graphql::schema::Schema,
+        introspection::Response,
     };
 
     fn context_and_schema() -> (app::Context, Schema) {
@@ -162,7 +162,8 @@ mod test {
             config_location: None,
         };
 
-        let response: Response = serde_json::from_str(schema_fetch_json).expect("deserialing schema");
+        let response: Response =
+            serde_json::from_str(schema_fetch_json).expect("deserialing schema");
 
         let schema = response.schema().expect("response must have schema");
 

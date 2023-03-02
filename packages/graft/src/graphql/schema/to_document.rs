@@ -1,9 +1,12 @@
 use std::borrow::Borrow;
 
-use graphql_parser::{schema::{
-    self as gql_parser, Definition, Document, InterfaceType, ObjectType, ScalarType,
-    SchemaDefinition, TypeDefinition,
-}, Pos};
+use graphql_parser::{
+    schema::{
+        self as gql_parser, Definition, Document, InterfaceType, ObjectType, ScalarType,
+        SchemaDefinition, TypeDefinition,
+    },
+    Pos,
+};
 
 use crate::util::MaybeNamed;
 
@@ -63,7 +66,10 @@ impl<'a> From<&'a NamedType> for TypeDefinition<'a, &'a str> {
                 position: Pos::default(),
                 description: description.as_ref().map(|d| d.as_str().into()),
                 name: name.as_str(),
-                implements_interfaces: interfaces.iter().filter_map(MaybeNamed::maybe_name).collect(),
+                implements_interfaces: interfaces
+                    .iter()
+                    .filter_map(MaybeNamed::maybe_name)
+                    .collect(),
                 directives: vec![],
                 fields: fields.iter().map(Into::into).collect(),
             }),
@@ -77,7 +83,10 @@ impl<'a> From<&'a NamedType> for TypeDefinition<'a, &'a str> {
                 position: Pos::default(),
                 description: description.as_ref().map(|d| d.as_str().into()),
                 name: name.as_str(),
-                implements_interfaces: interfaces.iter().filter_map(MaybeNamed::maybe_name).collect(),
+                implements_interfaces: interfaces
+                    .iter()
+                    .filter_map(MaybeNamed::maybe_name)
+                    .collect(),
                 directives: vec![],
                 fields: fields.iter().map(Into::into).collect(),
             }),

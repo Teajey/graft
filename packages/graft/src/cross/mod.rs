@@ -61,10 +61,7 @@ fn path_to_string<P: AsRef<std::path::Path>>(path: P) -> eyre::Result<String> {
 }
 
 pub mod env {
-    use std::{
-        ffi::OsString,
-        path::Path,
-    };
+    use std::{ffi::OsString, path::Path};
 
     use eyre::Result;
 

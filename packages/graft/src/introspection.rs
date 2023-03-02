@@ -1,8 +1,8 @@
-use eyre::{Result, eyre};
+use eyre::{eyre, Result};
 use graphql_client::GraphQLQuery;
 use serde::{Deserialize, Serialize};
 
-use crate::{app, cross, graphql::schema::Schema, print_info, cross_eprintln};
+use crate::{app, cross, cross_eprintln, graphql::schema::Schema, print_info};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Data {
@@ -28,7 +28,7 @@ pub enum Response {
     Error {
         data: Option<Data>,
         errors: serde_json::Value,
-    }
+    },
 }
 
 impl Response {
@@ -44,17 +44,19 @@ impl Response {
 
     pub fn schema(self) -> Result<Schema> {
         match self {
-            Self::Successful { data } => {
-                Ok(data.schema)
-            },
-            Self::Error { data: Some(data), errors } => {
+            Self::Successful { data } => Ok(data.schema),
+            Self::Error {
+                data: Some(data),
+                errors,
+            } => {
                 // FIXME: Need some proper logging. Maybe tracing?
-                cross_eprintln!("{}", console::style(format!("GraphQL data came with errors: {errors}")).yellow());
+                cross_eprintln!(
+                    "{}",
+                    console::style(format!("GraphQL data came with errors: {errors}")).yellow()
+                );
                 Ok(data.schema)
             }
-            Self::Error { data: None, errors } => {
-                Err(eyre!("GraphQL error: {errors}"))
-            }
+            Self::Error { data: None, errors } => Err(eyre!("GraphQL error: {errors}")),
         }
     }
 }
@@ -68,9 +70,11 @@ mod tests {
     async fn response_json() {
         let response_json = include_str!("../fixtures/star-wars-introspection-response.json");
 
-        let response: Response = serde_json::from_str(response_json).expect("response deserialization");
+        let response: Response =
+            serde_json::from_str(response_json).expect("response deserialization");
 
-        let serded_response = serde_json::to_string_pretty(&response).expect("failed to pretty-string response");
+        let serded_response =
+            serde_json::to_string_pretty(&response).expect("failed to pretty-string response");
 
         insta::assert_snapshot!(serded_response);
     }
