@@ -255,3 +255,20 @@ impl TryFrom<gp::Document<'_, String>> for ac::Schema {
         })
     }
 }
+
+#[cfg(not(target_arch = "wasm32"))]
+#[cfg(test)]
+mod tests {
+    use crate::graphql::schema::Schema;
+
+    #[test]
+    fn kitchen_sink() {
+        let schema_string = include_str!("../../../fixtures/kitchen-sink-schema.graphql");
+
+        let document = graphql_parser::parse_schema::<'_, String>(schema_string).expect("fixture must be valid");
+
+        let schema = Schema::try_from(document).expect("converting document to schema");
+
+        insta::assert_snapshot!(serde_json::to_string_pretty(&schema).expect("stringify schema"));
+    }
+}
