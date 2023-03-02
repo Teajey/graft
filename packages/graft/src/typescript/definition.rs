@@ -11,7 +11,7 @@ use crate::{
     typescript::{self, Typescriptable, TypescriptableWithBuffer, WithContext},
     graphql::{
         query::{self as ac, Operation},
-        schema::{Field, NamedType, Type, TypeRef, TypeRefContainer},
+        schema::{Field, NamedType, Type, TypeRef, TypeRefContainer, named_type},
     },
 };
 
@@ -139,7 +139,7 @@ impl<'a, 'b, 'c> TypescriptableWithBuffer for WithContext<'a, 'b, 'c, Definition
                     writeln!(buffer.args, "}}")?;
                 }
 
-                let NamedType::Object { fields: operation_fields, .. } = operation_type else {
+                let NamedType::Object(named_type::Object { fields: operation_fields, .. }) = operation_type else {
                     return Err(eyre!("Top-level operation must be an object"));
                 };
 
@@ -284,7 +284,7 @@ fn recursively_typescriptify_selected_field(
 
     match selected_field_type {
         Type::Named(named_type) => match named_type {
-            NamedType::Object { fields, .. } => {
+            NamedType::Object(named_type::Object { fields, .. }) => {
                 recursively_typescriptify_selected_object_fields(
                     selection_set,
                     &mut local_buffer,

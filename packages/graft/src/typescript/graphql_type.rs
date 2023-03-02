@@ -5,19 +5,19 @@ use eyre::{eyre, Result};
 
 use super::{possibly_write_description, Typescriptable, TypescriptableWithBuffer, WithContext};
 use crate::gen::Buffer;
-use crate::graphql::schema::{NamedType, TypeRef, TypeRefContainer};
-use crate::util::{MaybeNamed, Named};
+use crate::graphql::schema::{NamedType, TypeRef, TypeRefContainer, named_type::{Enum, InputObject, Interface, Object, Scalar, Union}};
+use crate::util::{Named, MaybeNamed};
 
 impl NamedType {
     pub fn typescript_name(&self) -> String {
         match self {
-            NamedType::Scalar { name, .. } => {
+            NamedType::Scalar(Scalar { name, .. }) => {
                 format!("{name}Scalar")
             }
-            NamedType::Interface { name, .. } => {
+            NamedType::Interface(Interface { name, .. }) => {
                 format!("{name}Interface")
             }
-            NamedType::Union { name, .. } => {
+            NamedType::Union(Union { name, .. }) => {
                 format!("{name}Union")
             }
             other_type => other_type.name().to_owned(),
@@ -34,7 +34,7 @@ impl<'a, 'b, 'c> TypescriptableWithBuffer for WithContext<'a, 'b, 'c, NamedType>
             return Ok(());
         }
         match target {
-            NamedType::Scalar { name, description } => {
+            NamedType::Scalar(Scalar { name, description }) => {
                 possibly_write_description(&mut buffer.scalars, description.as_ref())?;
                 let scalar_type = match name.as_str() {
                     "ID" => r#"NewType<string, "ID">"#.to_owned(),
@@ -53,12 +53,12 @@ impl<'a, 'b, 'c> TypescriptableWithBuffer for WithContext<'a, 'b, 'c, NamedType>
                 };
                 writeln!(buffer.scalars, "export type {ts_name} = {scalar_type};")?;
             }
-            NamedType::Object {
+            NamedType::Object(Object {
                 name: _,
                 description,
                 fields,
                 interfaces,
-            } => {
+            }) => {
                 possibly_write_description(&mut buffer.objects, description.as_ref())?;
                 write!(buffer.objects, "export type {ts_name} = ")?;
                 for interface in interfaces {
@@ -80,14 +80,14 @@ impl<'a, 'b, 'c> TypescriptableWithBuffer for WithContext<'a, 'b, 'c, NamedType>
                 }
                 writeln!(buffer.objects, "}}")?;
             }
-            NamedType::Interface {
+            NamedType::Interface(Interface {
                 name: _,
                 description,
                 fields,
                 // I don't think this would be very useful here
                 possible_types: _,
                 interfaces,
-            } => {
+            }) => {
                 possibly_write_description(&mut buffer.interfaces, description.as_ref())?;
                 write!(buffer.interfaces, "export type {ts_name} = ")?;
                 for interface in interfaces {
@@ -109,11 +109,11 @@ impl<'a, 'b, 'c> TypescriptableWithBuffer for WithContext<'a, 'b, 'c, NamedType>
                 }
                 writeln!(buffer.interfaces, "}}")?;
             }
-            NamedType::Union {
+            NamedType::Union(Union {
                 name: _,
                 description,
                 possible_types,
-            } => {
+            }) => {
                 possibly_write_description(&mut buffer.interfaces, description.as_ref())?;
                 let possible_types = possible_types
                     .iter()
@@ -128,11 +128,11 @@ impl<'a, 'b, 'c> TypescriptableWithBuffer for WithContext<'a, 'b, 'c, NamedType>
                     "export type {ts_name} = {possible_types};",
                 )?;
             }
-            NamedType::Enum {
+            NamedType::Enum(Enum {
                 name: _,
                 description,
                 enum_values,
-            } => {
+            }) => {
                 possibly_write_description(&mut buffer.enums, description.as_ref())?;
                 writeln!(buffer.enums, "export enum {ts_name} {{")?;
                 for v in enum_values {
@@ -146,11 +146,11 @@ impl<'a, 'b, 'c> TypescriptableWithBuffer for WithContext<'a, 'b, 'c, NamedType>
                 }
                 writeln!(buffer.enums, "}}")?;
             }
-            NamedType::InputObject {
+            NamedType::InputObject(InputObject {
                 name: _,
                 description,
                 input_fields,
-            } => {
+            }) => {
                 possibly_write_description(&mut buffer.objects, description.as_ref())?;
                 writeln!(buffer.input_objects, "export type {ts_name} = {{")?;
                 for f in input_fields {

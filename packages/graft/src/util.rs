@@ -16,13 +16,14 @@ pub trait Named {
 
 impl Named for NamedType {
     fn name(&self) -> &str {
+        use crate::graphql::schema::named_type::{Enum, InputObject, Interface, Object, Scalar, Union};
         match self {
-            NamedType::Scalar { name, .. }
-            | NamedType::Object { name, .. }
-            | NamedType::Interface { name, .. }
-            | NamedType::Union { name, .. }
-            | NamedType::Enum { name, .. }
-            | NamedType::InputObject { name, .. } => name,
+            NamedType::Scalar(Scalar { name, .. })
+            | NamedType::Object(Object { name, .. })
+            | NamedType::Interface(Interface { name, .. })
+            | NamedType::Union(Union { name, .. })
+            | NamedType::Enum(Enum { name, .. })
+            | NamedType::InputObject(InputObject { name, .. }) => name,
         }
     }
 }

@@ -88,49 +88,73 @@ impl Type {
     }
 }
 
+pub mod named_type {
+    use serde::{Serialize, Deserialize};
+
+    use super::{Field, TypeRef, EnumValue, InputValue};
+
+    #[derive(Serialize, Deserialize, Debug, Clone)]
+    #[serde(rename_all = "camelCase")]
+    pub struct Scalar {
+        pub name: String,
+        pub description: Option<String>,
+    }
+
+    #[derive(Serialize, Deserialize, Debug, Clone)]
+    #[serde(rename_all = "camelCase")]
+    pub struct Object {
+        pub name: String,
+        pub description: Option<String>,
+        pub fields: Vec<Field>,
+        pub interfaces: Vec<TypeRef>,
+    }
+
+    #[derive(Serialize, Deserialize, Debug, Clone)]
+    #[serde(rename_all = "camelCase")]
+    pub struct Interface {
+        pub name: String,
+        pub description: Option<String>,
+        pub fields: Vec<Field>,
+        pub possible_types: Vec<TypeRef>,
+        // FIXME: this field only valid in the October 2021 GraphQL spec
+        #[serde(skip)]
+        pub interfaces: Vec<TypeRef>,
+    }
+
+    #[derive(Serialize, Deserialize, Debug, Clone)]
+    #[serde(rename_all = "camelCase")]
+    pub struct Union {
+        pub name: String,
+        pub description: Option<String>,
+        pub possible_types: Vec<TypeRef>,
+    }
+
+    #[derive(Serialize, Deserialize, Debug, Clone)]
+    #[serde(rename_all = "camelCase")]
+    pub struct Enum {
+        pub name: String,
+        pub description: Option<String>,
+        pub enum_values: Vec<EnumValue>,
+    }
+
+    #[derive(Serialize, Deserialize, Debug, Clone)]
+    #[serde(rename_all = "camelCase")]
+    pub struct InputObject {
+        pub name: String,
+        pub description: Option<String>,
+        pub input_fields: Vec<InputValue>,
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "kind", rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum NamedType {
-    #[serde(rename_all = "camelCase")]
-    Scalar {
-        name: String,
-        description: Option<String>,
-    },
-    #[serde(rename_all = "camelCase")]
-    Object {
-        name: String,
-        description: Option<String>,
-        fields: Vec<Field>,
-        interfaces: Vec<TypeRef>,
-    },
-    #[serde(rename_all = "camelCase")]
-    Interface {
-        name: String,
-        description: Option<String>,
-        fields: Vec<Field>,
-        possible_types: Vec<TypeRef>,
-        // FIXME: this field only valid in the October 2021 GraphQL spec
-        #[serde(skip)]
-        interfaces: Vec<TypeRef>,
-    },
-    #[serde(rename_all = "camelCase")]
-    Union {
-        name: String,
-        description: Option<String>,
-        possible_types: Vec<TypeRef>,
-    },
-    #[serde(rename_all = "camelCase")]
-    Enum {
-        name: String,
-        description: Option<String>,
-        enum_values: Vec<EnumValue>,
-    },
-    #[serde(rename_all = "camelCase")]
-    InputObject {
-        name: String,
-        description: Option<String>,
-        input_fields: Vec<InputValue>,
-    },
+    Scalar(named_type::Scalar),
+    Object(named_type::Object),
+    Interface(named_type::Interface),
+    Union(named_type::Union),
+    Enum(named_type::Enum),
+    InputObject(named_type::InputObject),
 }
 
 impl NamedType {

@@ -47,19 +47,20 @@ impl<'a> From<&'a EnumValue> for gql_parser::EnumValue<'a, &'a str> {
 
 impl<'a> From<&'a NamedType> for TypeDefinition<'a, &'a str> {
     fn from(t: &'a NamedType) -> Self {
+        use super::named_type::{Enum, InputObject, Interface, Object, Scalar, Union};
         match t {
-            NamedType::Scalar { name, description } => TypeDefinition::Scalar(ScalarType {
+            NamedType::Scalar(Scalar { name, description }) => TypeDefinition::Scalar(ScalarType {
                 position: Pos::default(),
                 description: description.as_ref().map(|d| d.as_str().into()),
                 name: name.as_str(),
                 directives: vec![],
             }),
-            NamedType::Object {
+            NamedType::Object(Object {
                 name,
                 description,
                 fields,
                 interfaces,
-            } => TypeDefinition::Object(ObjectType {
+            }) => TypeDefinition::Object(ObjectType {
                 position: Pos::default(),
                 description: description.as_ref().map(|d| d.as_str().into()),
                 name: name.as_str(),
@@ -67,13 +68,13 @@ impl<'a> From<&'a NamedType> for TypeDefinition<'a, &'a str> {
                 directives: vec![],
                 fields: fields.iter().map(Into::into).collect(),
             }),
-            NamedType::Interface {
+            NamedType::Interface(Interface {
                 name,
                 description,
                 fields,
                 possible_types: _,
                 interfaces,
-            } => TypeDefinition::Interface(InterfaceType {
+            }) => TypeDefinition::Interface(InterfaceType {
                 position: Pos::default(),
                 description: description.as_ref().map(|d| d.as_str().into()),
                 name: name.as_str(),
@@ -81,11 +82,11 @@ impl<'a> From<&'a NamedType> for TypeDefinition<'a, &'a str> {
                 directives: vec![],
                 fields: fields.iter().map(Into::into).collect(),
             }),
-            NamedType::Union {
+            NamedType::Union(Union {
                 name,
                 description,
                 possible_types,
-            } => TypeDefinition::Union(gql_parser::UnionType {
+            }) => TypeDefinition::Union(gql_parser::UnionType {
                 position: Pos::default(),
                 description: description.as_ref().map(|d| d.as_str().into()),
                 name: name.as_str(),
@@ -95,22 +96,22 @@ impl<'a> From<&'a NamedType> for TypeDefinition<'a, &'a str> {
                     .filter_map(MaybeNamed::maybe_name)
                     .collect(),
             }),
-            NamedType::Enum {
+            NamedType::Enum(Enum {
                 name,
                 description,
                 enum_values,
-            } => TypeDefinition::Enum(gql_parser::EnumType {
+            }) => TypeDefinition::Enum(gql_parser::EnumType {
                 position: Pos::default(),
                 description: description.as_ref().cloned(),
                 name: name.as_str(),
                 directives: vec![],
                 values: enum_values.iter().map(Into::into).collect(),
             }),
-            NamedType::InputObject {
+            NamedType::InputObject(InputObject {
                 name,
                 description,
                 input_fields,
-            } => TypeDefinition::InputObject(gql_parser::InputObjectType {
+            }) => TypeDefinition::InputObject(gql_parser::InputObjectType {
                 position: Pos::default(),
                 description: description.as_ref().map(|d| d.as_str().into()),
                 name: name.as_str(),

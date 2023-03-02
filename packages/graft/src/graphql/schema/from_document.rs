@@ -79,13 +79,15 @@ impl From<gp::EnumValue<'_, String>> for ac::EnumValue {
 
 impl From<gp::TypeDefinition<'_, String>> for ac::NamedType {
     fn from(value: gp::TypeDefinition<'_, String>) -> Self {
+        use ac::named_type::{Enum, InputObject, Interface, Object, Scalar, Union};
+        
         match value {
             gp::TypeDefinition::Scalar(gp::ScalarType {
                 position: _,
                 description,
                 name,
                 directives: _,
-            }) => ac::NamedType::Scalar { name, description },
+            }) => ac::NamedType::Scalar(Scalar { name, description }),
             gp::TypeDefinition::Object(gp::ObjectType {
                 position: _,
                 description,
@@ -93,7 +95,7 @@ impl From<gp::TypeDefinition<'_, String>> for ac::NamedType {
                 implements_interfaces,
                 directives: _,
                 fields,
-            }) => ac::NamedType::Object {
+            }) => ac::NamedType::Object(Object {
                 name,
                 description,
                 fields: fields.into_iter().map(Into::into).collect(),
@@ -101,7 +103,7 @@ impl From<gp::TypeDefinition<'_, String>> for ac::NamedType {
                     .into_iter()
                     .map(|name| ac::TypeRef::To { name })
                     .collect(),
-            },
+            }),
             gp::TypeDefinition::Interface(gp::InterfaceType {
                 position: _,
                 description,
@@ -109,7 +111,7 @@ impl From<gp::TypeDefinition<'_, String>> for ac::NamedType {
                 implements_interfaces,
                 directives: _,
                 fields,
-            }) => ac::NamedType::Interface {
+            }) => ac::NamedType::Interface(Interface {
                 name,
                 description,
                 fields: fields.into_iter().map(Into::into).collect(),
@@ -118,43 +120,43 @@ impl From<gp::TypeDefinition<'_, String>> for ac::NamedType {
                     .into_iter()
                     .map(|name| ac::TypeRef::To { name })
                     .collect(),
-            },
+            }),
             gp::TypeDefinition::Union(gp::UnionType {
                 position: _,
                 description,
                 name,
                 directives: _,
                 types,
-            }) => ac::NamedType::Union {
+            }) => ac::NamedType::Union(Union {
                 name,
                 description,
                 possible_types: types
                     .into_iter()
                     .map(|name| ac::TypeRef::To { name })
                     .collect(),
-            },
+            }),
             gp::TypeDefinition::Enum(gp::EnumType {
                 position: _,
                 description,
                 name,
                 directives: _,
                 values,
-            }) => ac::NamedType::Enum {
+            }) => ac::NamedType::Enum(Enum {
                 name,
                 description,
                 enum_values: values.into_iter().map(Into::into).collect(),
-            },
+            }),
             gp::TypeDefinition::InputObject(gp::InputObjectType {
                 position: _,
                 description,
                 name,
                 directives: _,
                 fields,
-            }) => ac::NamedType::InputObject {
+            }) => ac::NamedType::InputObject(InputObject {
                 name,
                 description,
                 input_fields: fields.into_iter().map(Into::into).collect(),
-            },
+            }),
         }
     }
 }
