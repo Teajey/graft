@@ -4,7 +4,10 @@ mod to_document;
 use eyre::{eyre, Result};
 use serde::{Deserialize, Serialize};
 
-use crate::util::{Arg, Named};
+use crate::{
+    graphql::query,
+    util::{Arg, Named},
+};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -50,6 +53,39 @@ impl TypeRef {
     }
 }
 
+impl From<Type> for TypeRef {
+    fn from(value: Type) -> Self {
+        match value {
+            Type::Container(tfc) => TypeRef::Container(tfc),
+            Type::Named(named) => TypeRef::To {
+                name: named.name().to_owned(),
+            },
+        }
+    }
+}
+
+impl From<&query::Type> for TypeRef {
+    fn from(value: &query::Type) -> Self {
+        match value {
+            query::Type::Named { name } => TypeRef::To {
+                name: name.to_string(),
+            },
+            query::Type::NonNull { value } => {
+                let type_ref = (&**value).into();
+                TypeRef::Container(TypeRefContainer::NonNull {
+                    of_type: Box::new(type_ref),
+                })
+            }
+            query::Type::List { value } => {
+                let type_ref = (&**value).into();
+                TypeRef::Container(TypeRefContainer::List {
+                    of_type: Box::new(type_ref),
+                })
+            }
+        }
+    }
+}
+
 impl From<Arg<'_>> for TypeRef {
     fn from(arg: Arg<'_>) -> Self {
         match arg {
@@ -85,6 +121,10 @@ impl Type {
             Type::Container(_) => Err(eyre!("Tried to get {self:?} as NamedType")),
             Type::Named(named_type) => Ok(named_type),
         }
+    }
+
+    pub fn into_type_ref(self) -> TypeRef {
+        self.into()
     }
 }
 
@@ -160,6 +200,10 @@ pub enum NamedType {
 impl NamedType {
     pub fn is_internal(&self) -> bool {
         self.name().starts_with("__")
+    }
+
+    pub fn to_type_ref(&self) -> TypeRef {
+        self.into()
     }
 }
 

@@ -1,5 +1,8 @@
 pub mod definition;
 pub mod graphql_type;
+// pub mod query;
+pub mod schema;
+mod ts;
 pub mod type_ref;
 
 use std::collections::HashMap;

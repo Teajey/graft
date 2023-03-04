@@ -108,7 +108,7 @@ impl From<gp::Selection<'_, String>> for ac::Selection {
                 arguments,
                 directives,
                 selection_set,
-            }) => ac::Selection::Field {
+            }) => ac::Selection::Field(ac::Field {
                 alias: alias.map(ac::Name),
                 name: ac::Name(name),
                 arguments: arguments
@@ -122,28 +122,28 @@ impl From<gp::Selection<'_, String>> for ac::Selection {
                 directives: directives.into_iter().map(Into::into).collect(),
                 // FIXME: Surely not every field is going to have a selection set?
                 selection_set: Some(selection_set.into()),
-            },
+            }),
             gp::Selection::FragmentSpread(gp::FragmentSpread {
                 position: _,
                 fragment_name,
                 directives,
-            }) => ac::Selection::FragmentSpread {
+            }) => ac::Selection::FragmentSpread(ac::FragmentSpread {
                 name: ac::Name(fragment_name),
                 directives: directives.into_iter().map(Into::into).collect(),
-            },
+            }),
             gp::Selection::InlineFragment(gp::InlineFragment {
                 position: _,
                 type_condition,
                 directives,
                 selection_set,
-            }) => ac::Selection::InlineFragment {
+            }) => ac::Selection::InlineFragment(ac::InlineFragment {
                 type_condition: type_condition.map(|gp::TypeCondition::On(name)| ac::NamedType {
                     kind: Some(ac::tag::NamedType::T),
                     name: ac::Name(name),
                 }),
                 directives: directives.into_iter().map(Into::into).collect(),
                 selection_set: selection_set.into(),
-            },
+            }),
         }
     }
 }
@@ -157,48 +157,85 @@ impl From<gp::SelectionSet<'_, String>> for ac::SelectionSet {
     }
 }
 
+impl From<gp::Query<'_, String>> for ac::NamedOperation {
+    fn from(
+        gp::Query {
+            position: _,
+            name,
+            variable_definitions,
+            directives,
+            selection_set,
+        }: gp::Query<'_, String>,
+    ) -> Self {
+        Self {
+            name: name.map(ac::Name),
+            operation: ac::OperationType::Query,
+            variable_definitions: ac::VariableDefinitions(
+                variable_definitions.into_iter().map(Into::into).collect(),
+            ),
+            directives: directives.into_iter().map(Into::into).collect(),
+            selection_set: selection_set.into(),
+        }
+    }
+}
+
+impl From<gp::Mutation<'_, String>> for ac::NamedOperation {
+    fn from(
+        gp::Mutation {
+            position: _,
+            name,
+            variable_definitions,
+            directives,
+            selection_set,
+        }: gp::Mutation<'_, String>,
+    ) -> Self {
+        Self {
+            name: name.map(ac::Name),
+            operation: ac::OperationType::Mutation,
+            variable_definitions: ac::VariableDefinitions(
+                variable_definitions.into_iter().map(Into::into).collect(),
+            ),
+            directives: directives.into_iter().map(Into::into).collect(),
+            selection_set: selection_set.into(),
+        }
+    }
+}
+
+impl From<gp::Subscription<'_, String>> for ac::NamedOperation {
+    fn from(
+        gp::Subscription {
+            position: _,
+            name,
+            variable_definitions,
+            directives,
+            selection_set,
+        }: gp::Subscription<'_, String>,
+    ) -> Self {
+        Self {
+            name: name.map(ac::Name),
+            operation: ac::OperationType::Subscription,
+            variable_definitions: ac::VariableDefinitions(
+                variable_definitions.into_iter().map(Into::into).collect(),
+            ),
+            directives: directives.into_iter().map(Into::into).collect(),
+            selection_set: selection_set.into(),
+        }
+    }
+}
+
 impl From<gp::OperationDefinition<'_, String>> for ac::Operation {
     fn from(op: gp::OperationDefinition<'_, String>) -> Self {
         match op {
             gp::OperationDefinition::SelectionSet(selection_set) => {
                 ac::Operation::SelectionSet(selection_set.into())
             }
-            gp::OperationDefinition::Query(gp::Query {
-                position: _,
-                name,
-                variable_definitions,
-                directives,
-                selection_set,
-            }) => ac::Operation::Query {
-                name: name.map(ac::Name),
-                variable_definitions: variable_definitions.into_iter().map(Into::into).collect(),
-                directives: directives.into_iter().map(Into::into).collect(),
-                selection_set: selection_set.into(),
-            },
-            gp::OperationDefinition::Mutation(gp::Mutation {
-                position: _,
-                name,
-                variable_definitions,
-                directives,
-                selection_set,
-            }) => ac::Operation::Mutation {
-                name: name.map(ac::Name),
-                variable_definitions: variable_definitions.into_iter().map(Into::into).collect(),
-                directives: directives.into_iter().map(Into::into).collect(),
-                selection_set: selection_set.into(),
-            },
-            gp::OperationDefinition::Subscription(gp::Subscription {
-                position: _,
-                name,
-                variable_definitions,
-                directives,
-                selection_set,
-            }) => ac::Operation::Subscription {
-                name: name.map(ac::Name),
-                variable_definitions: variable_definitions.into_iter().map(Into::into).collect(),
-                directives: directives.into_iter().map(Into::into).collect(),
-                selection_set: selection_set.into(),
-            },
+            gp::OperationDefinition::Query(query) => ac::Operation::NamedOperation(query.into()),
+            gp::OperationDefinition::Mutation(mutation) => {
+                ac::Operation::NamedOperation(mutation.into())
+            }
+            gp::OperationDefinition::Subscription(subscription) => {
+                ac::Operation::NamedOperation(subscription.into())
+            }
         }
     }
 }
@@ -213,7 +250,7 @@ impl From<gp::Definition<'_, String>> for ac::Definition {
                 type_condition: gp::TypeCondition::On(tc_name),
                 directives,
                 selection_set,
-            }) => ac::Definition::Fragment {
+            }) => ac::Definition::Fragment(ac::Fragment {
                 name: ac::Name(name),
                 type_condition: ac::NamedType {
                     kind: Some(ac::tag::NamedType::T),
@@ -221,7 +258,7 @@ impl From<gp::Definition<'_, String>> for ac::Definition {
                 },
                 directives: directives.into_iter().map(Into::into).collect(),
                 selection_set: selection_set.into(),
-            },
+            }),
         }
     }
 }

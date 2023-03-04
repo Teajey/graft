@@ -1,9 +1,17 @@
 mod from_ast;
 
+use std::fmt::Display;
+
 use serde::{ser::SerializeMap, Serialize};
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub struct Name(pub String);
+
+impl Display for Name {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
 
 impl Serialize for Name {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -17,7 +25,7 @@ impl Serialize for Name {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 #[cfg_attr(test, derive(serde::Deserialize))]
 pub struct Directive {
     kind: Option<tag::Directive>,
@@ -25,7 +33,7 @@ pub struct Directive {
     arguments: Vec<Argument>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 #[cfg_attr(test, derive(serde::Deserialize))]
 pub struct ObjectField {
     kind: Option<tag::ObjectField>,
@@ -33,14 +41,14 @@ pub struct ObjectField {
     value: Value,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 #[cfg_attr(test, derive(serde::Deserialize))]
 pub struct Variable {
     kind: tag::Variable,
-    name: Name,
+    pub name: Name,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 #[cfg_attr(test, derive(serde::Deserialize))]
 #[serde(tag = "kind")]
 pub enum Value {
@@ -82,56 +90,56 @@ pub enum Value {
 
 // FIXME: I shouldn't need this :'(
 pub mod tag {
-    #[derive(Debug, serde::Serialize)]
+    #[derive(Debug, serde::Serialize, Clone)]
     #[cfg_attr(test, derive(serde::Deserialize))]
     pub enum Argument {
         #[serde(rename = "Argument")]
         T,
     }
 
-    #[derive(Debug, serde::Serialize)]
+    #[derive(Debug, serde::Serialize, Clone)]
     #[cfg_attr(test, derive(serde::Deserialize))]
     pub enum VariableDefinition {
         #[serde(rename = "VariableDefinition")]
         T,
     }
 
-    #[derive(Debug, serde::Serialize)]
+    #[derive(Debug, serde::Serialize, Clone)]
     #[cfg_attr(test, derive(serde::Deserialize))]
     pub enum Variable {
         #[serde(rename = "Variable")]
         T,
     }
 
-    #[derive(Debug, serde::Serialize)]
+    #[derive(Debug, serde::Serialize, Clone)]
     #[cfg_attr(test, derive(serde::Deserialize))]
     pub enum Directive {
         #[serde(rename = "Directive")]
         T,
     }
 
-    #[derive(Debug, serde::Serialize)]
+    #[derive(Debug, serde::Serialize, Clone)]
     #[cfg_attr(test, derive(serde::Deserialize))]
     pub enum ObjectField {
         #[serde(rename = "ObjectField")]
         T,
     }
 
-    #[derive(Debug, serde::Serialize)]
+    #[derive(Debug, serde::Serialize, Clone)]
     #[cfg_attr(test, derive(serde::Deserialize))]
     pub enum SelectionSet {
         #[serde(rename = "SelectionSet")]
         T,
     }
 
-    #[derive(Debug, serde::Serialize)]
+    #[derive(Debug, serde::Serialize, Clone)]
     #[cfg_attr(test, derive(serde::Deserialize))]
     pub enum NamedType {
         #[serde(rename = "NamedType")]
         T,
     }
 
-    #[derive(Debug, serde::Serialize)]
+    #[derive(Debug, serde::Serialize, Clone)]
     #[cfg_attr(test, derive(serde::Deserialize))]
     pub enum Document {
         #[serde(rename = "Document")]
@@ -139,7 +147,7 @@ pub mod tag {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 #[cfg_attr(test, derive(serde::Deserialize))]
 pub struct Argument {
     kind: Option<tag::Argument>,
@@ -147,14 +155,14 @@ pub struct Argument {
     value: Value,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 #[cfg_attr(test, derive(serde::Deserialize))]
 pub struct NamedType {
     kind: Option<tag::NamedType>,
-    name: Name,
+    pub name: Name,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 #[cfg_attr(test, derive(serde::Deserialize))]
 #[serde(tag = "kind")]
 pub enum Type {
@@ -166,99 +174,119 @@ pub enum Type {
     List { value: Box<Type> },
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 #[cfg_attr(test, derive(serde::Deserialize))]
 #[serde(rename_all = "camelCase")]
 pub struct VariableDefinition {
     kind: Option<tag::VariableDefinition>,
-    variable: Variable,
+    pub variable: Variable,
     #[serde(rename = "type")]
-    of_type: Type,
-    default_value: Option<Value>,
+    pub of_type: Type,
+    pub default_value: Option<Value>,
+    pub directives: Vec<Directive>,
+}
+
+#[derive(Debug, Serialize, Clone)]
+#[cfg_attr(test, derive(serde::Deserialize))]
+pub struct VariableDefinitions(pub Vec<VariableDefinition>);
+
+#[derive(Debug, Serialize, Clone)]
+#[cfg_attr(test, derive(serde::Deserialize))]
+#[serde(rename_all = "camelCase")]
+pub struct Field {
+    pub alias: Option<Name>,
+    pub name: Name,
+    pub arguments: Vec<Argument>,
+    pub directives: Vec<Directive>,
+    pub selection_set: Option<SelectionSet>,
+}
+
+#[derive(Debug, Serialize, Clone)]
+#[cfg_attr(test, derive(serde::Deserialize))]
+#[serde(rename_all = "camelCase")]
+pub struct InlineFragment {
+    type_condition: Option<NamedType>,
+    directives: Vec<Directive>,
+    selection_set: SelectionSet,
+}
+
+#[derive(Debug, Serialize, Clone)]
+#[cfg_attr(test, derive(serde::Deserialize))]
+#[serde(rename_all = "camelCase")]
+pub struct FragmentSpread {
+    name: Name,
     directives: Vec<Directive>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 #[cfg_attr(test, derive(serde::Deserialize))]
 #[serde(tag = "kind")]
 pub enum Selection {
-    #[serde(rename_all = "camelCase")]
-    Field {
-        alias: Option<Name>,
-        name: Name,
-        arguments: Vec<Argument>,
-        directives: Vec<Directive>,
-        selection_set: Option<SelectionSet>,
-    },
-    #[serde(rename_all = "camelCase")]
-    InlineFragment {
-        type_condition: Option<NamedType>,
-        directives: Vec<Directive>,
-        selection_set: SelectionSet,
-    },
-    #[serde(rename_all = "camelCase")]
-    FragmentSpread {
-        name: Name,
-        directives: Vec<Directive>,
-    },
+    Field(Field),
+    InlineFragment(InlineFragment),
+    FragmentSpread(FragmentSpread),
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 #[cfg_attr(test, derive(serde::Deserialize))]
 pub struct SelectionSet {
     kind: Option<tag::SelectionSet>,
-    selections: Vec<Selection>,
+    pub selections: Vec<Selection>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 #[cfg_attr(test, derive(serde::Deserialize))]
-#[serde(tag = "operation")]
 #[serde(rename_all = "camelCase")]
+pub enum OperationType {
+    Query,
+    Mutation,
+    Subscription,
+}
+
+#[derive(Debug, Serialize, Clone)]
+#[cfg_attr(test, derive(serde::Deserialize))]
+#[serde(rename_all = "camelCase")]
+pub struct NamedOperation {
+    pub operation: OperationType,
+    pub name: Option<Name>,
+    pub variable_definitions: VariableDefinitions,
+    pub directives: Vec<Directive>,
+    pub selection_set: SelectionSet,
+}
+
+#[derive(Debug, Serialize, Clone)]
+#[cfg_attr(test, derive(serde::Deserialize))]
+#[serde(untagged)]
 pub enum Operation {
     SelectionSet(SelectionSet),
-    #[serde(rename_all = "camelCase")]
-    Query {
-        name: Option<Name>,
-        variable_definitions: Vec<VariableDefinition>,
-        directives: Vec<Directive>,
-        selection_set: SelectionSet,
-    },
-    #[serde(rename_all = "camelCase")]
-    Mutation {
-        name: Option<Name>,
-        variable_definitions: Vec<VariableDefinition>,
-        directives: Vec<Directive>,
-        selection_set: SelectionSet,
-    },
-    #[serde(rename_all = "camelCase")]
-    Subscription {
-        name: Option<Name>,
-        variable_definitions: Vec<VariableDefinition>,
-        directives: Vec<Directive>,
-        selection_set: SelectionSet,
-    },
+    NamedOperation(NamedOperation),
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
+#[cfg_attr(test, derive(serde::Deserialize))]
+#[serde(rename_all = "camelCase")]
+pub struct Fragment {
+    pub name: Name,
+    pub type_condition: NamedType,
+    pub directives: Vec<Directive>,
+    pub selection_set: SelectionSet,
+}
+
+#[derive(Debug, Serialize, Clone)]
 #[cfg_attr(test, derive(serde::Deserialize))]
 #[serde(tag = "kind")]
 pub enum Definition {
     #[serde(rename = "OperationDefinition")]
     Operation(Operation),
-    #[serde(rename = "FragmentDefinition", rename_all = "camelCase")]
-    Fragment {
-        name: Name,
-        type_condition: NamedType,
-        directives: Vec<Directive>,
-        selection_set: SelectionSet,
-    },
+    #[serde(rename = "FragmentDefinition")]
+    Fragment(Fragment),
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 #[cfg_attr(test, derive(serde::Deserialize))]
 pub struct Document {
     kind: tag::Document,
-    definitions: Vec<Definition>,
+    pub definitions: Vec<Definition>,
 }
 
 impl Document {
