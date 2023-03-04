@@ -95,34 +95,83 @@ impl<'c, 't> TryFrom<WithContext<'c, 't, query::Operation>> for ts::Operation<'t
     }
 }
 
-impl<'t> TryFrom<WithFieldedType<'t, query::Type>> for ts::SelectionValueUtility<'t> {
-    type Error = Report;
+#[derive(Clone)]
+enum LeafType<'t> {
+    Enum(&'t ts::Enum),
+    Scalar(&'t ts::Scalar),
+}
 
-    fn try_from(value: WithFieldedType<'t, query::Type>) -> Result<Self> {
-        let WithFieldedType {
-            target: on_type,
-            of_type,
-        } = value;
+#[derive(Clone)]
+enum TreeType<'t> {
+    Trunk(ts::FieldedType<'t>),
+    Leaf(LeafType<'t>),
+}
 
-        todo!()
+impl<'t> ts::NamedType<'t> {
+    fn as_tree_type(&'t self) -> TreeType<'t> {
+        match self {
+            ts::NamedType::Object(object) => TreeType::Trunk(ts::FieldedType::Object(object)),
+            ts::NamedType::Interface(interface) => {
+                TreeType::Trunk(ts::FieldedType::Interface(interface))
+            }
+            ts::NamedType::Union(u) => TreeType::Trunk(ts::FieldedType::Union(u)),
+            ts::NamedType::Scalar(scalar) => TreeType::Leaf(LeafType::Scalar(scalar)),
+            ts::NamedType::Enum(e) => TreeType::Leaf(LeafType::Enum(e)),
+        }
     }
 }
 
-impl<'t> TryFrom<WithFieldedType<'t, query::Type>> for ts::SelectionValue<'t> {
+impl<'t> TryFrom<WithFieldedType<'t, (&'t ts::NamedType<'t>, Option<query::SelectionSet>)>>
+    for ts::NamedSelectionType<'t>
+{
     type Error = Report;
 
-    fn try_from(value: WithFieldedType<'t, query::Type>) -> Result<Self> {
+    fn try_from(
+        value: WithFieldedType<'t, (&'t ts::NamedType<'t>, Option<query::SelectionSet>)>,
+    ) -> Result<Self> {
         let WithFieldedType {
-            target: on_type,
+            target: (named, selection_set),
             of_type,
         } = value;
 
-        let selection_value = match on_type {
-            query::Type::Named { name } => todo!(),
-            query::Type::NonNull { value } => {
-                ts::SelectionValue::Utility(of_type.with(*value).try_into()?)
+        let selection_value = match named.as_tree_type() {
+            TreeType::Trunk(trunk) => {
+                let Some(selection_set) = selection_set else {
+                    return Err(eyre!("Didn't provide a selection set on a type with fields."));
+                };
+                Self::SelectionSet(trunk.with(selection_set).try_into()?)
             }
-            query::Type::List { value } => todo!(),
+            TreeType::Leaf(_) => {
+                if selection_set.is_some() {
+                    return Err(eyre!("Selection set on a non-selectable type"));
+                }
+                Self::On(of_type)
+            }
+        };
+
+        Ok(selection_value)
+    }
+}
+
+impl<'t> TryFrom<WithFieldedType<'t, (&ts::Field<'t>, Option<query::SelectionSet>)>>
+    for ts::SelectionType<'t>
+{
+    type Error = Report;
+
+    fn try_from(
+        value: WithFieldedType<'t, (&ts::Field<'t>, Option<query::SelectionSet>)>,
+    ) -> Result<Self> {
+        let WithFieldedType {
+            target: (on_type, selection_set),
+            of_type,
+        } = value;
+
+        let selection_value = match on_type.of_type {
+            ts::Type::Named(named) => {
+                ts::SelectionType::Named(of_type.with((named, selection_set)).try_into()?)
+            }
+            ts::Type::List(_) => todo!(),
+            ts::Type::NonNull(_) => todo!(),
         };
 
         Ok(selection_value)
@@ -139,6 +188,7 @@ impl<'t> TryFrom<WithFieldedType<'t, query::Field>> for ts::Selection<'t> {
         } = value;
 
         let alias = field.alias.map(|name| name.0);
+        let selection_set = field.selection_set;
 
         let field = of_type
             .get_field(&field.name.0)
@@ -151,7 +201,7 @@ impl<'t> TryFrom<WithFieldedType<'t, query::Field>> for ts::Selection<'t> {
 
         Ok(ts::Selection {
             name,
-            value: of_type.with(field.of_type).try_into()?,
+            of_type: of_type.with((field, selection_set)).try_into()?,
         })
     }
 }

@@ -143,28 +143,35 @@ impl<'t> FieldedType<'t> {
 }
 
 #[derive(Clone)]
-pub enum SelectionValueCollection<'t> {
+pub enum NonNullSelectionType<'t> {
     SelectionSet(SelectionSet<'t>),
-    List(Box<SelectionValueUtility<'t>>),
+    List(Box<ListSelectionType<'t>>),
 }
 
 #[derive(Clone)]
-pub enum SelectionValueUtility<'t> {
+pub enum ListSelectionType<'t> {
     SelectionSet(SelectionSet<'t>),
-    List(Box<SelectionValueUtility<'t>>),
-    NonNull(SelectionValueCollection<'t>),
+    NonNull(NonNullSelectionType<'t>),
+    List(Box<ListSelectionType<'t>>),
 }
 
 #[derive(Clone)]
-pub enum SelectionValue<'t> {
-    Utility(SelectionValueUtility<'t>),
+pub enum NamedSelectionType<'t> {
+    SelectionSet(SelectionSet<'t>),
     On(&'t FieldedType<'t>),
+}
+
+#[derive(Clone)]
+pub enum SelectionType<'t> {
+    Named(NamedSelectionType<'t>),
+    List(ListSelectionType<'t>),
+    NonNull(NonNullSelectionType<'t>),
 }
 
 #[derive(Clone)]
 pub struct Selection<'t> {
     name: SelectionName<'t>,
-    value: SelectionValue<'t>,
+    of_type: SelectionType<'t>,
 }
 
 #[derive(Clone)]
