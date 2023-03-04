@@ -7,9 +7,15 @@ use crate::{
     typescript::{ts, TypescriptOptions},
 };
 
-struct TypesIndex<'t> {
-    named: HashMap<String, ts::NamedType<'t>>,
-    fielded: HashMap<String, ts::FieldedType<'t>>,
+struct TypesIndex<'t>(HashMap<String, ts::NamedType<'t>>);
+
+impl<'t> TypesIndex<'t> {
+    fn get_fielded(&self, k: &str) -> Option<&ts::FieldedType> {
+        match self.0.get(k) {
+            Some(ts::NamedType::Fielded(f)) => Some(f),
+            _ => None,
+        }
+    }
 }
 
 type FragmentsIndex<'t> = HashMap<String, ts::Fragment<'t>>;
@@ -95,32 +101,6 @@ impl<'c, 't> TryFrom<WithContext<'c, 't, query::Operation>> for ts::Operation<'t
     }
 }
 
-#[derive(Clone)]
-enum LeafType<'t> {
-    Enum(&'t ts::Enum),
-    Scalar(&'t ts::Scalar),
-}
-
-#[derive(Clone)]
-enum TreeType<'t> {
-    Trunk(ts::FieldedType<'t>),
-    Leaf(LeafType<'t>),
-}
-
-impl<'t> ts::NamedType<'t> {
-    fn as_tree_type(&'t self) -> TreeType<'t> {
-        match self {
-            ts::NamedType::Object(object) => TreeType::Trunk(ts::FieldedType::Object(object)),
-            ts::NamedType::Interface(interface) => {
-                TreeType::Trunk(ts::FieldedType::Interface(interface))
-            }
-            ts::NamedType::Union(u) => TreeType::Trunk(ts::FieldedType::Union(u)),
-            ts::NamedType::Scalar(scalar) => TreeType::Leaf(LeafType::Scalar(scalar)),
-            ts::NamedType::Enum(e) => TreeType::Leaf(LeafType::Enum(e)),
-        }
-    }
-}
-
 impl<'t> TryFrom<WithFieldedType<'t, (&'t ts::NamedType<'t>, Option<query::SelectionSet>)>>
     for ts::NamedSelectionType<'t>
 {
@@ -134,14 +114,14 @@ impl<'t> TryFrom<WithFieldedType<'t, (&'t ts::NamedType<'t>, Option<query::Selec
             of_type,
         } = value;
 
-        let selection_value = match named.as_tree_type() {
-            TreeType::Trunk(trunk) => {
+        let selection_value = match named {
+            ts::NamedType::Fielded(fielded) => {
                 let Some(selection_set) = selection_set else {
                     return Err(eyre!("Didn't provide a selection set on a type with fields."));
                 };
-                Self::SelectionSet(trunk.with(selection_set).try_into()?)
+                Self::SelectionSet(fielded.with(selection_set).try_into()?)
             }
-            TreeType::Leaf(_) => {
+            ts::NamedType::Leaf(_) => {
                 if selection_set.is_some() {
                     return Err(eyre!("Selection set on a non-selectable type"));
                 }
@@ -170,8 +150,12 @@ impl<'t> TryFrom<WithFieldedType<'t, (&ts::Field<'t>, Option<query::SelectionSet
             ts::Type::Named(named) => {
                 ts::SelectionType::Named(of_type.with((named, selection_set)).try_into()?)
             }
-            ts::Type::List(_) => todo!(),
-            ts::Type::NonNull(_) => todo!(),
+            ts::Type::List(list) => {
+                ts::SelectionType::List(of_type.with((*list, selection_set)).try_into()?)
+            }
+            ts::Type::NonNull(non_null) => {
+                ts::SelectionType::NonNull(of_type.with((*non_null, selection_set)).try_into()?)
+            }
         };
 
         Ok(selection_value)
@@ -239,8 +223,7 @@ impl<'t> TryFrom<WithTypesIndex<'t, query::Fragment>> for ts::Fragment<'t> {
         } = value;
 
         let type_condition = types
-            .fielded
-            .get(&fragment.type_condition.name.0)
+            .get_fielded(&fragment.type_condition.name.0)
             .ok_or_else(|| eyre!("Fragment on invalid type"))?;
 
         Ok(Self {

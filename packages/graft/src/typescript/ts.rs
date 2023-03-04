@@ -85,28 +85,6 @@ pub enum InputType<'t> {
 }
 
 #[derive(Clone)]
-pub enum NamedType<'t> {
-    Object(Object<'t>),
-    Interface(Interface<'t>),
-    Scalar(Scalar),
-    Union(Union<'t>),
-    Enum(Enum),
-}
-
-// impl<'a> NamedType<'a> {
-//     pub fn clone_into_fielded(&'a self) -> Result<FieldedType<'a>> {
-//         let fielded = match self {
-//             NamedType::Object(obj) => FieldedType::Object(obj.clone()),
-//             NamedType::Interface(interface) => FieldedType::Interface(interface.clone()),
-//             NamedType::Union(uni) => FieldedType::Union(uni.clone()),
-//             _ => return Err(eyre!("Type does not have fields")),
-//         };
-
-//         Ok(fielded)
-//     }
-// }
-
-#[derive(Clone)]
 pub enum Type<'t> {
     Named(&'t NamedType<'t>),
     List(Box<Type<'t>>),
@@ -121,9 +99,21 @@ pub struct SelectionName<'t> {
 
 #[derive(Clone)]
 pub enum FieldedType<'t> {
-    Union(&'t Union<'t>),
-    Object(&'t Object<'t>),
-    Interface(&'t Interface<'t>),
+    Union(Union<'t>),
+    Object(Object<'t>),
+    Interface(Interface<'t>),
+}
+
+#[derive(Clone)]
+pub enum LeafType {
+    Scalar(Scalar),
+    Enum(Enum),
+}
+
+#[derive(Clone)]
+pub enum NamedType<'t> {
+    Fielded(FieldedType<'t>),
+    Leaf(LeafType),
 }
 
 impl<'t> FieldedType<'t> {
