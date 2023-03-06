@@ -148,7 +148,7 @@ pub enum ListSelectionType<'t> {
 #[derive(Clone)]
 pub enum NamedSelectionType<'t> {
     SelectionSet(SelectionSet<'t>),
-    On(&'t FieldedType<'t>),
+    Leaf(&'t LeafType),
 }
 
 #[derive(Clone)]
