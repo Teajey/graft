@@ -17,68 +17,56 @@ impl<'t> TypesIndex<'t> {
     }
 }
 
-pub struct WithField<'t, T> {
+struct With<'t, S, T> {
     target: T,
-    source: &'t ts::Field<'t>,
+    source: &'t S,
 }
 
 impl<'t> ts::Field<'t> {
-    pub fn with<T>(&'t self, target: T) -> WithField<'t, T> {
-        WithField {
+    fn with<T>(&'t self, target: T) -> With<'t, Self, T> {
+        With {
             target,
             source: self,
         }
     }
-}
-pub struct WithNamedType<'t, T> {
-    target: T,
-    source: &'t ts::NamedType<'t>,
 }
 
 impl<'t> ts::NamedType<'t> {
-    pub fn with<T>(&'t self, target: T) -> WithNamedType<'t, T> {
-        WithNamedType {
+    fn with<T>(&'t self, target: T) -> With<'t, Self, T> {
+        With {
             target,
             source: self,
         }
     }
-}
-
-pub struct WithFieldedType<'t, T> {
-    target: T,
-    source: &'t ts::FieldedType<'t>,
 }
 
 impl<'t> ts::FieldedType<'t> {
-    pub fn with<T>(&'t self, target: T) -> WithFieldedType<'t, T> {
-        WithFieldedType {
+    fn with<T>(&'t self, target: T) -> With<'t, Self, T> {
+        With {
             target,
             source: self,
         }
     }
 }
 
-pub struct WithTypesIndex<'t, T> {
-    target: T,
-    types: &'t TypesIndex<'t>,
-}
-
 impl<'t> TypesIndex<'t> {
-    pub fn with<T>(&'t self, target: T) -> WithTypesIndex<'t, T> {
-        WithTypesIndex {
+    fn with<T>(&'t self, target: T) -> With<'t, Self, T> {
+        With {
             target,
-            types: self,
+            source: self,
         }
     }
 }
 
-impl<'t> TryFrom<WithNamedType<'t, Option<query::SelectionSet>>> for ts::NamedSelectionType<'t> {
+impl<'t> TryFrom<With<'t, ts::NamedType<'t>, Option<query::SelectionSet>>>
+    for ts::NamedSelectionType<'t>
+{
     type Error = Report;
 
     fn try_from(
-        value: WithNamedType<'t, Option<query::SelectionSet>>,
+        value: With<'t, ts::NamedType<'t>, Option<query::SelectionSet>>,
     ) -> std::result::Result<Self, Self::Error> {
-        let WithNamedType {
+        let With {
             target: selection_set,
             source: named,
         } = value;
@@ -97,11 +85,11 @@ impl<'t> TryFrom<WithNamedType<'t, Option<query::SelectionSet>>> for ts::NamedSe
     }
 }
 
-impl<'t> TryFrom<WithField<'t, Option<query::SelectionSet>>> for ts::SelectionType<'t> {
+impl<'t> TryFrom<With<'t, ts::Field<'t>, Option<query::SelectionSet>>> for ts::SelectionType<'t> {
     type Error = Report;
 
-    fn try_from(value: WithField<'t, Option<query::SelectionSet>>) -> Result<Self> {
-        let WithField {
+    fn try_from(value: With<'t, ts::Field<'t>, Option<query::SelectionSet>>) -> Result<Self> {
+        let With {
             target: selection_set,
             source: field,
         } = value;
@@ -118,11 +106,11 @@ impl<'t> TryFrom<WithField<'t, Option<query::SelectionSet>>> for ts::SelectionTy
     }
 }
 
-impl<'t> TryFrom<WithFieldedType<'t, query::Field>> for ts::Selection<'t> {
+impl<'t> TryFrom<With<'t, ts::FieldedType<'t>, query::Field>> for ts::Selection<'t> {
     type Error = Report;
 
-    fn try_from(value: WithFieldedType<'t, query::Field>) -> Result<Self> {
-        let WithFieldedType {
+    fn try_from(value: With<'t, ts::FieldedType<'t>, query::Field>) -> Result<Self> {
+        let With {
             target: field,
             source,
         } = value;
@@ -146,11 +134,11 @@ impl<'t> TryFrom<WithFieldedType<'t, query::Field>> for ts::Selection<'t> {
     }
 }
 
-impl<'t> TryFrom<WithFieldedType<'t, query::SelectionSet>> for ts::SelectionSet<'t> {
+impl<'t> TryFrom<With<'t, ts::FieldedType<'t>, query::SelectionSet>> for ts::SelectionSet<'t> {
     type Error = Report;
 
-    fn try_from(value: WithFieldedType<'t, query::SelectionSet>) -> Result<Self> {
-        let WithFieldedType {
+    fn try_from(value: With<'t, ts::FieldedType, query::SelectionSet>) -> Result<Self> {
+        let With {
             target: selection_set,
             source,
         } = value;
@@ -169,13 +157,13 @@ impl<'t> TryFrom<WithFieldedType<'t, query::SelectionSet>> for ts::SelectionSet<
     }
 }
 
-impl<'t> TryFrom<WithTypesIndex<'t, query::Fragment>> for ts::Fragment<'t> {
+impl<'t> TryFrom<With<'t, TypesIndex<'t>, query::Fragment>> for ts::Fragment<'t> {
     type Error = Report;
 
-    fn try_from(value: WithTypesIndex<'t, query::Fragment>) -> Result<Self> {
-        let WithTypesIndex {
+    fn try_from(value: With<'t, TypesIndex<'t>, query::Fragment>) -> Result<Self> {
+        let With {
             target: fragment,
-            types,
+            source: types,
         } = value;
 
         let type_condition = types
