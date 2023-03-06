@@ -12,214 +12,147 @@ expression: defs
                         "queryName",
                     ),
                 ),
-                variable_definitions: [
-                    VariableDefinition {
-                        kind: Some(
-                            T,
-                        ),
-                        variable: Variable {
-                            kind: T,
-                            name: Name(
-                                "foo",
+                variable_definitions: VariableDefinitions(
+                    [
+                        VariableDefinition {
+                            kind: Some(
+                                T,
                             ),
-                        },
-                        of_type: Named {
-                            name: Name(
-                                "ComplexType",
-                            ),
-                        },
-                        default_value: None,
-                        directives: [],
-                    },
-                    VariableDefinition {
-                        kind: Some(
-                            T,
-                        ),
-                        variable: Variable {
-                            kind: T,
-                            name: Name(
-                                "site",
-                            ),
-                        },
-                        of_type: Named {
-                            name: Name(
-                                "Site",
-                            ),
-                        },
-                        default_value: Some(
-                            Enum {
-                                value: "MOBILE",
+                            variable: Variable {
+                                kind: T,
+                                name: Name(
+                                    "foo",
+                                ),
                             },
-                        ),
-                        directives: [],
-                    },
-                ],
+                            of_type: Named {
+                                name: Name(
+                                    "ComplexType",
+                                ),
+                            },
+                            default_value: None,
+                            directives: [],
+                        },
+                        VariableDefinition {
+                            kind: Some(
+                                T,
+                            ),
+                            variable: Variable {
+                                kind: T,
+                                name: Name(
+                                    "site",
+                                ),
+                            },
+                            of_type: Named {
+                                name: Name(
+                                    "Site",
+                                ),
+                            },
+                            default_value: Some(
+                                Enum {
+                                    value: "MOBILE",
+                                },
+                            ),
+                            directives: [],
+                        },
+                    ],
+                ),
                 directives: [],
                 selection_set: SelectionSet {
                     kind: Some(
                         T,
                     ),
                     selections: [
-                        Field {
-                            alias: Some(
-                                Name(
-                                    "whoever123is",
+                        Field(
+                            Field {
+                                alias: Some(
+                                    Name(
+                                        "whoever123is",
+                                    ),
                                 ),
-                            ),
-                            name: Name(
-                                "node",
-                            ),
-                            arguments: [
-                                Argument {
-                                    kind: Some(
-                                        T,
-                                    ),
-                                    name: Name(
-                                        "id",
-                                    ),
-                                    value: List {
-                                        values: [
-                                            Int {
-                                                value: "123",
-                                            },
-                                            Int {
-                                                value: "456",
-                                            },
-                                        ],
-                                    },
-                                },
-                            ],
-                            directives: [],
-                            selection_set: Some(
-                                SelectionSet {
-                                    kind: Some(
-                                        T,
-                                    ),
-                                    selections: [
-                                        Field {
-                                            alias: None,
-                                            name: Name(
-                                                "id",
-                                            ),
-                                            arguments: [],
-                                            directives: [],
-                                            selection_set: None,
-                                        },
-                                        InlineFragment {
-                                            type_condition: Some(
-                                                NamedType {
-                                                    kind: Some(
-                                                        T,
-                                                    ),
-                                                    name: Name(
-                                                        "User",
-                                                    ),
+                                name: Name(
+                                    "node",
+                                ),
+                                arguments: [
+                                    Argument {
+                                        kind: Some(
+                                            T,
+                                        ),
+                                        name: Name(
+                                            "id",
+                                        ),
+                                        value: List {
+                                            values: [
+                                                Int {
+                                                    value: "123",
                                                 },
-                                            ),
-                                            directives: [
-                                                Directive {
-                                                    kind: Some(
-                                                        T,
-                                                    ),
-                                                    name: Name(
-                                                        "defer",
-                                                    ),
-                                                    arguments: [],
+                                                Int {
+                                                    value: "456",
                                                 },
                                             ],
-                                            selection_set: SelectionSet {
-                                                kind: Some(
-                                                    T,
-                                                ),
-                                                selections: [
-                                                    Field {
-                                                        alias: None,
-                                                        name: Name(
-                                                            "field2",
+                                        },
+                                    },
+                                ],
+                                directives: [],
+                                selection_set: Some(
+                                    SelectionSet {
+                                        kind: Some(
+                                            T,
+                                        ),
+                                        selections: [
+                                            Field(
+                                                Field {
+                                                    alias: None,
+                                                    name: Name(
+                                                        "id",
+                                                    ),
+                                                    arguments: [],
+                                                    directives: [],
+                                                    selection_set: None,
+                                                },
+                                            ),
+                                            InlineFragment(
+                                                InlineFragment {
+                                                    type_condition: Some(
+                                                        NamedType {
+                                                            kind: Some(
+                                                                T,
+                                                            ),
+                                                            name: Name(
+                                                                "User",
+                                                            ),
+                                                        },
+                                                    ),
+                                                    directives: [
+                                                        Directive {
+                                                            kind: Some(
+                                                                T,
+                                                            ),
+                                                            name: Name(
+                                                                "defer",
+                                                            ),
+                                                            arguments: [],
+                                                        },
+                                                    ],
+                                                    selection_set: SelectionSet {
+                                                        kind: Some(
+                                                            T,
                                                         ),
-                                                        arguments: [],
-                                                        directives: [],
-                                                        selection_set: Some(
-                                                            SelectionSet {
-                                                                kind: Some(
-                                                                    T,
-                                                                ),
-                                                                selections: [
-                                                                    Field {
-                                                                        alias: None,
-                                                                        name: Name(
-                                                                            "id",
-                                                                        ),
-                                                                        arguments: [],
-                                                                        directives: [],
-                                                                        selection_set: None,
-                                                                    },
-                                                                    Field {
-                                                                        alias: Some(
-                                                                            Name(
-                                                                                "alias",
+                                                        selections: [
+                                                            Field(
+                                                                Field {
+                                                                    alias: None,
+                                                                    name: Name(
+                                                                        "field2",
+                                                                    ),
+                                                                    arguments: [],
+                                                                    directives: [],
+                                                                    selection_set: Some(
+                                                                        SelectionSet {
+                                                                            kind: Some(
+                                                                                T,
                                                                             ),
-                                                                        ),
-                                                                        name: Name(
-                                                                            "field1",
-                                                                        ),
-                                                                        arguments: [
-                                                                            Argument {
-                                                                                kind: Some(
-                                                                                    T,
-                                                                                ),
-                                                                                name: Name(
-                                                                                    "first",
-                                                                                ),
-                                                                                value: Int {
-                                                                                    value: "10",
-                                                                                },
-                                                                            },
-                                                                            Argument {
-                                                                                kind: Some(
-                                                                                    T,
-                                                                                ),
-                                                                                name: Name(
-                                                                                    "after",
-                                                                                ),
-                                                                                value: Variable {
-                                                                                    name: Name(
-                                                                                        "foo",
-                                                                                    ),
-                                                                                },
-                                                                            },
-                                                                        ],
-                                                                        directives: [
-                                                                            Directive {
-                                                                                kind: Some(
-                                                                                    T,
-                                                                                ),
-                                                                                name: Name(
-                                                                                    "include",
-                                                                                ),
-                                                                                arguments: [
-                                                                                    Argument {
-                                                                                        kind: Some(
-                                                                                            T,
-                                                                                        ),
-                                                                                        name: Name(
-                                                                                            "if",
-                                                                                        ),
-                                                                                        value: Variable {
-                                                                                            name: Name(
-                                                                                                "foo",
-                                                                                            ),
-                                                                                        },
-                                                                                    },
-                                                                                ],
-                                                                            },
-                                                                        ],
-                                                                        selection_set: Some(
-                                                                            SelectionSet {
-                                                                                kind: Some(
-                                                                                    T,
-                                                                                ),
-                                                                                selections: [
+                                                                            selections: [
+                                                                                Field(
                                                                                     Field {
                                                                                         alias: None,
                                                                                         name: Name(
@@ -229,91 +162,184 @@ expression: defs
                                                                                         directives: [],
                                                                                         selection_set: None,
                                                                                     },
-                                                                                    FragmentSpread {
-                                                                                        name: Name(
-                                                                                            "frag",
+                                                                                ),
+                                                                                Field(
+                                                                                    Field {
+                                                                                        alias: Some(
+                                                                                            Name(
+                                                                                                "alias",
+                                                                                            ),
                                                                                         ),
-                                                                                        directives: [],
+                                                                                        name: Name(
+                                                                                            "field1",
+                                                                                        ),
+                                                                                        arguments: [
+                                                                                            Argument {
+                                                                                                kind: Some(
+                                                                                                    T,
+                                                                                                ),
+                                                                                                name: Name(
+                                                                                                    "first",
+                                                                                                ),
+                                                                                                value: Int {
+                                                                                                    value: "10",
+                                                                                                },
+                                                                                            },
+                                                                                            Argument {
+                                                                                                kind: Some(
+                                                                                                    T,
+                                                                                                ),
+                                                                                                name: Name(
+                                                                                                    "after",
+                                                                                                ),
+                                                                                                value: Variable {
+                                                                                                    name: Name(
+                                                                                                        "foo",
+                                                                                                    ),
+                                                                                                },
+                                                                                            },
+                                                                                        ],
+                                                                                        directives: [
+                                                                                            Directive {
+                                                                                                kind: Some(
+                                                                                                    T,
+                                                                                                ),
+                                                                                                name: Name(
+                                                                                                    "include",
+                                                                                                ),
+                                                                                                arguments: [
+                                                                                                    Argument {
+                                                                                                        kind: Some(
+                                                                                                            T,
+                                                                                                        ),
+                                                                                                        name: Name(
+                                                                                                            "if",
+                                                                                                        ),
+                                                                                                        value: Variable {
+                                                                                                            name: Name(
+                                                                                                                "foo",
+                                                                                                            ),
+                                                                                                        },
+                                                                                                    },
+                                                                                                ],
+                                                                                            },
+                                                                                        ],
+                                                                                        selection_set: Some(
+                                                                                            SelectionSet {
+                                                                                                kind: Some(
+                                                                                                    T,
+                                                                                                ),
+                                                                                                selections: [
+                                                                                                    Field(
+                                                                                                        Field {
+                                                                                                            alias: None,
+                                                                                                            name: Name(
+                                                                                                                "id",
+                                                                                                            ),
+                                                                                                            arguments: [],
+                                                                                                            directives: [],
+                                                                                                            selection_set: None,
+                                                                                                        },
+                                                                                                    ),
+                                                                                                    FragmentSpread(
+                                                                                                        FragmentSpread {
+                                                                                                            name: Name(
+                                                                                                                "frag",
+                                                                                                            ),
+                                                                                                            directives: [],
+                                                                                                        },
+                                                                                                    ),
+                                                                                                ],
+                                                                                            },
+                                                                                        ),
                                                                                     },
-                                                                                ],
-                                                                            },
-                                                                        ),
-                                                                    },
-                                                                ],
-                                                            },
-                                                        ),
+                                                                                ),
+                                                                            ],
+                                                                        },
+                                                                    ),
+                                                                },
+                                                            ),
+                                                        ],
                                                     },
-                                                ],
-                                            },
-                                        },
-                                        InlineFragment {
-                                            type_condition: None,
-                                            directives: [
-                                                Directive {
-                                                    kind: Some(
-                                                        T,
-                                                    ),
-                                                    name: Name(
-                                                        "skip",
-                                                    ),
-                                                    arguments: [
-                                                        Argument {
+                                                },
+                                            ),
+                                            InlineFragment(
+                                                InlineFragment {
+                                                    type_condition: None,
+                                                    directives: [
+                                                        Directive {
                                                             kind: Some(
                                                                 T,
                                                             ),
                                                             name: Name(
-                                                                "unless",
+                                                                "skip",
                                                             ),
-                                                            value: Variable {
-                                                                name: Name(
-                                                                    "foo",
-                                                                ),
-                                                            },
+                                                            arguments: [
+                                                                Argument {
+                                                                    kind: Some(
+                                                                        T,
+                                                                    ),
+                                                                    name: Name(
+                                                                        "unless",
+                                                                    ),
+                                                                    value: Variable {
+                                                                        name: Name(
+                                                                            "foo",
+                                                                        ),
+                                                                    },
+                                                                },
+                                                            ],
                                                         },
                                                     ],
+                                                    selection_set: SelectionSet {
+                                                        kind: Some(
+                                                            T,
+                                                        ),
+                                                        selections: [
+                                                            Field(
+                                                                Field {
+                                                                    alias: None,
+                                                                    name: Name(
+                                                                        "id",
+                                                                    ),
+                                                                    arguments: [],
+                                                                    directives: [],
+                                                                    selection_set: None,
+                                                                },
+                                                            ),
+                                                        ],
+                                                    },
                                                 },
-                                            ],
-                                            selection_set: SelectionSet {
-                                                kind: Some(
-                                                    T,
-                                                ),
-                                                selections: [
-                                                    Field {
-                                                        alias: None,
-                                                        name: Name(
-                                                            "id",
+                                            ),
+                                            InlineFragment(
+                                                InlineFragment {
+                                                    type_condition: None,
+                                                    directives: [],
+                                                    selection_set: SelectionSet {
+                                                        kind: Some(
+                                                            T,
                                                         ),
-                                                        arguments: [],
-                                                        directives: [],
-                                                        selection_set: None,
+                                                        selections: [
+                                                            Field(
+                                                                Field {
+                                                                    alias: None,
+                                                                    name: Name(
+                                                                        "id",
+                                                                    ),
+                                                                    arguments: [],
+                                                                    directives: [],
+                                                                    selection_set: None,
+                                                                },
+                                                            ),
+                                                        ],
                                                     },
-                                                ],
-                                            },
-                                        },
-                                        InlineFragment {
-                                            type_condition: None,
-                                            directives: [],
-                                            selection_set: SelectionSet {
-                                                kind: Some(
-                                                    T,
-                                                ),
-                                                selections: [
-                                                    Field {
-                                                        alias: None,
-                                                        name: Name(
-                                                            "id",
-                                                        ),
-                                                        arguments: [],
-                                                        directives: [],
-                                                        selection_set: None,
-                                                    },
-                                                ],
-                                            },
-                                        },
-                                    ],
-                                },
-                            ),
-                        },
+                                                },
+                                            ),
+                                        ],
+                                    },
+                                ),
+                            },
+                        ),
                     ],
                 },
             },
@@ -328,78 +354,86 @@ expression: defs
                         "likeStory",
                     ),
                 ),
-                variable_definitions: [],
+                variable_definitions: VariableDefinitions(
+                    [],
+                ),
                 directives: [],
                 selection_set: SelectionSet {
                     kind: Some(
                         T,
                     ),
                     selections: [
-                        Field {
-                            alias: None,
-                            name: Name(
-                                "like",
-                            ),
-                            arguments: [
-                                Argument {
-                                    kind: Some(
-                                        T,
-                                    ),
-                                    name: Name(
-                                        "story",
-                                    ),
-                                    value: Int {
-                                        value: "123",
+                        Field(
+                            Field {
+                                alias: None,
+                                name: Name(
+                                    "like",
+                                ),
+                                arguments: [
+                                    Argument {
+                                        kind: Some(
+                                            T,
+                                        ),
+                                        name: Name(
+                                            "story",
+                                        ),
+                                        value: Int {
+                                            value: "123",
+                                        },
                                     },
-                                },
-                            ],
-                            directives: [
-                                Directive {
-                                    kind: Some(
-                                        T,
-                                    ),
-                                    name: Name(
-                                        "defer",
-                                    ),
-                                    arguments: [],
-                                },
-                            ],
-                            selection_set: Some(
-                                SelectionSet {
-                                    kind: Some(
-                                        T,
-                                    ),
-                                    selections: [
-                                        Field {
-                                            alias: None,
-                                            name: Name(
-                                                "story",
-                                            ),
-                                            arguments: [],
-                                            directives: [],
-                                            selection_set: Some(
-                                                SelectionSet {
-                                                    kind: Some(
-                                                        T,
+                                ],
+                                directives: [
+                                    Directive {
+                                        kind: Some(
+                                            T,
+                                        ),
+                                        name: Name(
+                                            "defer",
+                                        ),
+                                        arguments: [],
+                                    },
+                                ],
+                                selection_set: Some(
+                                    SelectionSet {
+                                        kind: Some(
+                                            T,
+                                        ),
+                                        selections: [
+                                            Field(
+                                                Field {
+                                                    alias: None,
+                                                    name: Name(
+                                                        "story",
                                                     ),
-                                                    selections: [
-                                                        Field {
-                                                            alias: None,
-                                                            name: Name(
-                                                                "id",
+                                                    arguments: [],
+                                                    directives: [],
+                                                    selection_set: Some(
+                                                        SelectionSet {
+                                                            kind: Some(
+                                                                T,
                                                             ),
-                                                            arguments: [],
-                                                            directives: [],
-                                                            selection_set: None,
+                                                            selections: [
+                                                                Field(
+                                                                    Field {
+                                                                        alias: None,
+                                                                        name: Name(
+                                                                            "id",
+                                                                        ),
+                                                                        arguments: [],
+                                                                        directives: [],
+                                                                        selection_set: None,
+                                                                    },
+                                                                ),
+                                                            ],
                                                         },
-                                                    ],
+                                                    ),
                                                 },
                                             ),
-                                        },
-                                    ],
-                                },
-                            ),
-                        },
+                                        ],
+                                    },
+                                ),
+                            },
+                        ),
                     ],
                 },
             },
@@ -414,132 +448,146 @@ expression: defs
                         "StoryLikeSubscription",
                     ),
                 ),
-                variable_definitions: [
-                    VariableDefinition {
-                        kind: Some(
-                            T,
-                        ),
-                        variable: Variable {
-                            kind: T,
-                            name: Name(
-                                "input",
+                variable_definitions: VariableDefinitions(
+                    [
+                        VariableDefinition {
+                            kind: Some(
+                                T,
                             ),
+                            variable: Variable {
+                                kind: T,
+                                name: Name(
+                                    "input",
+                                ),
+                            },
+                            of_type: Named {
+                                name: Name(
+                                    "StoryLikeSubscribeInput",
+                                ),
+                            },
+                            default_value: None,
+                            directives: [],
                         },
-                        of_type: Named {
-                            name: Name(
-                                "StoryLikeSubscribeInput",
-                            ),
-                        },
-                        default_value: None,
-                        directives: [],
-                    },
-                ],
+                    ],
+                ),
                 directives: [],
                 selection_set: SelectionSet {
                     kind: Some(
                         T,
                     ),
                     selections: [
-                        Field {
-                            alias: None,
-                            name: Name(
-                                "storyLikeSubscribe",
-                            ),
-                            arguments: [
-                                Argument {
-                                    kind: Some(
-                                        T,
-                                    ),
-                                    name: Name(
-                                        "input",
-                                    ),
-                                    value: Variable {
+                        Field(
+                            Field {
+                                alias: None,
+                                name: Name(
+                                    "storyLikeSubscribe",
+                                ),
+                                arguments: [
+                                    Argument {
+                                        kind: Some(
+                                            T,
+                                        ),
                                         name: Name(
                                             "input",
                                         ),
-                                    },
-                                },
-                            ],
-                            directives: [],
-                            selection_set: Some(
-                                SelectionSet {
-                                    kind: Some(
-                                        T,
-                                    ),
-                                    selections: [
-                                        Field {
-                                            alias: None,
+                                        value: Variable {
                                             name: Name(
-                                                "story",
-                                            ),
-                                            arguments: [],
-                                            directives: [],
-                                            selection_set: Some(
-                                                SelectionSet {
-                                                    kind: Some(
-                                                        T,
-                                                    ),
-                                                    selections: [
-                                                        Field {
-                                                            alias: None,
-                                                            name: Name(
-                                                                "likers",
-                                                            ),
-                                                            arguments: [],
-                                                            directives: [],
-                                                            selection_set: Some(
-                                                                SelectionSet {
-                                                                    kind: Some(
-                                                                        T,
-                                                                    ),
-                                                                    selections: [
-                                                                        Field {
-                                                                            alias: None,
-                                                                            name: Name(
-                                                                                "count",
-                                                                            ),
-                                                                            arguments: [],
-                                                                            directives: [],
-                                                                            selection_set: None,
-                                                                        },
-                                                                    ],
-                                                                },
-                                                            ),
-                                                        },
-                                                        Field {
-                                                            alias: None,
-                                                            name: Name(
-                                                                "likeSentence",
-                                                            ),
-                                                            arguments: [],
-                                                            directives: [],
-                                                            selection_set: Some(
-                                                                SelectionSet {
-                                                                    kind: Some(
-                                                                        T,
-                                                                    ),
-                                                                    selections: [
-                                                                        Field {
-                                                                            alias: None,
-                                                                            name: Name(
-                                                                                "text",
-                                                                            ),
-                                                                            arguments: [],
-                                                                            directives: [],
-                                                                            selection_set: None,
-                                                                        },
-                                                                    ],
-                                                                },
-                                                            ),
-                                                        },
-                                                    ],
-                                                },
+                                                "input",
                                             ),
                                         },
-                                    ],
-                                },
-                            ),
-                        },
+                                    },
+                                ],
+                                directives: [],
+                                selection_set: Some(
+                                    SelectionSet {
+                                        kind: Some(
+                                            T,
+                                        ),
+                                        selections: [
+                                            Field(
+                                                Field {
+                                                    alias: None,
+                                                    name: Name(
+                                                        "story",
+                                                    ),
+                                                    arguments: [],
+                                                    directives: [],
+                                                    selection_set: Some(
+                                                        SelectionSet {
+                                                            kind: Some(
+                                                                T,
+                                                            ),
+                                                            selections: [
+                                                                Field(
+                                                                    Field {
+                                                                        alias: None,
+                                                                        name: Name(
+                                                                            "likers",
+                                                                        ),
+                                                                        arguments: [],
+                                                                        directives: [],
+                                                                        selection_set: Some(
+                                                                            SelectionSet {
+                                                                                kind: Some(
+                                                                                    T,
+                                                                                ),
+                                                                                selections: [
+                                                                                    Field(
+                                                                                        Field {
+                                                                                            alias: None,
+                                                                                            name: Name(
+                                                                                                "count",
+                                                                                            ),
+                                                                                            arguments: [],
+                                                                                            directives: [],
+                                                                                            selection_set: None,
+                                                                                        },
+                                                                                    ),
+                                                                                ],
+                                                                            },
+                                                                        ),
+                                                                    },
+                                                                ),
+                                                                Field(
+                                                                    Field {
+                                                                        alias: None,
+                                                                        name: Name(
+                                                                            "likeSentence",
+                                                                        ),
+                                                                        arguments: [],
+                                                                        directives: [],
+                                                                        selection_set: Some(
+                                                                            SelectionSet {
+                                                                                kind: Some(
+                                                                                    T,
+                                                                                ),
+                                                                                selections: [
+                                                                                    Field(
+                                                                                        Field {
+                                                                                            alias: None,
+                                                                                            name: Name(
+                                                                                                "text",
+                                                                                            ),
+                                                                                            arguments: [],
+                                                                                            directives: [],
+                                                                                            selection_set: None,
+                                                                                        },
+                                                                                    ),
+                                                                                ],
+                                                                            },
+                                                                        ),
+                                                                    },
+                                                                ),
+                                                            ],
+                                                        },
+                                                    ),
+                                                },
+                                            ),
+                                        ],
+                                    },
+                                ),
+                            },
+                        ),
                     ],
                 },
             },
@@ -564,78 +612,80 @@ expression: defs
                     T,
                 ),
                 selections: [
-                    Field {
-                        alias: None,
-                        name: Name(
-                            "foo",
-                        ),
-                        arguments: [
-                            Argument {
-                                kind: Some(
-                                    T,
-                                ),
-                                name: Name(
-                                    "size",
-                                ),
-                                value: Variable {
+                    Field(
+                        Field {
+                            alias: None,
+                            name: Name(
+                                "foo",
+                            ),
+                            arguments: [
+                                Argument {
+                                    kind: Some(
+                                        T,
+                                    ),
                                     name: Name(
                                         "size",
                                     ),
+                                    value: Variable {
+                                        name: Name(
+                                            "size",
+                                        ),
+                                    },
                                 },
-                            },
-                            Argument {
-                                kind: Some(
-                                    T,
-                                ),
-                                name: Name(
-                                    "bar",
-                                ),
-                                value: Variable {
-                                    name: Name(
-                                        "b",
+                                Argument {
+                                    kind: Some(
+                                        T,
                                     ),
+                                    name: Name(
+                                        "bar",
+                                    ),
+                                    value: Variable {
+                                        name: Name(
+                                            "b",
+                                        ),
+                                    },
                                 },
-                            },
-                            Argument {
-                                kind: Some(
-                                    T,
-                                ),
-                                name: Name(
-                                    "obj",
-                                ),
-                                value: Object {
-                                    fields: [
-                                        ObjectField {
-                                            kind: Some(
-                                                T,
-                                            ),
-                                            name: Name(
-                                                "key",
-                                            ),
-                                            value: String {
-                                                value: "value",
-                                                block: false,
+                                Argument {
+                                    kind: Some(
+                                        T,
+                                    ),
+                                    name: Name(
+                                        "obj",
+                                    ),
+                                    value: Object {
+                                        fields: [
+                                            ObjectField {
+                                                kind: Some(
+                                                    T,
+                                                ),
+                                                name: Name(
+                                                    "key",
+                                                ),
+                                                value: String {
+                                                    value: "value",
+                                                    block: false,
+                                                },
                                             },
-                                        },
-                                        ObjectField {
-                                            kind: Some(
-                                                T,
-                                            ),
-                                            name: Name(
-                                                "block",
-                                            ),
-                                            value: String {
-                                                value: "              block string uses \\\"\\\"\\\"          ",
-                                                block: true,
+                                            ObjectField {
+                                                kind: Some(
+                                                    T,
+                                                ),
+                                                name: Name(
+                                                    "block",
+                                                ),
+                                                value: String {
+                                                    value: "              block string uses \\\"\\\"\\\"          ",
+                                                    block: true,
+                                                },
                                             },
-                                        },
-                                    ],
+                                        ],
+                                    },
                                 },
-                            },
-                        ],
-                        directives: [],
-                        selection_set: None,
-                    },
+                            ],
+                            directives: [],
+                            selection_set: None,
+                        },
+                    ),
                 ],
             },
         },
@@ -645,63 +695,69 @@ expression: defs
             NamedOperation {
                 operation: Query,
                 name: None,
-                variable_definitions: [],
+                variable_definitions: VariableDefinitions(
+                    [],
+                ),
                 directives: [],
                 selection_set: SelectionSet {
                     kind: Some(
                         T,
                     ),
                     selections: [
-                        Field {
-                            alias: None,
-                            name: Name(
-                                "unnamed",
-                            ),
-                            arguments: [
-                                Argument {
-                                    kind: Some(
-                                        T,
-                                    ),
-                                    name: Name(
-                                        "truthy",
-                                    ),
-                                    value: Boolean {
-                                        value: true,
+                        Field(
+                            Field {
+                                alias: None,
+                                name: Name(
+                                    "unnamed",
+                                ),
+                                arguments: [
+                                    Argument {
+                                        kind: Some(
+                                            T,
+                                        ),
+                                        name: Name(
+                                            "truthy",
+                                        ),
+                                        value: Boolean {
+                                            value: true,
+                                        },
                                     },
-                                },
-                                Argument {
-                                    kind: Some(
-                                        T,
-                                    ),
-                                    name: Name(
-                                        "falsey",
-                                    ),
-                                    value: Boolean {
-                                        value: false,
+                                    Argument {
+                                        kind: Some(
+                                            T,
+                                        ),
+                                        name: Name(
+                                            "falsey",
+                                        ),
+                                        value: Boolean {
+                                            value: false,
+                                        },
                                     },
-                                },
-                                Argument {
-                                    kind: Some(
-                                        T,
-                                    ),
-                                    name: Name(
-                                        "nullish",
-                                    ),
-                                    value: Null,
-                                },
-                            ],
-                            directives: [],
-                            selection_set: None,
-                        },
-                        Field {
-                            alias: None,
-                            name: Name(
-                                "query",
-                            ),
-                            arguments: [],
-                            directives: [],
-                            selection_set: None,
-                        },
+                                    Argument {
+                                        kind: Some(
+                                            T,
+                                        ),
+                                        name: Name(
+                                            "nullish",
+                                        ),
+                                        value: Null,
+                                    },
+                                ],
+                                directives: [],
+                                selection_set: None,
+                            },
+                        ),
+                        Field(
+                            Field {
+                                alias: None,
+                                name: Name(
+                                    "query",
+                                ),
+                                arguments: [],
+                                directives: [],
+                                selection_set: None,
+                            },
+                        ),
                     ],
                 },
             },
