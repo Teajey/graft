@@ -1,22 +1,45 @@
+use eyre::{eyre, ErrReport, Result};
 use graphql_parser::query as gp;
 
 use crate::graphql::query as ac;
 
 use super::ObjectField;
 
-impl From<gp::Type<'_, String>> for ac::Type {
-    fn from(t: gp::Type<'_, String>) -> Self {
-        match t {
+impl TryFrom<gp::Type<'_, String>> for ac::NonNullType {
+    type Error = ErrReport;
+
+    fn try_from(t: gp::Type<'_, String>) -> Result<Self> {
+        let t = match t {
+            gp::Type::NamedType(name) => ac::NonNullType::Named {
+                name: ac::Name(name),
+            },
+            gp::Type::ListType(value) => ac::NonNullType::List {
+                value: Box::new((*value).try_into()?),
+            },
+            gp::Type::NonNullType(_) => return Err(eyre!("NonNull cannot contain NonNull")),
+        };
+
+        Ok(t)
+    }
+}
+
+impl TryFrom<gp::Type<'_, String>> for ac::Type {
+    type Error = ErrReport;
+
+    fn try_from(t: gp::Type<'_, String>) -> Result<Self> {
+        let t = match t {
             gp::Type::NamedType(name) => ac::Type::Named {
                 name: ac::Name(name),
             },
             gp::Type::ListType(value) => ac::Type::List {
-                value: Box::new((*value).into()),
+                value: Box::new((*value).try_into()?),
             },
             gp::Type::NonNullType(value) => ac::Type::NonNull {
-                value: Box::new((*value).into()),
+                value: (*value).try_into()?,
             },
-        }
+        };
+
+        Ok(t)
     }
 }
 
@@ -53,25 +76,27 @@ impl From<gp::Value<'_, String>> for ac::Value {
     }
 }
 
-impl From<gp::VariableDefinition<'_, String>> for ac::VariableDefinition {
-    fn from(
+impl TryFrom<gp::VariableDefinition<'_, String>> for ac::VariableDefinition {
+    type Error = ErrReport;
+
+    fn try_from(
         gp::VariableDefinition {
             position: _,
             name,
             var_type,
             default_value,
         }: gp::VariableDefinition<'_, String>,
-    ) -> Self {
-        Self {
+    ) -> Result<Self> {
+        Ok(Self {
             kind: Some(ac::tag::VariableDefinition::T),
             variable: ac::Variable {
                 kind: ac::tag::Variable::T,
                 name: ac::Name(name),
             },
-            of_type: var_type.into(),
+            of_type: var_type.try_into()?,
             default_value: default_value.map(Into::into),
             directives: vec![],
-        }
+        })
     }
 }
 
@@ -157,8 +182,10 @@ impl From<gp::SelectionSet<'_, String>> for ac::SelectionSet {
     }
 }
 
-impl From<gp::Query<'_, String>> for ac::NamedOperation {
-    fn from(
+impl TryFrom<gp::Query<'_, String>> for ac::NamedOperation {
+    type Error = ErrReport;
+
+    fn try_from(
         gp::Query {
             position: _,
             name,
@@ -166,21 +193,26 @@ impl From<gp::Query<'_, String>> for ac::NamedOperation {
             directives,
             selection_set,
         }: gp::Query<'_, String>,
-    ) -> Self {
-        Self {
+    ) -> Result<Self> {
+        Ok(Self {
             name: name.map(ac::Name),
             operation: ac::OperationType::Query,
             variable_definitions: ac::VariableDefinitions(
-                variable_definitions.into_iter().map(Into::into).collect(),
+                variable_definitions
+                    .into_iter()
+                    .map(TryInto::try_into)
+                    .collect::<Result<_>>()?,
             ),
             directives: directives.into_iter().map(Into::into).collect(),
             selection_set: selection_set.into(),
-        }
+        })
     }
 }
 
-impl From<gp::Mutation<'_, String>> for ac::NamedOperation {
-    fn from(
+impl TryFrom<gp::Mutation<'_, String>> for ac::NamedOperation {
+    type Error = ErrReport;
+
+    fn try_from(
         gp::Mutation {
             position: _,
             name,
@@ -188,21 +220,26 @@ impl From<gp::Mutation<'_, String>> for ac::NamedOperation {
             directives,
             selection_set,
         }: gp::Mutation<'_, String>,
-    ) -> Self {
-        Self {
+    ) -> Result<Self> {
+        Ok(Self {
             name: name.map(ac::Name),
             operation: ac::OperationType::Mutation,
             variable_definitions: ac::VariableDefinitions(
-                variable_definitions.into_iter().map(Into::into).collect(),
+                variable_definitions
+                    .into_iter()
+                    .map(TryInto::try_into)
+                    .collect::<Result<_>>()?,
             ),
             directives: directives.into_iter().map(Into::into).collect(),
             selection_set: selection_set.into(),
-        }
+        })
     }
 }
 
-impl From<gp::Subscription<'_, String>> for ac::NamedOperation {
-    fn from(
+impl TryFrom<gp::Subscription<'_, String>> for ac::NamedOperation {
+    type Error = ErrReport;
+
+    fn try_from(
         gp::Subscription {
             position: _,
             name,
@@ -210,40 +247,51 @@ impl From<gp::Subscription<'_, String>> for ac::NamedOperation {
             directives,
             selection_set,
         }: gp::Subscription<'_, String>,
-    ) -> Self {
-        Self {
+    ) -> Result<Self> {
+        Ok(Self {
             name: name.map(ac::Name),
             operation: ac::OperationType::Subscription,
             variable_definitions: ac::VariableDefinitions(
-                variable_definitions.into_iter().map(Into::into).collect(),
+                variable_definitions
+                    .into_iter()
+                    .map(TryInto::try_into)
+                    .collect::<Result<_>>()?,
             ),
             directives: directives.into_iter().map(Into::into).collect(),
             selection_set: selection_set.into(),
-        }
+        })
     }
 }
 
-impl From<gp::OperationDefinition<'_, String>> for ac::Operation {
-    fn from(op: gp::OperationDefinition<'_, String>) -> Self {
-        match op {
+impl TryFrom<gp::OperationDefinition<'_, String>> for ac::Operation {
+    type Error = ErrReport;
+
+    fn try_from(op: gp::OperationDefinition<'_, String>) -> Result<Self> {
+        let op = match op {
             gp::OperationDefinition::SelectionSet(selection_set) => {
                 ac::Operation::SelectionSet(selection_set.into())
             }
-            gp::OperationDefinition::Query(query) => ac::Operation::NamedOperation(query.into()),
+            gp::OperationDefinition::Query(query) => {
+                ac::Operation::NamedOperation(query.try_into()?)
+            }
             gp::OperationDefinition::Mutation(mutation) => {
-                ac::Operation::NamedOperation(mutation.into())
+                ac::Operation::NamedOperation(mutation.try_into()?)
             }
             gp::OperationDefinition::Subscription(subscription) => {
-                ac::Operation::NamedOperation(subscription.into())
+                ac::Operation::NamedOperation(subscription.try_into()?)
             }
-        }
+        };
+
+        Ok(op)
     }
 }
 
-impl From<gp::Definition<'_, String>> for ac::Definition {
-    fn from(def: gp::Definition<'_, String>) -> Self {
-        match def {
-            gp::Definition::Operation(op) => ac::Definition::Operation(op.into()),
+impl TryFrom<gp::Definition<'_, String>> for ac::Definition {
+    type Error = ErrReport;
+
+    fn try_from(def: gp::Definition<'_, String>) -> Result<Self> {
+        let def = match def {
+            gp::Definition::Operation(op) => ac::Definition::Operation(op.try_into()?),
             gp::Definition::Fragment(gp::FragmentDefinition {
                 position: _,
                 name,
@@ -259,6 +307,8 @@ impl From<gp::Definition<'_, String>> for ac::Definition {
                 directives: directives.into_iter().map(Into::into).collect(),
                 selection_set: selection_set.into(),
             }),
-        }
+        };
+
+        Ok(def)
     }
 }

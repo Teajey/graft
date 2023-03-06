@@ -32,7 +32,7 @@ impl<'a, 'b, 'c> TypescriptableWithBuffer for WithContext<'a, 'b, 'c, Definition
                       ));
                     }
                     OperationDefinition::Query(query) => (
-                        Operation::from(OperationDefinition::Query(query.clone())),
+                        Operation::try_from(OperationDefinition::Query(query.clone()))?,
                         query
                             .name
                             .as_ref()
@@ -44,7 +44,7 @@ impl<'a, 'b, 'c> TypescriptableWithBuffer for WithContext<'a, 'b, 'c, Definition
                         &ctx.index.query,
                     ),
                     OperationDefinition::Mutation(mutation) => (
-                        Operation::from(OperationDefinition::Mutation(mutation.clone())),
+                        Operation::try_from(OperationDefinition::Mutation(mutation.clone()))?,
                         mutation
                             .name
                             .as_ref()
@@ -59,7 +59,9 @@ impl<'a, 'b, 'c> TypescriptableWithBuffer for WithContext<'a, 'b, 'c, Definition
                             .ok_or_else(|| eyre!("Mutation type does not exist in TypeIndex"))?,
                     ),
                     OperationDefinition::Subscription(subscription) => (
-                        Operation::from(OperationDefinition::Subscription(subscription.clone())),
+                        Operation::try_from(OperationDefinition::Subscription(
+                            subscription.clone(),
+                        ))?,
                         subscription
                             .name
                             .as_ref()
@@ -119,7 +121,7 @@ impl<'a, 'b, 'c> TypescriptableWithBuffer for WithContext<'a, 'b, 'c, Definition
                 } else {
                     writeln!(buffer.args, "export type {args_name} = {{")?;
                     for def in variable_definitions {
-                        let ts_type = TypeRef::from(def.var_type.clone());
+                        let ts_type = TypeRef::try_from(def.var_type.clone())?;
                         if ts_type.is_non_null() {
                             writeln!(
                                 buffer.args,
@@ -153,7 +155,7 @@ impl<'a, 'b, 'c> TypescriptableWithBuffer for WithContext<'a, 'b, 'c, Definition
                 writeln!(buffer.selection_sets, ";")?;
             }
             Definition::Fragment(fragment) => {
-                let definition = ac::Definition::from(Definition::Fragment(fragment.clone()));
+                let definition = ac::Definition::try_from(Definition::Fragment(fragment.clone()))?;
                 let document = ac::Document::new(vec![definition]);
 
                 let document_json = serde_json::to_string(&document)?;

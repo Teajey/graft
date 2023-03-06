@@ -10,7 +10,10 @@ use graphql_parser::{
 
 use crate::util::MaybeNamed;
 
-use super::{EnumValue, Field, InputValue, NamedType, Schema, TypeRef, TypeRefContainer};
+use super::{
+    EnumValue, Field, InputValue, NamedType, NonNullTypeRef, NonNullTypeRefContainer, Schema,
+    TypeRef, TypeRefContainer,
+};
 
 impl<'a> From<&'a Schema> for Document<'a, &'a str> {
     fn from(schema: &'a Schema) -> Self {
@@ -153,6 +156,17 @@ impl<'a> From<&'a Field> for gql_parser::Field<'a, &'a str> {
             arguments: field.args.iter().map(Into::into).collect(),
             field_type: field.of_type.borrow().into(),
             directives: vec![],
+        }
+    }
+}
+
+impl<'a> From<&'a NonNullTypeRef> for gql_parser::Type<'a, &'a str> {
+    fn from(type_ref: &'a NonNullTypeRef) -> Self {
+        match type_ref {
+            NonNullTypeRef::To { name } => Self::NamedType(name.as_str()),
+            NonNullTypeRef::Container(NonNullTypeRefContainer::List { of_type }) => {
+                Self::ListType(Box::new((&**of_type).into()))
+            }
         }
     }
 }

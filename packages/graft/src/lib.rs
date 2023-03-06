@@ -1,6 +1,6 @@
 mod app;
 mod cross;
-mod gen;
+// mod gen;
 mod graphql;
 mod introspection;
 mod typescript;
@@ -11,7 +11,7 @@ use eyre::Result;
 use graphql_parser::schema::{parse_schema, Document};
 
 use crate::app::cli;
-use crate::gen::generate_typescript;
+// use crate::gen::generate_typescript;
 
 #[allow(clippy::missing_errors_doc)]
 pub async fn run() -> Result<()> {
@@ -77,17 +77,17 @@ pub async fn run() -> Result<()> {
             print_info!(ctx, 1, "Reading schema ast...");
             let schema_ast = cross::fs::read_to_string(&typescript_gen_plan.ast)?;
             let schema_ast = parse_schema::<String>(&schema_ast)?;
-            let schema = schema_ast.try_into()?;
+            // let schema = schema_ast.try_into()?;
 
             print_info!(ctx, 1, "Generating typescript...");
-            let ts = generate_typescript(
-                &ctx,
-                typescript_gen_plan.options,
-                typescript_gen_plan.document_paths,
-                &schema,
-            )?;
+            // let ts = generate_typescript(
+            //     &ctx,
+            //     typescript_gen_plan.options,
+            //     typescript_gen_plan.document_paths,
+            //     &schema,
+            // )?;
 
-            cross::fs::write_to_file(typescript_gen_plan.out, &ts)?;
+            // cross::fs::write_to_file(typescript_gen_plan.out, &ts)?;
         }
     }
 

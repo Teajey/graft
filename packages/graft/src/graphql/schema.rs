@@ -4,10 +4,7 @@ mod to_document;
 use eyre::{eyre, Result};
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    graphql::query,
-    util::{Arg, Named},
-};
+use crate::{graphql::query, util::Named};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -33,9 +30,23 @@ pub enum TypeKind {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "kind", rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum NonNullTypeRefContainer {
+    #[serde(rename_all = "camelCase")]
+    List { of_type: Box<TypeRef> },
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(untagged)]
+pub enum NonNullTypeRef {
+    Container(NonNullTypeRefContainer),
+    To { name: String },
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(tag = "kind", rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum TypeRefContainer {
     #[serde(rename_all = "camelCase")]
-    NonNull { of_type: Box<TypeRef> },
+    NonNull { of_type: Box<NonNullTypeRef> },
     #[serde(rename_all = "camelCase")]
     List { of_type: Box<TypeRef> },
 }
@@ -64,21 +75,15 @@ impl From<Type> for TypeRef {
     }
 }
 
-impl From<&query::Type> for TypeRef {
-    fn from(value: &query::Type) -> Self {
+impl From<&query::NonNullType> for NonNullTypeRef {
+    fn from(value: &query::NonNullType) -> Self {
         match value {
-            query::Type::Named { name } => TypeRef::To {
+            query::NonNullType::Named { name } => NonNullTypeRef::To {
                 name: name.to_string(),
             },
-            query::Type::NonNull { value } => {
+            query::NonNullType::List { value } => {
                 let type_ref = (&**value).into();
-                TypeRef::Container(TypeRefContainer::NonNull {
-                    of_type: Box::new(type_ref),
-                })
-            }
-            query::Type::List { value } => {
-                let type_ref = (&**value).into();
-                TypeRef::Container(TypeRefContainer::List {
+                NonNullTypeRef::Container(NonNullTypeRefContainer::List {
                     of_type: Box::new(type_ref),
                 })
             }
@@ -86,20 +91,20 @@ impl From<&query::Type> for TypeRef {
     }
 }
 
-impl From<Arg<'_>> for TypeRef {
-    fn from(arg: Arg<'_>) -> Self {
-        match arg {
-            Arg::NamedType(name) => TypeRef::To {
+impl From<&query::Type> for TypeRef {
+    fn from(value: &query::Type) -> Self {
+        match value {
+            query::Type::Named { name } => TypeRef::To {
                 name: name.to_string(),
             },
-            Arg::NonNullType(var_type) => {
-                let type_ref = (*var_type).into();
+            query::Type::NonNull { value } => {
+                let type_ref = value.into();
                 TypeRef::Container(TypeRefContainer::NonNull {
                     of_type: Box::new(type_ref),
                 })
             }
-            Arg::ListType(var_type) => {
-                let type_ref = (*var_type).into();
+            query::Type::List { value } => {
+                let type_ref = (&**value).into();
                 TypeRef::Container(TypeRefContainer::List {
                     of_type: Box::new(type_ref),
                 })

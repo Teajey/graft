@@ -165,11 +165,21 @@ pub struct NamedType {
 #[derive(Debug, Serialize, Clone)]
 #[cfg_attr(test, derive(serde::Deserialize))]
 #[serde(tag = "kind")]
+pub enum NonNullType {
+    #[serde(rename = "NamedType")]
+    Named { name: Name },
+    #[serde(rename = "ListType")]
+    List { value: Box<Type> },
+}
+
+#[derive(Debug, Serialize, Clone)]
+#[cfg_attr(test, derive(serde::Deserialize))]
+#[serde(tag = "kind")]
 pub enum Type {
     #[serde(rename = "NamedType")]
     Named { name: Name },
     #[serde(rename = "NonNullType")]
-    NonNull { value: Box<Type> },
+    NonNull { value: NonNullType },
     #[serde(rename = "ListType")]
     List { value: Box<Type> },
 }

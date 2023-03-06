@@ -4,8 +4,6 @@ use ::graphql_parser::query::Type as GraphQLParserType;
 
 use crate::graphql::schema::{NamedType, TypeRef};
 
-pub type Arg<'a> = GraphQLParserType<'a, &'a str>;
-
 pub trait MaybeNamed {
     fn maybe_name(&self) -> Option<&str>;
 }
