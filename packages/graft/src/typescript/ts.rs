@@ -36,7 +36,7 @@ pub struct Interface<'t> {
     name: String,
     description: Option<String>,
     fields: Vec<Field<'t>>,
-    possible_types: Vec<&'t Type<'t>>,
+    possible_types: Vec<&'t Object<'t>>,
 }
 
 #[derive(Clone)]
@@ -85,10 +85,16 @@ pub enum InputType<'t> {
 }
 
 #[derive(Clone)]
+pub enum NonNullType<'t> {
+    Named(&'t NamedType<'t>),
+    List(Box<Type<'t>>),
+}
+
+#[derive(Clone)]
 pub enum Type<'t> {
     Named(&'t NamedType<'t>),
     List(Box<Type<'t>>),
-    NonNull(Box<Type<'t>>),
+    NonNull(NonNullType<'t>),
 }
 
 #[derive(Clone)]
@@ -117,6 +123,21 @@ pub enum NamedType<'t> {
 }
 
 impl<'t> FieldedType<'t> {
+    pub fn get_possible_type(&self, name: &str) -> Result<Option<&'t Object<'t>>> {
+        let possible_types = match self {
+            FieldedType::Object(_) => {
+                // FIXME: Perhaps there should be a subtype so that this error isn't necessary
+                return Err(eyre!("An Object does not contain possible types"));
+            }
+            FieldedType::Union(Union { possible_types, .. })
+            | FieldedType::Interface(Interface { possible_types, .. }) => possible_types,
+        };
+
+        let possible_type = possible_types.iter().find(|o| o.name == name).copied();
+
+        Ok(possible_type)
+    }
+
     pub fn get_field(&self, name: &str) -> Option<&Field> {
         match self {
             FieldedType::Union(uni) => uni
@@ -134,13 +155,13 @@ impl<'t> FieldedType<'t> {
 
 #[derive(Clone)]
 pub enum NonNullSelectionType<'t> {
-    SelectionSet(SelectionSet<'t>),
+    Named(NamedSelectionType<'t>),
     List(Box<ListSelectionType<'t>>),
 }
 
 #[derive(Clone)]
 pub enum ListSelectionType<'t> {
-    SelectionSet(SelectionSet<'t>),
+    Named(NamedSelectionType<'t>),
     NonNull(NonNullSelectionType<'t>),
     List(Box<ListSelectionType<'t>>),
 }
@@ -159,9 +180,18 @@ pub enum SelectionType<'t> {
 }
 
 #[derive(Clone)]
-pub struct Selection<'t> {
+pub struct FieldSelection<'t> {
     name: SelectionName<'t>,
     of_type: SelectionType<'t>,
+}
+
+#[derive(Clone)]
+pub struct FragmentSelection<'t>(SelectionSet<'t>);
+
+#[derive(Clone)]
+pub enum Selection<'t> {
+    Field(FieldSelection<'t>),
+    Fragment(FragmentSelection<'t>),
 }
 
 #[derive(Clone)]

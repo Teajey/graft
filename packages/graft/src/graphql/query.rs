@@ -157,6 +157,7 @@ pub struct Argument {
 
 #[derive(Debug, Serialize, Clone)]
 #[cfg_attr(test, derive(serde::Deserialize))]
+// FIXME: Maybe rename this to TypeRef
 pub struct NamedType {
     kind: Option<tag::NamedType>,
     pub name: Name,
@@ -215,17 +216,17 @@ pub struct Field {
 #[cfg_attr(test, derive(serde::Deserialize))]
 #[serde(rename_all = "camelCase")]
 pub struct InlineFragment {
-    type_condition: Option<NamedType>,
-    directives: Vec<Directive>,
-    selection_set: SelectionSet,
+    pub type_condition: Option<NamedType>,
+    pub directives: Vec<Directive>,
+    pub selection_set: SelectionSet,
 }
 
 #[derive(Debug, Serialize, Clone)]
 #[cfg_attr(test, derive(serde::Deserialize))]
 #[serde(rename_all = "camelCase")]
 pub struct FragmentSpread {
-    name: Name,
-    directives: Vec<Directive>,
+    pub name: Name,
+    pub directives: Vec<Directive>,
 }
 
 #[derive(Debug, Serialize, Clone)]
