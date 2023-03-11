@@ -2,7 +2,10 @@ use std::collections::HashMap;
 
 use eyre::{eyre, Report, Result};
 
-use crate::{graphql::query, typescript::ts};
+use crate::{
+    graphql::query,
+    typescript::ts::{self, Fielded, PossibleTypes},
+};
 
 struct TypesIndex<'t>(HashMap<String, ts::NamedType<'t>>);
 
@@ -13,6 +16,13 @@ impl<'t> TypesIndex<'t> {
             _ => None,
         }
     }
+
+    fn get_object(&self, k: &str) -> Option<&ts::Object> {
+        match self.0.get(k) {
+            Some(ts::NamedType::Fielded(ts::FieldedType::Object(o))) => Some(o),
+            _ => None,
+        }
+    }
 }
 
 struct FragmentsIndex<'t>(HashMap<String, ts::Fragment<'t>>);
@@ -20,6 +30,9 @@ struct FragmentsIndex<'t>(HashMap<String, ts::Fragment<'t>>);
 struct Index<'t> {
     types: TypesIndex<'t>,
     fragments: FragmentsIndex<'t>,
+    query: ts::Object<'t>,
+    mutation: ts::Object<'t>,
+    subscription: ts::Object<'t>,
 }
 
 struct WithIndex<'t, T> {
@@ -211,13 +224,42 @@ impl<'t> TryFrom<WithIndex<'t, (&'t ts::FieldedType<'t>, query::InlineFragment)>
             index,
         } = value;
 
-        let fielded = inline_fragment
-            .type_condition
-            .map(|tc| fielded.get_possible_type(&tc.name.0))
-            .transpose()?
-            .flatten()
-            .and_then(|object| index.types.get_fielded(&object.name))
-            .unwrap_or(fielded);
+        let spreaded_object = match fielded {
+            ts::FieldedType::Object(o) => {
+                if let Some(tc) = inline_fragment.type_condition {
+                    return Err(eyre!(
+                        "Cannot spread an object ({tc:?}) into another object"
+                    ));
+                }
+                o
+            }
+            ts::FieldedType::Union(u) => {
+                let tc = inline_fragment
+                    .type_condition
+                    .map(|tc| tc.name.0)
+                    .ok_or_else(|| {
+                        eyre!(
+                            "Must provide an object as the target of an inline fragment on a union"
+                        )
+                    })?;
+                u.get_possible_type(&tc).ok_or_else(|| {
+                    eyre!("Inline fragment targetting object that does not implement this union")
+                })?
+            }
+            ts::FieldedType::Interface(i) => {
+                let tc = inline_fragment.type_condition.map(|tc| tc.name.0).ok_or_else(|| eyre!("Must provide an object as the target of an inline fragment on an interface"))?;
+                i.get_possible_type(&tc).ok_or_else(|| {
+                    eyre!(
+                        "Inline fragment targetting object that does not implement this interface"
+                    )
+                })?
+            }
+        };
+
+        let fielded = index
+            .types
+            .get_fielded(&spreaded_object.name)
+            .expect("Something is very wrong if this object doesn't exist");
 
         Ok(ts::FragmentSelection(
             index
@@ -295,5 +337,82 @@ impl<'t> TryFrom<WithIndex<'t, query::Fragment>> for ts::Fragment<'t> {
             type_condition,
             doc: fragment,
         })
+    }
+}
+
+impl<'t> TryFrom<WithIndex<'t, query::VariableDefinition>> for ts::Argument<'t> {
+    type Error = Report;
+
+    fn try_from(
+        value: WithIndex<'t, query::VariableDefinition>,
+    ) -> std::result::Result<Self, Self::Error> {
+        let WithIndex {
+            index,
+            bundle:
+                query::VariableDefinition {
+                    variable,
+                    of_type,
+                    default_value,
+                    directives,
+                    ..
+                },
+        } = value;
+
+        Ok(ts::Argument {
+            name: variable.name.0,
+            description: None,
+            of_type: todo!(),
+        })
+    }
+}
+
+impl<'t> TryFrom<WithIndex<'t, query::NamedOperation>> for ts::Operation<'t> {
+    type Error = Report;
+
+    fn try_from(
+        value: WithIndex<'t, query::NamedOperation>,
+    ) -> std::result::Result<Self, Self::Error> {
+        let WithIndex {
+            index,
+            bundle: named,
+        } = value;
+
+        let doc = named.clone();
+
+        let query::NamedOperation {
+            operation,
+            name,
+            variable_definitions: query::VariableDefinitions(variable_definitions),
+            directives,
+            selection_set,
+        } = named;
+
+        let name =
+            name.ok_or_else(|| eyre!("Typescripting anonymous operations is not supported"))?;
+
+        let operation = match operation {
+            query::OperationType::Query => {
+                let query = index
+                    .types
+                    .get_fielded(&index.query.name)
+                    .expect("Query must exist, it was already in index");
+                ts::Operation {
+                    of_type: ts::OperationType::Query,
+                    name: name.0,
+                    arguments: ts::Arguments(
+                        variable_definitions
+                            .into_iter()
+                            .map(|vd| index.with(vd).try_into())
+                            .collect::<Result<Vec<_>>>()?,
+                    ),
+                    selection_set: index.with((query, selection_set)).try_into()?,
+                    doc,
+                }
+            }
+            query::OperationType::Mutation => todo!(),
+            query::OperationType::Subscription => todo!(),
+        };
+
+        Ok(operation)
     }
 }

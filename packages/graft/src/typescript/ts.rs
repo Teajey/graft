@@ -39,12 +39,30 @@ pub struct Interface<'t> {
     possible_types: Vec<&'t Object<'t>>,
 }
 
+impl<'t> PossibleTypes for Interface<'t> {
+    fn get_possible_types(&self) -> &[&Object] {
+        &self.possible_types
+    }
+}
+
+impl<'t> Fielded<'t> for Interface<'t> {
+    fn get_fields(&'t self) -> Vec<&'t Field<'t>> {
+        self.fields.iter().collect::<Vec<_>>()
+    }
+}
+
 #[derive(Clone)]
 pub struct Object<'t> {
     name: String,
     description: Option<String>,
     interfaces: Vec<&'t Interface<'t>>,
     fields: Vec<Field<'t>>,
+}
+
+impl<'t> Fielded<'t> for Object<'t> {
+    fn get_fields(&'t self) -> Vec<&'t Field<'t>> {
+        self.fields.iter().collect::<Vec<_>>()
+    }
 }
 
 #[derive(Clone)]
@@ -64,6 +82,21 @@ pub struct Union<'t> {
     name: String,
     description: Option<String>,
     possible_types: Vec<&'t Object<'t>>,
+}
+
+impl<'t> PossibleTypes for Union<'t> {
+    fn get_possible_types(&self) -> &[&Object] {
+        &self.possible_types
+    }
+}
+
+impl<'t> Fielded<'t> for Union<'t> {
+    fn get_fields(&self) -> Vec<&'t Field<'t>> {
+        self.possible_types
+            .iter()
+            .flat_map(|f| f.get_fields())
+            .collect::<Vec<_>>()
+    }
 }
 
 #[derive(Clone)]
@@ -122,34 +155,34 @@ pub enum NamedType<'t> {
     Leaf(LeafType),
 }
 
-impl<'t> FieldedType<'t> {
-    pub fn get_possible_type(&self, name: &str) -> Result<Option<&'t Object<'t>>> {
-        let possible_types = match self {
-            FieldedType::Object(_) => {
-                // FIXME: Perhaps there should be a subtype so that this error isn't necessary
-                return Err(eyre!("An Object does not contain possible types"));
-            }
-            FieldedType::Union(Union { possible_types, .. })
-            | FieldedType::Interface(Interface { possible_types, .. }) => possible_types,
-        };
-
-        let possible_type = possible_types.iter().find(|o| o.name == name).copied();
-
-        Ok(possible_type)
-    }
-
-    pub fn get_field(&self, name: &str) -> Option<&Field> {
+impl<'t> Fielded<'t> for FieldedType<'t> {
+    fn get_fields(&'t self) -> Vec<&'t Field<'t>> {
         match self {
-            FieldedType::Union(uni) => uni
-                .possible_types
-                .iter()
-                .flat_map(|t| &t.fields)
-                .find(|field| field.name.0 == name),
-            FieldedType::Object(Object { fields, .. })
-            | FieldedType::Interface(Interface { fields, .. }) => {
-                fields.iter().find(|field| field.name.0 == name)
-            }
+            FieldedType::Union(u) => u.get_fields(),
+            FieldedType::Object(o) => o.get_fields(),
+            FieldedType::Interface(i) => i.get_fields(),
         }
+    }
+}
+
+pub trait Fielded<'t> {
+    fn get_fields(&'t self) -> Vec<&'t Field<'t>>;
+
+    fn get_field(&'t self, name: &str) -> Option<&'t Field> {
+        self.get_fields()
+            .into_iter()
+            .find(|field| field.name.0 == name)
+    }
+}
+
+pub trait PossibleTypes {
+    fn get_possible_types(&self) -> &[&Object];
+
+    fn get_possible_type(&self, name: &str) -> Option<&Object> {
+        self.get_possible_types()
+            .iter()
+            .find(|t| t.name == name)
+            .copied()
     }
 }
 
@@ -209,7 +242,7 @@ pub struct Operation<'t> {
     name: String,
     arguments: Arguments<'t>,
     selection_set: SelectionSet<'t>,
-    doc: query::Operation,
+    doc: query::NamedOperation,
 }
 
 // struct GraphQLTypescript<'t> {
