@@ -27,12 +27,15 @@ impl<'t> TypesIndex<'t> {
 
 struct FragmentsIndex<'t>(HashMap<String, ts::Fragment<'t>>);
 
+struct InputsIndex<'t>(HashMap<String, ts::InputType<'t>>);
+
 struct Index<'t> {
     types: TypesIndex<'t>,
     fragments: FragmentsIndex<'t>,
-    query: ts::Object<'t>,
-    mutation: ts::Object<'t>,
-    subscription: ts::Object<'t>,
+    inputs: InputsIndex<'t>,
+    query: &'t ts::Object<'t>,
+    mutation: Option<&'t ts::Object<'t>>,
+    subscription: Option<&'t ts::Object<'t>>,
 }
 
 struct WithIndex<'t, T> {
@@ -340,6 +343,61 @@ impl<'t> TryFrom<WithIndex<'t, query::Fragment>> for ts::Fragment<'t> {
     }
 }
 
+impl<'t> TryFrom<WithIndex<'t, query::NonNullType>> for ts::NonNullType<'t, ts::InputType<'t>> {
+    type Error = Report;
+
+    fn try_from(
+        value: WithIndex<'t, query::NonNullType>,
+    ) -> std::result::Result<Self, Self::Error> {
+        let WithIndex {
+            index,
+            bundle: of_type,
+        } = value;
+
+        let of_type = match of_type {
+            query::NonNullType::Named { name } => {
+                let input_type = index
+                    .inputs
+                    .0
+                    .get(&name.0)
+                    .ok_or_else(|| eyre!("Could not find input type: {}", name.0))?;
+                ts::NonNullType::Named(input_type)
+            }
+            query::NonNullType::List { value } => {
+                ts::NonNullType::List(Box::new(index.with(*value).try_into()?))
+            }
+        };
+
+        Ok(of_type)
+    }
+}
+
+impl<'t> TryFrom<WithIndex<'t, query::Type>> for ts::Type<'t, ts::InputType<'t>> {
+    type Error = Report;
+
+    fn try_from(value: WithIndex<'t, query::Type>) -> std::result::Result<Self, Self::Error> {
+        let WithIndex {
+            index,
+            bundle: of_type,
+        } = value;
+
+        let of_type = match of_type {
+            query::Type::Named { name } => {
+                let input_type = index
+                    .inputs
+                    .0
+                    .get(&name.0)
+                    .ok_or_else(|| eyre!("Could not find input type: {}", name.0))?;
+                ts::Type::Named(input_type)
+            }
+            query::Type::NonNull { value } => ts::Type::NonNull(index.with(value).try_into()?),
+            query::Type::List { value } => ts::Type::List(Box::new(index.with(*value).try_into()?)),
+        };
+
+        Ok(of_type)
+    }
+}
+
 impl<'t> TryFrom<WithIndex<'t, query::VariableDefinition>> for ts::Argument<'t> {
     type Error = Report;
 
@@ -361,7 +419,7 @@ impl<'t> TryFrom<WithIndex<'t, query::VariableDefinition>> for ts::Argument<'t> 
         Ok(ts::Argument {
             name: variable.name.0,
             description: None,
-            of_type: todo!(),
+            of_type: index.with(of_type).try_into()?,
         })
     }
 }
@@ -390,29 +448,48 @@ impl<'t> TryFrom<WithIndex<'t, query::NamedOperation>> for ts::Operation<'t> {
         let name =
             name.ok_or_else(|| eyre!("Typescripting anonymous operations is not supported"))?;
 
-        let operation = match operation {
+        let (operation_object, of_type) = match operation {
             query::OperationType::Query => {
                 let query = index
                     .types
                     .get_fielded(&index.query.name)
                     .expect("Query must exist, it was already in index");
-                ts::Operation {
-                    of_type: ts::OperationType::Query,
-                    name: name.0,
-                    arguments: ts::Arguments(
-                        variable_definitions
-                            .into_iter()
-                            .map(|vd| index.with(vd).try_into())
-                            .collect::<Result<Vec<_>>>()?,
-                    ),
-                    selection_set: index.with((query, selection_set)).try_into()?,
-                    doc,
-                }
+                (query, ts::OperationType::Query)
             }
-            query::OperationType::Mutation => todo!(),
-            query::OperationType::Subscription => todo!(),
+            query::OperationType::Mutation => {
+                let name = index
+                    .mutation
+                    .map(|m| m.name.as_str())
+                    .ok_or_else(|| eyre!("Tried to declare a mutation without a mutation root"))?;
+                let mutation = index
+                    .types
+                    .get_fielded(name)
+                    .expect("Mutation must exist, it was already in index");
+                (mutation, ts::OperationType::Mutation)
+            }
+            query::OperationType::Subscription => {
+                let name = index.subscription.map(|m| m.name.as_str()).ok_or_else(|| {
+                    eyre!("Tried to declare a subscription without a subscription root")
+                })?;
+                let subscription = index
+                    .types
+                    .get_fielded(name)
+                    .expect("Subscription must exist, it was already in index");
+                (subscription, ts::OperationType::Subscription)
+            }
         };
 
-        Ok(operation)
+        Ok(ts::Operation {
+            of_type,
+            name: name.0,
+            arguments: ts::Arguments(
+                variable_definitions
+                    .into_iter()
+                    .map(|vd| index.with(vd).try_into())
+                    .collect::<Result<Vec<_>>>()?,
+            ),
+            selection_set: index.with((operation_object, selection_set)).try_into()?,
+            doc,
+        })
     }
 }

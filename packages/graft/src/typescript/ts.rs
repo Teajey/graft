@@ -15,7 +15,7 @@ use crate::{
 pub struct Argument<'t> {
     name: String,
     description: Option<String>,
-    of_type: &'t InputType<'t>,
+    of_type: Type<'t, InputType<'t>>,
 }
 
 #[derive(Clone)]
@@ -71,6 +71,7 @@ pub struct Scalar {
     description: Option<String>,
 }
 
+#[derive(Clone)]
 pub struct InputObject<'t> {
     name: String,
     description: Option<String>,
@@ -112,22 +113,23 @@ pub struct Enum {
     pub enum_values: Vec<EnumValue>,
 }
 
+#[derive(Clone)]
 pub enum InputType<'t> {
-    InputObject(InputObject<'t>),
+    Object(InputObject<'t>),
     Scalar(Scalar),
 }
 
 #[derive(Clone)]
-pub enum NonNullType<'t> {
-    Named(&'t NamedType<'t>),
-    List(Box<Type<'t>>),
+pub enum NonNullType<'t, T = NamedType<'t>> {
+    Named(&'t T),
+    List(Box<Type<'t, T>>),
 }
 
 #[derive(Clone)]
-pub enum Type<'t> {
-    Named(&'t NamedType<'t>),
-    List(Box<Type<'t>>),
-    NonNull(NonNullType<'t>),
+pub enum Type<'t, T = NamedType<'t>> {
+    Named(&'t T),
+    List(Box<Type<'t, T>>),
+    NonNull(NonNullType<'t, T>),
 }
 
 #[derive(Clone)]
