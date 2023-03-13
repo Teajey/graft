@@ -33,9 +33,9 @@ struct Index<'t> {
     types: TypesIndex<'t>,
     fragments: FragmentsIndex<'t>,
     inputs: InputsIndex<'t>,
-    query: &'t ts::Object<'t>,
-    mutation: Option<&'t ts::Object<'t>>,
-    subscription: Option<&'t ts::Object<'t>>,
+    query: ts::Object<'t>,
+    mutation: Option<ts::Object<'t>>,
+    subscription: Option<ts::Object<'t>>,
 }
 
 struct WithIndex<'t, T> {
@@ -81,13 +81,13 @@ impl<'t> TryFrom<WithIndex<'t, (&'t ts::NamedType<'t>, Option<query::SelectionSe
     }
 }
 
-impl<'t> TryFrom<WithIndex<'t, (&'t ts::NonNullType<'t>, Option<query::SelectionSet>)>>
-    for ts::NonNullSelectionType<'t>
+impl<'t> TryFrom<WithIndex<'t, (&'t ts::NullableType<'t>, Option<query::SelectionSet>)>>
+    for ts::NullableSelectionType<'t>
 {
     type Error = Report;
 
     fn try_from(
-        value: WithIndex<'t, (&'t ts::NonNullType<'t>, Option<query::SelectionSet>)>,
+        value: WithIndex<'t, (&'t ts::NullableType<'t>, Option<query::SelectionSet>)>,
     ) -> Result<Self> {
         let WithIndex {
             index,
@@ -95,10 +95,10 @@ impl<'t> TryFrom<WithIndex<'t, (&'t ts::NonNullType<'t>, Option<query::Selection
         } = value;
 
         let non_null_selection_type = match of_type {
-            ts::NonNullType::Named(named) => {
+            ts::NullableType::Named(named) => {
                 Self::Named(index.with((*named, selection_set)).try_into()?)
             }
-            ts::NonNullType::List(list) => {
+            ts::NullableType::List(list) => {
                 Self::List(Box::new(index.with((&**list, selection_set)).try_into()?))
             }
         };
@@ -125,8 +125,8 @@ impl<'t> TryFrom<WithIndex<'t, (&'t ts::Type<'t>, Option<query::SelectionSet>)>>
             ts::Type::List(list) => {
                 Self::List(Box::new(index.with((&**list, selection_set)).try_into()?))
             }
-            ts::Type::NonNull(non_null) => {
-                Self::NonNull(index.with((non_null, selection_set)).try_into()?)
+            ts::Type::Nullable(non_null) => {
+                Self::Nullable(index.with((non_null, selection_set)).try_into()?)
             }
         };
 
@@ -150,8 +150,8 @@ impl<'t> TryFrom<WithIndex<'t, (&'t ts::Type<'t>, Option<query::SelectionSet>)>>
         let selection_type = match of_type {
             ts::Type::Named(named) => Self::Named(index.with((*named, selection_set)).try_into()?),
             ts::Type::List(list) => Self::List(index.with((&**list, selection_set)).try_into()?),
-            ts::Type::NonNull(non_null) => {
-                Self::NonNull(index.with((non_null, selection_set)).try_into()?)
+            ts::Type::Nullable(non_null) => {
+                Self::Nullable(index.with((non_null, selection_set)).try_into()?)
             }
         };
 
@@ -343,7 +343,7 @@ impl<'t> TryFrom<WithIndex<'t, query::Fragment>> for ts::Fragment<'t> {
     }
 }
 
-impl<'t> TryFrom<WithIndex<'t, query::NonNullType>> for ts::NonNullType<'t, ts::InputType<'t>> {
+impl<'t> TryFrom<WithIndex<'t, query::NonNullType>> for ts::Type<'t, ts::InputType<'t>> {
     type Error = Report;
 
     fn try_from(
@@ -361,10 +361,10 @@ impl<'t> TryFrom<WithIndex<'t, query::NonNullType>> for ts::NonNullType<'t, ts::
                     .0
                     .get(&name.0)
                     .ok_or_else(|| eyre!("Could not find input type: {}", name.0))?;
-                ts::NonNullType::Named(input_type)
+                ts::Type::Named(input_type)
             }
             query::NonNullType::List { value } => {
-                ts::NonNullType::List(Box::new(index.with(*value).try_into()?))
+                ts::Type::List(Box::new(index.with(*value).try_into()?))
             }
         };
 
@@ -388,10 +388,12 @@ impl<'t> TryFrom<WithIndex<'t, query::Type>> for ts::Type<'t, ts::InputType<'t>>
                     .0
                     .get(&name.0)
                     .ok_or_else(|| eyre!("Could not find input type: {}", name.0))?;
-                ts::Type::Named(input_type)
+                ts::Type::Nullable(ts::NullableType::Named(input_type))
             }
-            query::Type::NonNull { value } => ts::Type::NonNull(index.with(value).try_into()?),
-            query::Type::List { value } => ts::Type::List(Box::new(index.with(*value).try_into()?)),
+            query::Type::NonNull { value } => index.with(value).try_into()?,
+            query::Type::List { value } => ts::Type::Nullable(ts::NullableType::List(Box::new(
+                index.with(*value).try_into()?,
+            ))),
         };
 
         Ok(of_type)
@@ -459,6 +461,7 @@ impl<'t> TryFrom<WithIndex<'t, query::NamedOperation>> for ts::Operation<'t> {
             query::OperationType::Mutation => {
                 let name = index
                     .mutation
+                    .as_ref()
                     .map(|m| m.name.as_str())
                     .ok_or_else(|| eyre!("Tried to declare a mutation without a mutation root"))?;
                 let mutation = index
@@ -468,9 +471,13 @@ impl<'t> TryFrom<WithIndex<'t, query::NamedOperation>> for ts::Operation<'t> {
                 (mutation, ts::OperationType::Mutation)
             }
             query::OperationType::Subscription => {
-                let name = index.subscription.map(|m| m.name.as_str()).ok_or_else(|| {
-                    eyre!("Tried to declare a subscription without a subscription root")
-                })?;
+                let name = index
+                    .subscription
+                    .as_ref()
+                    .map(|m| m.name.as_str())
+                    .ok_or_else(|| {
+                        eyre!("Tried to declare a subscription without a subscription root")
+                    })?;
                 let subscription = index
                     .types
                     .get_fielded(name)
@@ -491,5 +498,120 @@ impl<'t> TryFrom<WithIndex<'t, query::NamedOperation>> for ts::Operation<'t> {
             selection_set: index.with((operation_object, selection_set)).try_into()?,
             doc,
         })
+    }
+}
+
+impl<'t> TryFrom<WithIndex<'t, query::NonNullType>> for ts::Type<'t> {
+    type Error = Report;
+
+    fn try_from(
+        value: WithIndex<'t, query::NonNullType>,
+    ) -> std::result::Result<Self, Self::Error> {
+        let WithIndex {
+            index,
+            bundle: of_type,
+        } = value;
+
+        let of_type = match of_type {
+            query::NonNullType::Named { name } => {
+                let named = index
+                    .types
+                    .0
+                    .get(&name.0)
+                    .ok_or_else(|| eyre!("Tried to ts a non-existent type"))?;
+                ts::Type::Named(named)
+            }
+            query::NonNullType::List { value } => {
+                ts::Type::List(Box::new(index.with(*value).try_into()?))
+            }
+        };
+
+        Ok(of_type)
+    }
+}
+
+impl<'t> TryFrom<WithIndex<'t, query::Type>> for ts::Type<'t> {
+    type Error = Report;
+
+    fn try_from(value: WithIndex<'t, query::Type>) -> std::result::Result<Self, Self::Error> {
+        let WithIndex {
+            index,
+            bundle: of_type,
+        } = value;
+
+        let of_type = match of_type {
+            query::Type::Named { name } => {
+                let named = index
+                    .types
+                    .0
+                    .get(&name.0)
+                    .ok_or_else(|| eyre!("Tried to ts a non-existent type"))?;
+                ts::Type::Nullable(ts::NullableType::Named(named))
+            }
+            query::Type::NonNull { value } => index.with(value).try_into()?,
+            query::Type::List { value } => ts::Type::Nullable(ts::NullableType::List(Box::new(
+                index.with(*value).try_into()?,
+            ))),
+        };
+
+        Ok(of_type)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use map_macro::map;
+    use pretty_assertions::assert_eq;
+
+    use crate::graphql::query;
+
+    use super::{ts, FragmentsIndex, Index, InputsIndex, TypesIndex};
+
+    fn nullable() {
+        let query = ts::Object {
+            name: "Query".to_string(),
+            description: None,
+            interfaces: vec![],
+            fields: vec![],
+        };
+
+        let string = ts::NamedType::Leaf(ts::LeafType::Scalar(ts::Scalar {
+            name: "String".to_string(),
+            description: None,
+        }));
+
+        let index = Index {
+            types: TypesIndex(map! {
+                "String".to_string() => string,
+            }),
+            fragments: FragmentsIndex(map! {}),
+            inputs: InputsIndex(map! {}),
+            query,
+            mutation: None,
+            subscription: None,
+        };
+
+        let type_ref = index.types.0.get("String").expect("String type must exist");
+
+        let weird_gql_type = query::Type::NonNull {
+            value: query::NonNullType::List {
+                value: Box::new(query::Type::NonNull {
+                    value: query::NonNullType::Named {
+                        name: query::Name("String".to_string()),
+                    },
+                }),
+            },
+        };
+
+        let expected_ts_type = ts::Type::List(Box::new(ts::Type::List(Box::new(ts::Type::Named(
+            type_ref,
+        )))));
+
+        let actual_ts_type: ts::Type = index
+            .with(weird_gql_type)
+            .try_into()
+            .expect("must transform");
+
+        // assert_eq!(expected_ts_type, actual_ts_type);
     }
 }

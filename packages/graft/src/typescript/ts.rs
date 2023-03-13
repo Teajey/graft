@@ -120,7 +120,7 @@ pub enum InputType<'t> {
 }
 
 #[derive(Clone)]
-pub enum NonNullType<'t, T = NamedType<'t>> {
+pub enum NullableType<'t, T = NamedType<'t>> {
     Named(&'t T),
     List(Box<Type<'t, T>>),
 }
@@ -129,7 +129,7 @@ pub enum NonNullType<'t, T = NamedType<'t>> {
 pub enum Type<'t, T = NamedType<'t>> {
     Named(&'t T),
     List(Box<Type<'t, T>>),
-    NonNull(NonNullType<'t, T>),
+    Nullable(NullableType<'t, T>),
 }
 
 #[derive(Clone)]
@@ -189,7 +189,7 @@ pub trait PossibleTypes {
 }
 
 #[derive(Clone)]
-pub enum NonNullSelectionType<'t> {
+pub enum NullableSelectionType<'t> {
     Named(NamedSelectionType<'t>),
     List(Box<ListSelectionType<'t>>),
 }
@@ -197,7 +197,7 @@ pub enum NonNullSelectionType<'t> {
 #[derive(Clone)]
 pub enum ListSelectionType<'t> {
     Named(NamedSelectionType<'t>),
-    NonNull(NonNullSelectionType<'t>),
+    Nullable(NullableSelectionType<'t>),
     List(Box<ListSelectionType<'t>>),
 }
 
@@ -211,7 +211,7 @@ pub enum NamedSelectionType<'t> {
 pub enum SelectionType<'t> {
     Named(NamedSelectionType<'t>),
     List(ListSelectionType<'t>),
-    NonNull(NonNullSelectionType<'t>),
+    Nullable(NullableSelectionType<'t>),
 }
 
 #[derive(Clone)]
