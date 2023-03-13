@@ -4,22 +4,26 @@ use eyre::{eyre, Report, Result};
 
 use crate::{
     graphql::query,
-    typescript::ts::{self, Fielded, PossibleTypes},
+    typescript::ts::{self, type_ref::IntoField, GetField, PossibleTypes},
 };
 
 struct TypesIndex<'t>(HashMap<String, ts::NamedType<'t>>);
 
 impl<'t> TypesIndex<'t> {
-    fn get_fielded(&self, k: &str) -> Option<&ts::FieldedType> {
-        match self.0.get(k) {
-            Some(ts::NamedType::Fielded(f)) => Some(f),
-            _ => None,
-        }
+    fn get_fielded(&self, k: &str) -> Option<ts::type_ref::Fielded> {
+        let fielded = match self.0.get(k)? {
+            ts::NamedType::Union(u) => ts::type_ref::Fielded::Union(u),
+            ts::NamedType::Object(o) => ts::type_ref::Fielded::Object(o),
+            ts::NamedType::Interface(i) => ts::type_ref::Fielded::Interface(i),
+            ts::NamedType::Scalar(_) | ts::NamedType::Enum(_) => return None,
+        };
+
+        Some(fielded)
     }
 
     fn get_object(&self, k: &str) -> Option<&ts::Object> {
         match self.0.get(k) {
-            Some(ts::NamedType::Fielded(ts::FieldedType::Object(o))) => Some(o),
+            Some(ts::NamedType::Object(o)) => Some(o),
             _ => None,
         }
     }
@@ -65,8 +69,8 @@ impl<'t> TryFrom<WithIndex<'t, (&'t ts::NamedType<'t>, Option<query::SelectionSe
             bundle: (named, selection_set),
         } = value;
 
-        let named_selection_type = match named {
-            ts::NamedType::Fielded(fielded) => {
+        let named_selection_type = match named.as_leaf_or_fielded() {
+            ts::type_ref::Named::Fielded(fielded) => {
                 let Some(selection_set) = selection_set else {
                     return Err(eyre!("A fielded type must have a subselection"));
                 };
@@ -74,7 +78,7 @@ impl<'t> TryFrom<WithIndex<'t, (&'t ts::NamedType<'t>, Option<query::SelectionSe
                     index.with((fielded, selection_set)).try_into()?,
                 )
             }
-            ts::NamedType::Leaf(leaf) => ts::NamedSelectionType::Leaf(leaf),
+            ts::type_ref::Named::Leaf(leaf) => ts::NamedSelectionType::Leaf(leaf),
         };
 
         Ok(named_selection_type)
@@ -159,12 +163,12 @@ impl<'t> TryFrom<WithIndex<'t, (&'t ts::Type<'t>, Option<query::SelectionSet>)>>
     }
 }
 
-impl<'t> TryFrom<WithIndex<'t, (&'t ts::FieldedType<'t>, query::Field)>>
+impl<'t> TryFrom<WithIndex<'t, (ts::type_ref::Fielded<'t>, query::Field)>>
     for ts::FieldSelection<'t>
 {
     type Error = Report;
 
-    fn try_from(value: WithIndex<'t, (&'t ts::FieldedType<'t>, query::Field)>) -> Result<Self> {
+    fn try_from(value: WithIndex<'t, (ts::type_ref::Fielded<'t>, query::Field)>) -> Result<Self> {
         let WithIndex {
             bundle: (fielded, field),
             index,
@@ -174,7 +178,7 @@ impl<'t> TryFrom<WithIndex<'t, (&'t ts::FieldedType<'t>, query::Field)>>
         let selection_set = field.selection_set;
 
         let field = fielded
-            .get_field(&field.name.0)
+            .into_field(&field.name.0)
             .ok_or_else(|| eyre!("Selection on a non-existent field"))?;
 
         let name = ts::SelectionName {
@@ -214,13 +218,13 @@ impl<'t> TryFrom<WithIndex<'t, query::FragmentSpread>> for ts::FragmentSelection
     }
 }
 
-impl<'t> TryFrom<WithIndex<'t, (&'t ts::FieldedType<'t>, query::InlineFragment)>>
+impl<'t> TryFrom<WithIndex<'t, (ts::type_ref::Fielded<'t>, query::InlineFragment)>>
     for ts::FragmentSelection<'t>
 {
     type Error = Report;
 
     fn try_from(
-        value: WithIndex<'t, (&'t ts::FieldedType<'t>, query::InlineFragment)>,
+        value: WithIndex<'t, (ts::type_ref::Fielded<'t>, query::InlineFragment)>,
     ) -> std::result::Result<Self, Self::Error> {
         let WithIndex {
             bundle: (fielded, inline_fragment),
@@ -228,7 +232,7 @@ impl<'t> TryFrom<WithIndex<'t, (&'t ts::FieldedType<'t>, query::InlineFragment)>
         } = value;
 
         let spreaded_object = match fielded {
-            ts::FieldedType::Object(o) => {
+            ts::type_ref::Fielded::Object(o) => {
                 if let Some(tc) = inline_fragment.type_condition {
                     return Err(eyre!(
                         "Cannot spread an object ({tc:?}) into another object"
@@ -236,7 +240,7 @@ impl<'t> TryFrom<WithIndex<'t, (&'t ts::FieldedType<'t>, query::InlineFragment)>
                 }
                 o
             }
-            ts::FieldedType::Union(u) => {
+            ts::type_ref::Fielded::Union(u) => {
                 let tc = inline_fragment
                     .type_condition
                     .map(|tc| tc.name.0)
@@ -249,7 +253,7 @@ impl<'t> TryFrom<WithIndex<'t, (&'t ts::FieldedType<'t>, query::InlineFragment)>
                     eyre!("Inline fragment targetting object that does not implement this union")
                 })?
             }
-            ts::FieldedType::Interface(i) => {
+            ts::type_ref::Fielded::Interface(i) => {
                 let tc = inline_fragment.type_condition.map(|tc| tc.name.0).ok_or_else(|| eyre!("Must provide an object as the target of an inline fragment on an interface"))?;
                 i.get_possible_type(&tc).ok_or_else(|| {
                     eyre!(
@@ -272,10 +276,14 @@ impl<'t> TryFrom<WithIndex<'t, (&'t ts::FieldedType<'t>, query::InlineFragment)>
     }
 }
 
-impl<'t> TryFrom<WithIndex<'t, (&'t ts::FieldedType<'t>, query::Selection)>> for ts::Selection<'t> {
+impl<'t> TryFrom<WithIndex<'t, (ts::type_ref::Fielded<'t>, query::Selection)>>
+    for ts::Selection<'t>
+{
     type Error = Report;
 
-    fn try_from(value: WithIndex<'t, (&'t ts::FieldedType<'t>, query::Selection)>) -> Result<Self> {
+    fn try_from(
+        value: WithIndex<'t, (ts::type_ref::Fielded<'t>, query::Selection)>,
+    ) -> Result<Self> {
         let WithIndex {
             bundle: (fielded, selection),
             index,
@@ -295,13 +303,13 @@ impl<'t> TryFrom<WithIndex<'t, (&'t ts::FieldedType<'t>, query::Selection)>> for
     }
 }
 
-impl<'t> TryFrom<WithIndex<'t, (&'t ts::FieldedType<'t>, query::SelectionSet)>>
+impl<'t> TryFrom<WithIndex<'t, (ts::type_ref::Fielded<'t>, query::SelectionSet)>>
     for ts::SelectionSet<'t>
 {
     type Error = Report;
 
     fn try_from(
-        value: WithIndex<'t, (&'t ts::FieldedType<'t>, query::SelectionSet)>,
+        value: WithIndex<'t, (ts::type_ref::Fielded<'t>, query::SelectionSet)>,
     ) -> Result<Self> {
         let WithIndex {
             bundle: (fielded, selection_set),
@@ -575,10 +583,10 @@ mod tests {
             fields: vec![],
         };
 
-        let string = ts::NamedType::Leaf(ts::LeafType::Scalar(ts::Scalar {
+        let string = ts::NamedType::Scalar(ts::Scalar {
             name: "String".to_string(),
             description: None,
-        }));
+        });
 
         let index = Index {
             types: TypesIndex(map! {

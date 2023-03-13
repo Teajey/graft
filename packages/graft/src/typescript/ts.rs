@@ -45,7 +45,7 @@ impl<'t> PossibleTypes for Interface<'t> {
     }
 }
 
-impl<'t> Fielded<'t> for Interface<'t> {
+impl<'t> GetField<'t> for Interface<'t> {
     fn get_fields(&'t self) -> Vec<&'t Field<'t>> {
         self.fields.iter().collect::<Vec<_>>()
     }
@@ -59,7 +59,7 @@ pub struct Object<'t> {
     fields: Vec<Field<'t>>,
 }
 
-impl<'t> Fielded<'t> for Object<'t> {
+impl<'t> GetField<'t> for Object<'t> {
     fn get_fields(&'t self) -> Vec<&'t Field<'t>> {
         self.fields.iter().collect::<Vec<_>>()
     }
@@ -91,7 +91,7 @@ impl<'t> PossibleTypes for Union<'t> {
     }
 }
 
-impl<'t> Fielded<'t> for Union<'t> {
+impl<'t> GetField<'t> for Union<'t> {
     fn get_fields(&self) -> Vec<&'t Field<'t>> {
         self.possible_types
             .iter()
@@ -116,7 +116,7 @@ pub struct Enum {
 #[derive(Clone)]
 pub enum InputType<'t> {
     Object(InputObject<'t>),
-    Scalar(Scalar),
+    Scalar(&'t Scalar),
 }
 
 #[derive(Clone)]
@@ -139,35 +139,73 @@ pub struct SelectionName<'t> {
 }
 
 #[derive(Clone)]
-pub enum FieldedType<'t> {
+pub enum NamedType<'t> {
     Union(Union<'t>),
     Object(Object<'t>),
     Interface(Interface<'t>),
-}
-
-#[derive(Clone)]
-pub enum LeafType {
     Scalar(Scalar),
     Enum(Enum),
 }
 
-#[derive(Clone)]
-pub enum NamedType<'t> {
-    Fielded(FieldedType<'t>),
-    Leaf(LeafType),
-}
-
-impl<'t> Fielded<'t> for FieldedType<'t> {
-    fn get_fields(&'t self) -> Vec<&'t Field<'t>> {
+impl<'t> NamedType<'t> {
+    fn as_leaf_or_fielded(&'t self) -> type_ref::Named<'t> {
         match self {
-            FieldedType::Union(u) => u.get_fields(),
-            FieldedType::Object(o) => o.get_fields(),
-            FieldedType::Interface(i) => i.get_fields(),
+            NamedType::Union(u) => type_ref::Named::Fielded(type_ref::Fielded::Union(u)),
+            NamedType::Object(o) => type_ref::Named::Fielded(type_ref::Fielded::Object(o)),
+            NamedType::Interface(i) => type_ref::Named::Fielded(type_ref::Fielded::Interface(i)),
+            NamedType::Scalar(s) => type_ref::Named::Leaf(type_ref::Leaf::Scalar(s)),
+            NamedType::Enum(e) => type_ref::Named::Leaf(type_ref::Leaf::Enum(e)),
         }
     }
 }
 
-pub trait Fielded<'t> {
+pub mod type_ref {
+    use super::{Enum, Field, Interface, Object, Scalar, Union};
+
+    pub trait IntoField<'t>
+    where
+        Self: Sized,
+    {
+        fn into_fields(self) -> Vec<&'t Field<'t>>;
+
+        fn into_field(self, name: &str) -> Option<&'t Field<'t>> {
+            self.into_fields()
+                .into_iter()
+                .find(|field| field.name.0 == name)
+        }
+    }
+
+    #[derive(Clone, Copy)]
+    pub enum Fielded<'t> {
+        Union(&'t Union<'t>),
+        Object(&'t Object<'t>),
+        Interface(&'t Interface<'t>),
+    }
+
+    impl<'t> IntoField<'t> for Fielded<'t> {
+        fn into_fields(self) -> Vec<&'t Field<'t>> {
+            match self {
+                Fielded::Union(u) => todo!(),
+                Fielded::Object(o) => todo!(),
+                Fielded::Interface(i) => todo!(),
+            }
+        }
+    }
+
+    #[derive(Clone, Copy)]
+    pub enum Leaf<'t> {
+        Scalar(&'t Scalar),
+        Enum(&'t Enum),
+    }
+
+    #[derive(Clone, Copy)]
+    pub enum Named<'t> {
+        Fielded(Fielded<'t>),
+        Leaf(Leaf<'t>),
+    }
+}
+
+pub trait GetField<'t> {
     fn get_fields(&'t self) -> Vec<&'t Field<'t>>;
 
     fn get_field(&'t self, name: &str) -> Option<&'t Field> {
@@ -204,7 +242,7 @@ pub enum ListSelectionType<'t> {
 #[derive(Clone)]
 pub enum NamedSelectionType<'t> {
     SelectionSet(SelectionSet<'t>),
-    Leaf(&'t LeafType),
+    Leaf(type_ref::Leaf<'t>),
 }
 
 #[derive(Clone)]
@@ -234,7 +272,7 @@ pub struct SelectionSet<'t>(Vec<Selection<'t>>);
 
 pub struct Fragment<'t> {
     name: String,
-    type_condition: &'t FieldedType<'t>,
+    type_condition: type_ref::Fielded<'t>,
     selection_set: SelectionSet<'t>,
     doc: query::Fragment,
 }
