@@ -4,7 +4,7 @@ use eyre::{eyre, Report, Result};
 
 use crate::{
     graphql::query,
-    typescript::ts::{self, type_ref::IntoField, GetField, PossibleTypes},
+    typescript::ts::query::{self as ts, type_ref::IntoField, GetField, PossibleTypes},
 };
 
 struct TypesIndex<'t>(HashMap<String, ts::NamedType<'t>>);
@@ -575,6 +575,7 @@ mod tests {
 
     use super::{ts, FragmentsIndex, Index, InputsIndex, TypesIndex};
 
+    #[test]
     fn nullable() {
         let query = ts::Object {
             name: "Query".to_string(),
@@ -601,25 +602,29 @@ mod tests {
 
         let type_ref = index.types.0.get("String").expect("String type must exist");
 
+        // [[String]!]!
         let weird_gql_type = query::Type::NonNull {
             value: query::NonNullType::List {
                 value: Box::new(query::Type::NonNull {
-                    value: query::NonNullType::Named {
-                        name: query::Name("String".to_string()),
+                    value: query::NonNullType::List {
+                        value: Box::new(query::Type::Named {
+                            name: query::Name("String".to_string()),
+                        }),
                     },
                 }),
             },
         };
 
-        let expected_ts_type = ts::Type::List(Box::new(ts::Type::List(Box::new(ts::Type::Named(
-            type_ref,
-        )))));
+        // List<List<Nullable<StringScalar>>>
+        let expected_ts_type = ts::Type::List(Box::new(ts::Type::List(Box::new(
+            ts::Type::Nullable(ts::NullableType::Named(type_ref)),
+        ))));
 
         let actual_ts_type: ts::Type = index
             .with(weird_gql_type)
             .try_into()
             .expect("must transform");
 
-        // assert_eq!(expected_ts_type, actual_ts_type);
+        assert_eq!(expected_ts_type, actual_ts_type);
     }
 }
