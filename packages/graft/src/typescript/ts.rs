@@ -1,3 +1,5 @@
+mod common;
+mod display;
 mod from_graphql;
 
 use eyre::{eyre, Result};
@@ -10,6 +12,37 @@ use crate::{
     },
     util::Named,
 };
+
+pub struct Typescript<T>(T);
+
+pub struct Comment(String);
+
+impl Comment {
+    fn deprecated_notice(deprecation_reason: Option<&str>) -> Self {
+        let mut comment_string = String::new();
+        comment_string.push_str("@deprecated");
+        if let Some(deprecation_reason) = deprecation_reason {
+            comment_string.push_str(&format!(" {deprecation_reason}"));
+        }
+        Self(comment_string)
+    }
+
+    fn maybe_deprecated(
+        is_deprecated: bool,
+        deprecation_reason: Option<&str>,
+        comment_string: String,
+    ) -> Self {
+        if is_deprecated {
+            let deprecated_notice_comment = Self::deprecated_notice(deprecation_reason);
+            Self(format!(
+                "{}\n\n{}",
+                deprecated_notice_comment.0, comment_string
+            ))
+        } else {
+            Self(comment_string)
+        }
+    }
+}
 
 #[derive(Clone)]
 pub struct Argument<'t> {

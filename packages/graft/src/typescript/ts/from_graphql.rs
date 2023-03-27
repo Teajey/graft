@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use eyre::{eyre, Report, Result};
 
 use crate::{
-    graphql::query,
+    graphql::{query, schema},
     typescript::ts::{self, type_ref::IntoField, GetField, PossibleTypes},
 };
 
@@ -563,6 +563,75 @@ impl<'t> TryFrom<WithIndex<'t, query::Type>> for ts::Type<'t> {
         };
 
         Ok(of_type)
+    }
+}
+
+impl From<schema::named_type::Scalar> for ts::Scalar {
+    fn from(value: schema::named_type::Scalar) -> Self {
+        let schema::named_type::Scalar { name, description } = value;
+
+        ts::Scalar {
+            name,
+            description: todo!(),
+        }
+    }
+}
+
+impl<'t> TryFrom<schema::named_type::Object> for ts::Object<'t> {
+    type Error = Report;
+
+    fn try_from(value: schema::named_type::Object) -> std::result::Result<Self, Self::Error> {
+        let schema::named_type::Object {
+            name,
+            description,
+            fields,
+            interfaces,
+        } = value;
+
+        todo!()
+    }
+}
+
+impl<'t> TryFrom<schema::named_type::Interface> for ts::Interface<'t> {
+    type Error = Report;
+
+    fn try_from(value: schema::named_type::Interface) -> std::result::Result<Self, Self::Error> {
+        todo!()
+    }
+}
+
+impl<'t> TryFrom<schema::named_type::Union> for ts::Union<'t> {
+    type Error = Report;
+
+    fn try_from(value: schema::named_type::Union) -> std::result::Result<Self, Self::Error> {
+        todo!()
+    }
+}
+
+impl TryFrom<schema::named_type::Enum> for ts::Enum {
+    type Error = Report;
+
+    fn try_from(value: schema::named_type::Enum) -> std::result::Result<Self, Self::Error> {
+        todo!()
+    }
+}
+
+impl<'t> TryFrom<schema::NamedType> for ts::NamedType<'t> {
+    type Error = Report;
+
+    fn try_from(value: schema::NamedType) -> std::result::Result<Self, Self::Error> {
+        let named_type = match value {
+            schema::NamedType::Scalar(s) => ts::NamedType::Scalar(s.into()),
+            schema::NamedType::Object(o) => ts::NamedType::Object(o.try_into()?),
+            schema::NamedType::Interface(i) => ts::NamedType::Interface(i.try_into()?),
+            schema::NamedType::Union(u) => ts::NamedType::Union(u.try_into()?),
+            schema::NamedType::Enum(e) => ts::NamedType::Enum(e.try_into()?),
+            schema::NamedType::InputObject(_) => {
+                panic!("input objects can't be derived as ts::NamedType")
+            }
+        };
+
+        Ok(named_type)
     }
 }
 
