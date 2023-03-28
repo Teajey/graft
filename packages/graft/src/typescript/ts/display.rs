@@ -1,10 +1,20 @@
-use std::fmt::Display;
+use std::{fmt::Display, marker::PhantomData};
 
 use crate::{
     app::config::TypescriptOptions,
     graphql::schema,
-    typescript::ts::{Comment, Typescript},
+    typescript::ts::{self, Comment, Typescript},
 };
+
+trait TypeRefSuffix {
+    const SUFFIX: &'static str;
+}
+
+struct Interface;
+
+impl TypeRefSuffix for Interface {
+    const SUFFIX: &'static str = "Interface";
+}
 
 impl Display for Comment {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -98,9 +108,40 @@ impl<'a> Display for Typescript<&'a schema::Field> {
     }
 }
 
-impl<'a> Display for Typescript<&'a schema::TypeRef> {
+impl<'a, S: TypeRefSuffix> Display for Typescript<(ts::NullableTypeRef, PhantomData<S>)> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        todo!()
+        let Typescript((type_ref, suffix)) = self;
+        match type_ref {
+            ts::NullableTypeRef::To { name } => write!(f, "{name}{suffix}", suffix = S::SUFFIX),
+            ts::NullableTypeRef::List(type_ref) => {
+                write!(
+                    f,
+                    "List<{type_ref}>",
+                    type_ref = Typescript((**type_ref, *suffix))
+                )
+            }
+        }
+    }
+}
+
+impl<'a, S: TypeRefSuffix> Display for Typescript<(ts::TypeRef, PhantomData<S>)> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let Typescript((type_ref, suffix)) = self;
+        match type_ref {
+            ts::TypeRef::To { name } => write!(f, "{name}{}", S::SUFFIX),
+            ts::TypeRef::List(type_ref) => write!(
+                f,
+                "List<{type_ref}>",
+                type_ref = Typescript((**type_ref, *suffix))
+            ),
+            ts::TypeRef::Nullable(type_ref) => {
+                write!(
+                    f,
+                    "Nullable<{type_ref}>",
+                    type_ref = Typescript((*type_ref, *suffix))
+                )
+            }
+        }
     }
 }
 
@@ -126,7 +167,9 @@ impl Display for Typescript<schema::named_type::Object> {
                 .join(", ")
         )];
 
-        components.extend(interfaces.iter().map(|i| Typescript(i).to_string()));
+        components.extend(interfaces.iter().map(|i| {
+            Typescript((ts::TypeRef::from(i.clone()), PhantomData::<Interface>)).to_string()
+        }));
 
         writeln!(f, "type {name}Object = {};", components.join(" & "))
     }

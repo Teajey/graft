@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use eyre::{eyre, Report, Result};
+use lazy_static::__Deref;
 
 use crate::{
     graphql::{query, schema},
@@ -535,6 +536,31 @@ impl<'t> TryFrom<WithIndex<'t, query::NonNullType>> for ts::Type<'t> {
         };
 
         Ok(of_type)
+    }
+}
+
+impl From<schema::NonNullTypeRef> for ts::TypeRef {
+    fn from(value: schema::NonNullTypeRef) -> Self {
+        match value {
+            schema::NonNullTypeRef::Container(schema::NonNullTypeRefContainer::List {
+                of_type,
+            }) => ts::TypeRef::List(Box::new((*of_type).into())),
+            schema::NonNullTypeRef::To { name } => ts::TypeRef::To { name },
+        }
+    }
+}
+
+impl From<schema::TypeRef> for ts::TypeRef {
+    fn from(value: schema::TypeRef) -> Self {
+        match value {
+            schema::TypeRef::To { name } => ts::TypeRef::Nullable(ts::NullableTypeRef::To { name }),
+            schema::TypeRef::Container(schema::TypeRefContainer::NonNull { of_type }) => {
+                (*of_type).into()
+            }
+            schema::TypeRef::Container(schema::TypeRefContainer::List { of_type }) => {
+                ts::TypeRef::Nullable(ts::NullableTypeRef::List(Box::new((*of_type).into())))
+            }
+        }
     }
 }
 

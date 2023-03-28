@@ -153,6 +153,19 @@ pub enum InputType<'t> {
 }
 
 #[derive(Clone)]
+pub enum NullableTypeRef {
+    To { name: String },
+    List(Box<TypeRef>),
+}
+
+#[derive(Clone)]
+pub enum TypeRef {
+    To { name: String },
+    List(Box<TypeRef>),
+    Nullable(NullableTypeRef),
+}
+
+#[derive(Clone)]
 pub enum NullableType<'t, T = NamedType<'t>> {
     Named(&'t T),
     List(Box<Type<'t, T>>),
