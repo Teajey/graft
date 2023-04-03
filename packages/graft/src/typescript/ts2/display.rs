@@ -1,24 +1,35 @@
-use std::{fmt::Display, marker::PhantomData};
+use std::fmt::Display;
 
-use crate::{
-    app::config::TypescriptOptions,
-    graphql::schema,
-    typescript::ts::{self, Comment, Typescript},
-};
+use crate::typescript::ts2::{self as ts, Ref};
 
-trait TypeRefSuffix {
-    const SUFFIX: &'static str;
-}
-
-struct Interface;
-
-impl TypeRefSuffix for Interface {
-    const SUFFIX: &'static str = "Interface";
-}
-
-impl Display for Comment {
+impl Display for ts::Deprecable {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let Self(comment_string) = self;
+        match self {
+            Self::Deprecated {
+                message,
+                description,
+            } => {
+                write!(f, "@deprecated")?;
+                if let Some(message) = message {
+                    write!(f, " {message}")?;
+                }
+                if let Some(description) = description {
+                    write!(f, "\n\n{description}")?;
+                }
+
+                Ok(())
+            }
+            Self::Description(description) => {
+                write!(f, "{description}")
+            }
+        }
+    }
+}
+
+impl<T: Display> Display for ts::DocComment<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let Self(comment) = self;
+        let comment_string = comment.to_string();
 
         if comment_string.contains('\n') {
             write!(f, "/**\n * {}\n */", comment_string.replace('\n', "\n * "))
@@ -28,148 +39,135 @@ impl Display for Comment {
     }
 }
 
-impl<'a> Display for Typescript<(schema::named_type::Scalar, &'a TypescriptOptions)> {
+impl Display for ts::Scalar {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let Typescript((schema::named_type::Scalar { name, description }, options)) = self;
-        if let Some(description) = description {
-            writeln!(f, "{}", Comment(description.clone()))?;
+        let Self {
+            name,
+            doc_comment,
+            of_type,
+        } = self;
+        if let Some(doc_comment) = doc_comment {
+            writeln!(f, "{doc_comment}")?;
         }
-        let scalar_type = match name.as_str() {
-            "ID" => r#"NewType<string, "ID">"#.to_owned(),
-            "String" => "string".to_owned(),
-            "Int" | "Float" => "number".to_owned(),
-            "Boolean" => "boolean".to_owned(),
-            name => {
-                let default = || format!(r#"NewType<unknown, "{name}">"#);
-                match &options.scalar_newtypes {
-                    None => default(),
-                    Some(scalar_newtypes) => {
-                        scalar_newtypes.get(name).cloned().unwrap_or_else(default)
-                    }
-                }
-            }
+        write!(f, "type {name}Scalar = ")?;
+        let ts_type = match of_type {
+            ts::ScalarType::ID => r#"NewType<string, "ID">"#.to_owned(),
+            ts::ScalarType::String => "string".to_owned(),
+            ts::ScalarType::Number => "number".to_owned(),
+            ts::ScalarType::Boolean => "boolean".to_owned(),
+            ts::ScalarType::Custom(Some(ts_type)) => ts_type.clone(),
+            ts::ScalarType::Custom(None) => format!(r#"NewType<unknown, "{name}">"#),
         };
-        writeln!(f, "type {name}Scalar = {scalar_type};",)
+        writeln!(f, "{ts_type};")
     }
 }
 
-impl<'a> Display for Typescript<&'a schema::EnumValue> {
+impl Display for ts::EnumValue {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let Typescript(schema::EnumValue {
-            name,
-            description,
-            is_deprecated,
-            deprecation_reason,
-        }) = self;
+        let ts::EnumValue { name, doc_comment } = self;
 
-        if let Some(description) = description {
-            writeln!(
-                f,
-                "{}",
-                Comment::maybe_deprecated(
-                    *is_deprecated,
-                    deprecation_reason.as_deref(),
-                    description.clone()
-                )
-            )?;
+        if let Some(doc_comment) = doc_comment {
+            writeln!(f, "{doc_comment}")?;
         }
 
         write!(f, "{name}")
     }
 }
 
-impl Display for Typescript<schema::named_type::Enum> {
+impl Display for ts::Enum {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let Typescript(schema::named_type::Enum {
+        let ts::Enum {
             name,
-            description,
-            enum_values,
-        }) = self;
+            doc_comment,
+            values,
+        } = self;
 
-        if let Some(description) = description {
-            writeln!(f, "{}", Comment(description.clone()))?;
+        if let Some(doc_comment) = doc_comment {
+            writeln!(f, "{doc_comment}")?;
         }
 
         writeln!(
             f,
             "enum {name} = {{ {} }};",
-            enum_values
+            values
                 .iter()
-                .map(|ev| Typescript(ev).to_string())
+                .map(ToString::to_string)
                 .collect::<Vec<_>>()
                 .join(", ")
         )
     }
 }
 
-impl<'a> Display for Typescript<&'a schema::Field> {
+impl Display for ts::InterfaceRef {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        todo!()
+        write!(f, "{}", self.name())
     }
 }
 
-impl<'a, S: TypeRefSuffix> Display for Typescript<(ts::NullableTypeRef, PhantomData<S>)> {
+impl Display for ts::TypeRef {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let Typescript((type_ref, suffix)) = self;
-        match type_ref {
-            ts::NullableTypeRef::To { name } => write!(f, "{name}{suffix}", suffix = S::SUFFIX),
-            ts::NullableTypeRef::List(type_ref) => {
-                write!(
-                    f,
-                    "List<{type_ref}>",
-                    type_ref = Typescript((**type_ref, *suffix))
-                )
-            }
+        write!(f, "{}", self.name())
+    }
+}
+
+impl<R: ts::Ref + Display> Display for ts::NullableRefContainer<R> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ts::NullableRefContainer::Ref(r) => write!(f, "{r}"),
+            ts::NullableRefContainer::List(r) => write!(f, "List<{r}>"),
         }
     }
 }
 
-impl<'a, S: TypeRefSuffix> Display for Typescript<(ts::TypeRef, PhantomData<S>)> {
+impl<R: ts::Ref + Display> Display for ts::RefContainer<R> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let Typescript((type_ref, suffix)) = self;
-        match type_ref {
-            ts::TypeRef::To { name } => write!(f, "{name}{}", S::SUFFIX),
-            ts::TypeRef::List(type_ref) => write!(
-                f,
-                "List<{type_ref}>",
-                type_ref = Typescript((**type_ref, *suffix))
-            ),
-            ts::TypeRef::Nullable(type_ref) => {
-                write!(
-                    f,
-                    "Nullable<{type_ref}>",
-                    type_ref = Typescript((*type_ref, *suffix))
-                )
-            }
+        match self {
+            ts::RefContainer::Ref(r) => write!(f, "{r}"),
+            ts::RefContainer::List(r) => write!(f, "List<{r}>"),
+            ts::RefContainer::Nullable(r) => write!(f, "Nullable<{r}>"),
         }
     }
 }
 
-impl Display for Typescript<schema::named_type::Object> {
+impl Display for ts::Field {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let Typescript(schema::named_type::Object {
+        let Self {
             name,
-            description,
-            fields,
-            interfaces,
-        }) = self;
+            of_type,
+            doc_comment,
+        } = self;
 
-        if let Some(description) = description {
-            writeln!(f, "{}", Comment(description.clone()))?;
+        if let Some(doc_comment) = doc_comment {
+            writeln!(f, "{doc_comment}")?;
+        }
+
+        writeln!(f, "{name}: {of_type}")
+    }
+}
+
+impl Display for ts::Object {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let Self {
+            name,
+            comment,
+            interfaces,
+            fields,
+        } = self;
+
+        if let Some(comment) = comment {
+            writeln!(f, "{comment}")?;
         }
 
         let mut components = vec![format!(
             "{{ {} }}",
             fields
                 .iter()
-                .map(|f| Typescript(f).to_string())
+                .map(ToString::to_string)
                 .collect::<Vec<_>>()
                 .join(", ")
         )];
 
-        components.extend(interfaces.iter().map(|i| {
-            Typescript((ts::TypeRef::from(i.clone()), PhantomData::<Interface>)).to_string()
-        }));
+        components.extend(interfaces.iter().map(ToString::to_string));
 
         writeln!(f, "type {name}Object = {};", components.join(" & "))
     }
