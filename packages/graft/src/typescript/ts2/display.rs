@@ -149,13 +149,13 @@ impl Display for ts::Object {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let Self {
             name,
-            comment,
+            doc_comment,
             interfaces,
             fields,
         } = self;
 
-        if let Some(comment) = comment {
-            writeln!(f, "{comment}")?;
+        if let Some(doc_comment) = doc_comment {
+            writeln!(f, "{doc_comment}")?;
         }
 
         let mut components = vec![format!(

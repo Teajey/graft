@@ -1,4 +1,3 @@
-mod common;
 mod display;
 mod from_graphql;
 
@@ -6,6 +5,25 @@ use std::fmt::Display;
 
 #[derive(Clone)]
 pub struct DocComment<T: Display = String>(T);
+
+impl DocComment<Deprecable> {
+    pub fn maybe_new(
+        is_deprecated: bool,
+        deprecation_reason: Option<String>,
+        description: Option<String>,
+    ) -> Option<Self> {
+        let deprecable = if is_deprecated {
+            Deprecable::Deprecated {
+                message: deprecation_reason,
+                description,
+            }
+        } else {
+            Deprecable::Description(description?)
+        };
+
+        Some(Self(deprecable))
+    }
+}
 
 #[derive(Clone)]
 pub enum Deprecable {
@@ -58,14 +76,14 @@ pub enum RefContainer<R: Ref> {
 #[derive(Clone)]
 pub struct Field {
     pub name: String,
-    pub doc_comment: Option<DocComment>,
+    pub doc_comment: Option<DocComment<Deprecable>>,
     pub of_type: RefContainer<TypeRef>,
 }
 
 #[derive(Clone)]
 pub struct Object {
     name: String,
-    comment: Option<DocComment>,
+    doc_comment: Option<DocComment>,
     interfaces: Vec<InterfaceRef>,
     fields: Vec<Field>,
 }
