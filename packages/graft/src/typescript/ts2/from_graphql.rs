@@ -207,3 +207,35 @@ impl From<(gql::named_type::Scalar, &TypescriptOptions)> for ts::Scalar {
         }
     }
 }
+
+impl From<gql::EnumValue> for ts::EnumValue {
+    fn from(value: gql::EnumValue) -> Self {
+        let gql::EnumValue {
+            name,
+            description,
+            is_deprecated,
+            deprecation_reason,
+        } = value;
+
+        Self {
+            name,
+            doc_comment: ts::DocComment::maybe_new(is_deprecated, deprecation_reason, description),
+        }
+    }
+}
+
+impl From<gql::named_type::Enum> for ts::Enum {
+    fn from(value: gql::named_type::Enum) -> Self {
+        let gql::named_type::Enum {
+            name,
+            description,
+            enum_values,
+        } = value;
+
+        Self {
+            name,
+            doc_comment: description.map(ts::DocComment),
+            values: enum_values.into_iter().map(Into::into).collect::<Vec<_>>(),
+        }
+    }
+}
