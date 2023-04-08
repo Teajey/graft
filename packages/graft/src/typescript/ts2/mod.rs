@@ -50,14 +50,36 @@ impl Ref for InterfaceRef {
 }
 
 #[derive(Clone)]
+pub struct UnionRef(String);
+
+impl Ref for UnionRef {
+    fn name(&self) -> String {
+        format!("{}Union", self.0)
+    }
+}
+
+#[derive(Clone)]
+pub struct ObjectRef(String);
+
+impl Ref for ObjectRef {
+    fn name(&self) -> String {
+        self.0.to_string()
+    }
+}
+
+#[derive(Clone)]
 pub enum TypeRef {
     Interface(InterfaceRef),
+    Union(UnionRef),
+    Object(ObjectRef),
 }
 
 impl Ref for TypeRef {
     fn name(&self) -> String {
         match self {
             Self::Interface(interface) => interface.name(),
+            Self::Union(union) => union.name(),
+            Self::Object(object) => object.name(),
         }
     }
 }
