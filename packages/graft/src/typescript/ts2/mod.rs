@@ -3,6 +3,8 @@ mod from_graphql;
 
 use std::fmt::Display;
 
+use crate::app::config::TypescriptOptions;
+
 #[derive(Clone)]
 pub struct DocComment<T: Display = String>(T);
 
@@ -94,6 +96,23 @@ pub enum ScalarType {
     Number,
     Boolean,
     Custom(Option<String>),
+}
+
+impl ScalarType {
+    pub fn new(name: String, options: &TypescriptOptions) -> Self {
+        match name.as_str() {
+            "ID" => Self::ID,
+            "String" => Self::String,
+            "Float" | "Int" => Self::Number,
+            "Boolean" => Self::Boolean,
+            custom => Self::Custom(
+                options
+                    .scalar_newtypes
+                    .as_ref()
+                    .and_then(|nt| nt.get(custom).cloned()),
+            ),
+        }
+    }
 }
 
 pub struct Scalar {

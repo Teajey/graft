@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use eyre::{eyre, Report, Result};
 
-use crate::{graphql::schema as gql, typescript::ts2 as ts};
+use crate::{app::config::TypescriptOptions, graphql::schema as gql, typescript::ts2 as ts};
 
 impl From<gql::TypeRef> for ts::InterfaceRef {
     fn from(value: gql::TypeRef) -> Self {
@@ -115,5 +115,17 @@ impl TryFrom<(&TypeRefIndex, gql::named_type::Object)> for ts::Object {
                 .map(|field| (type_ref_index, field).try_into())
                 .collect::<Result<_>>()?,
         })
+    }
+}
+
+impl From<(gql::named_type::Scalar, &TypescriptOptions)> for ts::Scalar {
+    fn from((value, options): (gql::named_type::Scalar, &TypescriptOptions)) -> Self {
+        let gql::named_type::Scalar { name, description } = value;
+
+        Self {
+            name: name.clone(),
+            doc_comment: description.map(ts::DocComment),
+            of_type: ts::ScalarType::new(name, options),
+        }
     }
 }
