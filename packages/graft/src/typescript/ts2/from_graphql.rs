@@ -25,14 +25,14 @@ impl TypeRefIndex {
             ts::TypeRef::Interface(i) => ts::FieldedRef::Interface(i.clone()),
             ts::TypeRef::Union(u) => ts::FieldedRef::Union(u.clone()),
             ts::TypeRef::Object(o) => ts::FieldedRef::Object(o.clone()),
-            ts::TypeRef::Scalar(_) => return None,
+            ts::TypeRef::Scalar(_) | ts::TypeRef::InputObject(_) => return None,
         };
 
         Some(fielded)
     }
 }
 
-impl TryFrom<(&TypeRefIndex, gql::NonNullTypeRef)> for ts::RefContainer<ts::TypeRef> {
+impl<R: ts::Ref> TryFrom<(&TypeRefIndex, gql::NonNullTypeRef)> for ts::RefContainer<R> {
     type Error = Report;
 
     fn try_from(
@@ -47,7 +47,8 @@ impl TryFrom<(&TypeRefIndex, gql::NonNullTypeRef)> for ts::RefContainer<ts::Type
                     .0
                     .get(&name)
                     .cloned()
-                    .ok_or_else(|| eyre!("Couldn't find TypeRef"))?,
+                    .ok_or_else(|| eyre!("Couldn't find TypeRef"))?
+                    .try_into_ref()?,
             ),
         };
 
@@ -55,7 +56,7 @@ impl TryFrom<(&TypeRefIndex, gql::NonNullTypeRef)> for ts::RefContainer<ts::Type
     }
 }
 
-impl TryFrom<(&TypeRefIndex, gql::TypeRef)> for ts::RefContainer<ts::TypeRef> {
+impl<R: ts::Ref> TryFrom<(&TypeRefIndex, gql::TypeRef)> for ts::RefContainer<R> {
     type Error = Report;
 
     fn try_from(
@@ -75,7 +76,8 @@ impl TryFrom<(&TypeRefIndex, gql::TypeRef)> for ts::RefContainer<ts::TypeRef> {
                     .0
                     .get(&name)
                     .cloned()
-                    .ok_or_else(|| eyre!("Couldn't find TypeRef"))?,
+                    .ok_or_else(|| eyre!("Couldn't find TypeRef"))?
+                    .try_into_ref()?,
             )),
         };
 
@@ -237,5 +239,41 @@ impl From<gql::named_type::Enum> for ts::Enum {
             doc_comment: description.map(ts::DocComment),
             values: enum_values.into_iter().map(Into::into).collect::<Vec<_>>(),
         }
+    }
+}
+
+impl TryFrom<(gql::InputValue, &TypeRefIndex)> for ts::InputField {
+    type Error = Report;
+
+    fn try_from(
+        (value, type_ref_index): (gql::InputValue, &TypeRefIndex),
+    ) -> std::result::Result<Self, Self::Error> {
+        let gql::InputValue {
+            name,
+            description,
+            of_type,
+        } = value;
+
+        Ok(Self {
+            name,
+            doc_comment: description.map(ts::DocComment),
+            of_type: (type_ref_index, of_type).try_into()?,
+        })
+    }
+}
+
+impl TryFrom<(gql::named_type::InputObject, &TypeRefIndex)> for ts::InputObject {
+    type Error = Report;
+
+    fn try_from(
+        (value, type_ref_index): (gql::named_type::InputObject, &TypeRefIndex),
+    ) -> std::result::Result<Self, Self::Error> {
+        let gql::named_type::InputObject {
+            name,
+            description,
+            input_fields,
+        } = value;
+
+        todo!()
     }
 }
