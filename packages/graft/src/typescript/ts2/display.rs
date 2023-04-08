@@ -172,3 +172,28 @@ impl Display for ts::Object {
         writeln!(f, "type {name}Object = {};", components.join(" & "))
     }
 }
+
+impl Display for ts::Interface {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let Self {
+            name,
+            doc_comment,
+            fields,
+        } = self;
+
+        if let Some(doc_comment) = doc_comment {
+            writeln!(f, "{doc_comment}")?;
+        }
+
+        let fields = format!(
+            "{{ {} }}",
+            fields
+                .iter()
+                .map(ToString::to_string)
+                .collect::<Vec<_>>()
+                .join(", ")
+        );
+
+        writeln!(f, "type {name}Interface = {};", fields)
+    }
+}

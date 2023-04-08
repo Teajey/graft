@@ -90,6 +90,12 @@ pub struct Object {
     fields: Vec<Field>,
 }
 
+pub struct Interface {
+    name: String,
+    doc_comment: Option<DocComment>,
+    fields: Vec<Field>,
+}
+
 pub enum ScalarType {
     ID,
     String,

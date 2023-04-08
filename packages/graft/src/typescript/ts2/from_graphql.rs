@@ -118,6 +118,31 @@ impl TryFrom<(&TypeRefIndex, gql::named_type::Object)> for ts::Object {
     }
 }
 
+impl TryFrom<(&TypeRefIndex, gql::named_type::Interface)> for ts::Interface {
+    type Error = Report;
+
+    fn try_from(
+        (type_ref_index, value): (&TypeRefIndex, gql::named_type::Interface),
+    ) -> Result<Self, Self::Error> {
+        let gql::named_type::Interface {
+            name,
+            description,
+            fields,
+            possible_types: _,
+            interfaces: _,
+        } = value;
+
+        Ok(Self {
+            name,
+            doc_comment: description.map(ts::DocComment),
+            fields: fields
+                .into_iter()
+                .map(|field| (type_ref_index, field).try_into())
+                .collect::<Result<_>>()?,
+        })
+    }
+}
+
 impl From<(gql::named_type::Scalar, &TypescriptOptions)> for ts::Scalar {
     fn from((value, options): (gql::named_type::Scalar, &TypescriptOptions)) -> Self {
         let gql::named_type::Scalar { name, description } = value;
