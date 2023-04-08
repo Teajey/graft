@@ -197,3 +197,33 @@ impl Display for ts::Interface {
         writeln!(f, "type {name}Interface = {};", fields)
     }
 }
+
+impl Display for ts::FieldedRef {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.name())
+    }
+}
+
+impl Display for ts::Union {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let Self {
+            name,
+            doc_comment,
+            possible_types,
+        } = self;
+
+        if let Some(doc_comment) = doc_comment {
+            writeln!(f, "{doc_comment}")?;
+        }
+
+        writeln!(
+            f,
+            "type {name}Union = {};",
+            possible_types
+                .iter()
+                .map(ToString::to_string)
+                .collect::<Vec<_>>()
+                .join(" | ")
+        )
+    }
+}

@@ -19,6 +19,19 @@ impl From<gql::TypeRef> for ts::InterfaceRef {
 
 struct TypeRefIndex(HashMap<String, ts::TypeRef>);
 
+impl TypeRefIndex {
+    fn get_fielded(&self, name: &str) -> Option<ts::FieldedRef> {
+        let fielded = match self.0.get(name)? {
+            ts::TypeRef::Interface(i) => ts::FieldedRef::Interface(i.clone()),
+            ts::TypeRef::Union(u) => ts::FieldedRef::Union(u.clone()),
+            ts::TypeRef::Object(o) => ts::FieldedRef::Object(o.clone()),
+            ts::TypeRef::Scalar(_) => return None,
+        };
+
+        Some(fielded)
+    }
+}
+
 impl TryFrom<(&TypeRefIndex, gql::NonNullTypeRef)> for ts::RefContainer<ts::TypeRef> {
     type Error = Report;
 
@@ -138,6 +151,46 @@ impl TryFrom<(&TypeRefIndex, gql::named_type::Interface)> for ts::Interface {
             fields: fields
                 .into_iter()
                 .map(|field| (type_ref_index, field).try_into())
+                .collect::<Result<_>>()?,
+        })
+    }
+}
+
+impl TryFrom<(&TypeRefIndex, gql::TypeRef)> for ts::FieldedRef {
+    type Error = Report;
+
+    fn try_from(
+        (type_ref_index, value): (&TypeRefIndex, gql::TypeRef),
+    ) -> std::result::Result<Self, Self::Error> {
+        let type_ref = match value {
+            gql::TypeRef::Container(_) => return Err(eyre!("Unexpected contained reference")),
+            gql::TypeRef::To { name } => type_ref_index
+                .get_fielded(&name)
+                .ok_or_else(|| eyre!("Couldn't find ts::TypeRef with name '{}'", name))?,
+        };
+
+        Ok(type_ref)
+    }
+}
+
+impl TryFrom<(&TypeRefIndex, gql::named_type::Union)> for ts::Union {
+    type Error = Report;
+
+    fn try_from(
+        (type_ref_index, value): (&TypeRefIndex, gql::named_type::Union),
+    ) -> Result<Self, Self::Error> {
+        let gql::named_type::Union {
+            name,
+            description,
+            possible_types,
+        } = value;
+
+        Ok(Self {
+            name,
+            doc_comment: description.map(ts::DocComment),
+            possible_types: possible_types
+                .into_iter()
+                .map(|pt| (type_ref_index, pt).try_into())
                 .collect::<Result<_>>()?,
         })
     }

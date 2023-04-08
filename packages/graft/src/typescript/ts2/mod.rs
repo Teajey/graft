@@ -68,13 +68,41 @@ impl Ref for ObjectRef {
 }
 
 #[derive(Clone)]
+pub struct ScalarRef(String);
+
+impl Ref for ScalarRef {
+    fn name(&self) -> String {
+        format!("{}Scalar", self.0)
+    }
+}
+
+#[derive(Clone)]
 pub enum TypeRef {
+    Interface(InterfaceRef),
+    Union(UnionRef),
+    Object(ObjectRef),
+    Scalar(ScalarRef),
+}
+
+#[derive(Clone)]
+pub enum FieldedRef {
     Interface(InterfaceRef),
     Union(UnionRef),
     Object(ObjectRef),
 }
 
 impl Ref for TypeRef {
+    fn name(&self) -> String {
+        match self {
+            Self::Interface(interface) => interface.name(),
+            Self::Union(union) => union.name(),
+            Self::Object(object) => object.name(),
+            Self::Scalar(scalar) => scalar.name(),
+        }
+    }
+}
+
+impl Ref for FieldedRef {
     fn name(&self) -> String {
         match self {
             Self::Interface(interface) => interface.name(),
@@ -116,6 +144,12 @@ pub struct Interface {
     name: String,
     doc_comment: Option<DocComment>,
     fields: Vec<Field>,
+}
+
+pub struct Union {
+    name: String,
+    doc_comment: Option<DocComment>,
+    possible_types: Vec<FieldedRef>,
 }
 
 pub enum ScalarType {
