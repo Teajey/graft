@@ -274,6 +274,13 @@ impl TryFrom<(gql::named_type::InputObject, &TypeRefIndex)> for ts::InputObject 
             input_fields,
         } = value;
 
-        todo!()
+        Ok(Self {
+            name,
+            doc_comment: description.map(ts::DocComment),
+            input_fields: input_fields
+                .into_iter()
+                .map(|input_value| (input_value, type_ref_index).try_into())
+                .collect::<Result<Vec<_>>>()?,
+        })
     }
 }

@@ -227,3 +227,62 @@ impl Display for ts::Union {
         )
     }
 }
+
+impl Display for ts::InputObjectRef {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}Input", self.0)
+    }
+}
+
+impl Display for ts::ScalarRef {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}Scalar", self.0)
+    }
+}
+
+impl Display for ts::InputRef {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ts::InputRef::InputObject(io) => io.fmt(f),
+            ts::InputRef::Scalar(s) => s.fmt(f),
+        }
+    }
+}
+
+impl Display for ts::InputField {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let Self {
+            name,
+            doc_comment,
+            of_type,
+        } = self;
+        if let Some(doc_comment) = doc_comment {
+            writeln!(f, "{doc_comment}")?;
+        }
+        writeln!(f, "{name}: {of_type},")
+    }
+}
+
+impl Display for ts::InputObject {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let Self {
+            name,
+            doc_comment,
+            input_fields,
+        } = self;
+
+        if let Some(doc_comment) = doc_comment {
+            writeln!(f, "{doc_comment}")?;
+        }
+
+        write!(
+            f,
+            "type {name}Input = {{ {} }}",
+            input_fields
+                .iter()
+                .map(ToString::to_string)
+                .collect::<Vec<_>>()
+                .join(", ")
+        )
+    }
+}
