@@ -1,24 +1,46 @@
-use eyre::{eyre, Report, Result};
+use eyre::{eyre, ErrReport, Report, Result};
 use graphql_parser::schema as gp;
 
 use crate::graphql::schema as ac;
 
-impl From<gp::Type<'_, String>> for ac::TypeRef {
-    fn from(value: gp::Type<'_, String>) -> Self {
-        match value {
+impl TryFrom<gp::Type<'_, String>> for ac::NonNullTypeRef {
+    type Error = ErrReport;
+
+    fn try_from(value: gp::Type<'_, String>) -> std::result::Result<Self, Self::Error> {
+        let type_ref = match value {
             gp::Type::NamedType(name) => Self::To { name },
-            gp::Type::ListType(of_type) => Self::Container(ac::TypeRefContainer::List {
-                of_type: Box::new((*of_type).into()),
+            gp::Type::ListType(list) => Self::Container(ac::NonNullTypeRefContainer::List {
+                of_type: Box::new((*list).try_into()?),
             }),
-            gp::Type::NonNullType(of_type) => Self::Container(ac::TypeRefContainer::NonNull {
-                of_type: Box::new((*of_type).into()),
-            }),
-        }
+            gp::Type::NonNullType(_) => return Err(eyre!("NonNull cannot contain NonNull")),
+        };
+
+        Ok(type_ref)
     }
 }
 
-impl From<gp::InputValue<'_, String>> for ac::InputValue {
-    fn from(
+impl TryFrom<gp::Type<'_, String>> for ac::TypeRef {
+    type Error = ErrReport;
+
+    fn try_from(value: gp::Type<'_, String>) -> Result<Self> {
+        let type_ref = match value {
+            gp::Type::NamedType(name) => Self::To { name },
+            gp::Type::ListType(of_type) => Self::Container(ac::TypeRefContainer::List {
+                of_type: Box::new((*of_type).try_into()?),
+            }),
+            gp::Type::NonNullType(of_type) => Self::Container(ac::TypeRefContainer::NonNull {
+                of_type: Box::new((*of_type).try_into()?),
+            }),
+        };
+
+        Ok(type_ref)
+    }
+}
+
+impl TryFrom<gp::InputValue<'_, String>> for ac::InputValue {
+    type Error = ErrReport;
+
+    fn try_from(
         gp::InputValue {
             position: _,
             description,
@@ -28,17 +50,19 @@ impl From<gp::InputValue<'_, String>> for ac::InputValue {
             // Reading directives with introspection not supported: https://stackoverflow.com/a/65064958/2269124
             directives: _,
         }: gp::InputValue<'_, String>,
-    ) -> Self {
-        Self {
+    ) -> Result<Self> {
+        Ok(Self {
             name,
             description,
-            of_type: value_type.into(),
-        }
+            of_type: value_type.try_into()?,
+        })
     }
 }
 
-impl From<gp::Field<'_, String>> for ac::Field {
-    fn from(
+impl TryFrom<gp::Field<'_, String>> for ac::Field {
+    type Error = ErrReport;
+
+    fn try_from(
         gp::Field {
             position: _,
             description,
@@ -47,15 +71,18 @@ impl From<gp::Field<'_, String>> for ac::Field {
             field_type,
             directives: _,
         }: gp::Field<'_, String>,
-    ) -> Self {
-        Self {
+    ) -> Result<Self> {
+        Ok(Self {
             name,
             description,
-            args: arguments.into_iter().map(Into::into).collect(),
-            of_type: field_type.into(),
+            args: arguments
+                .into_iter()
+                .map(TryInto::try_into)
+                .collect::<Result<_>>()?,
+            of_type: field_type.try_into()?,
             is_deprecated: false,
             deprecation_reason: None,
-        }
+        })
     }
 }
 
@@ -77,15 +104,19 @@ impl From<gp::EnumValue<'_, String>> for ac::EnumValue {
     }
 }
 
-impl From<gp::TypeDefinition<'_, String>> for ac::NamedType {
-    fn from(value: gp::TypeDefinition<'_, String>) -> Self {
-        match value {
+impl TryFrom<gp::TypeDefinition<'_, String>> for ac::NamedType {
+    type Error = ErrReport;
+
+    fn try_from(value: gp::TypeDefinition<'_, String>) -> Result<Self> {
+        use ac::named_type::{Enum, InputObject, Interface, Object, Scalar, Union};
+
+        let named_type = match value {
             gp::TypeDefinition::Scalar(gp::ScalarType {
                 position: _,
                 description,
                 name,
                 directives: _,
-            }) => ac::NamedType::Scalar { name, description },
+            }) => ac::NamedType::Scalar(Scalar { name, description }),
             gp::TypeDefinition::Object(gp::ObjectType {
                 position: _,
                 description,
@@ -93,15 +124,18 @@ impl From<gp::TypeDefinition<'_, String>> for ac::NamedType {
                 implements_interfaces,
                 directives: _,
                 fields,
-            }) => ac::NamedType::Object {
+            }) => ac::NamedType::Object(Object {
                 name,
                 description,
-                fields: fields.into_iter().map(Into::into).collect(),
+                fields: fields
+                    .into_iter()
+                    .map(TryInto::try_into)
+                    .collect::<Result<_>>()?,
                 interfaces: implements_interfaces
                     .into_iter()
                     .map(|name| ac::TypeRef::To { name })
                     .collect(),
-            },
+            }),
             gp::TypeDefinition::Interface(gp::InterfaceType {
                 position: _,
                 description,
@@ -109,53 +143,61 @@ impl From<gp::TypeDefinition<'_, String>> for ac::NamedType {
                 implements_interfaces,
                 directives: _,
                 fields,
-            }) => ac::NamedType::Interface {
+            }) => ac::NamedType::Interface(Interface {
                 name,
                 description,
-                fields: fields.into_iter().map(Into::into).collect(),
+                fields: fields
+                    .into_iter()
+                    .map(TryInto::try_into)
+                    .collect::<Result<_>>()?,
                 possible_types: vec![],
                 interfaces: implements_interfaces
                     .into_iter()
                     .map(|name| ac::TypeRef::To { name })
                     .collect(),
-            },
+            }),
             gp::TypeDefinition::Union(gp::UnionType {
                 position: _,
                 description,
                 name,
                 directives: _,
                 types,
-            }) => ac::NamedType::Union {
+            }) => ac::NamedType::Union(Union {
                 name,
                 description,
                 possible_types: types
                     .into_iter()
                     .map(|name| ac::TypeRef::To { name })
                     .collect(),
-            },
+            }),
             gp::TypeDefinition::Enum(gp::EnumType {
                 position: _,
                 description,
                 name,
                 directives: _,
                 values,
-            }) => ac::NamedType::Enum {
+            }) => ac::NamedType::Enum(Enum {
                 name,
                 description,
                 enum_values: values.into_iter().map(Into::into).collect(),
-            },
+            }),
             gp::TypeDefinition::InputObject(gp::InputObjectType {
                 position: _,
                 description,
                 name,
                 directives: _,
                 fields,
-            }) => ac::NamedType::InputObject {
+            }) => ac::NamedType::InputObject(InputObject {
                 name,
                 description,
-                input_fields: fields.into_iter().map(Into::into).collect(),
-            },
-        }
+                input_fields: fields
+                    .into_iter()
+                    .map(TryInto::try_into)
+                    .collect::<Result<_>>()?,
+            }),
+        };
+
+        Ok(named_type)
     }
 }
 
@@ -186,8 +228,10 @@ impl From<gp::DirectiveLocation> for ac::DirectiveLocation {
     }
 }
 
-impl From<gp::DirectiveDefinition<'_, String>> for ac::Directive {
-    fn from(
+impl TryFrom<gp::DirectiveDefinition<'_, String>> for ac::Directive {
+    type Error = ErrReport;
+
+    fn try_from(
         gp::DirectiveDefinition {
             position: _,
             description,
@@ -197,13 +241,16 @@ impl From<gp::DirectiveDefinition<'_, String>> for ac::Directive {
             repeatable: _,
             locations,
         }: gp::DirectiveDefinition<'_, String>,
-    ) -> Self {
-        Self {
+    ) -> Result<Self> {
+        Ok(Self {
             description,
             name,
             locations: locations.into_iter().map(Into::into).collect(),
-            args: arguments.into_iter().map(Into::into).collect(),
-        }
+            args: arguments
+                .into_iter()
+                .map(TryInto::try_into)
+                .collect::<Result<_>>()?,
+        })
     }
 }
 
@@ -235,11 +282,11 @@ impl TryFrom<gp::Document<'_, String>> for ac::Schema {
                     subscription_type = subscription.map(|name| ac::RootType { name });
                 }
                 gp::Definition::TypeDefinition(type_definition) => {
-                    types.push(type_definition.into());
+                    types.push(type_definition.try_into()?);
                 }
                 gp::Definition::TypeExtension(_) => panic!("TypeExtension not yet supported"),
                 gp::Definition::DirectiveDefinition(directive_definition) => {
-                    directives.push(directive_definition.into());
+                    directives.push(directive_definition.try_into()?);
                 }
             }
         }

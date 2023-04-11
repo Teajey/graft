@@ -4,7 +4,7 @@ mod to_document;
 use eyre::{eyre, Result};
 use serde::{Deserialize, Serialize};
 
-use crate::util::{Arg, Named};
+use crate::{graphql::query, util::Named};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -30,9 +30,23 @@ pub enum TypeKind {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "kind", rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum NonNullTypeRefContainer {
+    #[serde(rename_all = "camelCase")]
+    List { of_type: Box<TypeRef> },
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(untagged)]
+pub enum NonNullTypeRef {
+    Container(NonNullTypeRefContainer),
+    To { name: String },
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(tag = "kind", rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum TypeRefContainer {
     #[serde(rename_all = "camelCase")]
-    NonNull { of_type: Box<TypeRef> },
+    NonNull { of_type: Box<NonNullTypeRef> },
     #[serde(rename_all = "camelCase")]
     List { of_type: Box<TypeRef> },
 }
@@ -50,20 +64,47 @@ impl TypeRef {
     }
 }
 
-impl From<Arg<'_>> for TypeRef {
-    fn from(arg: Arg<'_>) -> Self {
-        match arg {
-            Arg::NamedType(name) => TypeRef::To {
+impl From<Type> for TypeRef {
+    fn from(value: Type) -> Self {
+        match value {
+            Type::Container(tfc) => TypeRef::Container(tfc),
+            Type::Named(named) => TypeRef::To {
+                name: named.name().to_owned(),
+            },
+        }
+    }
+}
+
+impl From<&query::NonNullType> for NonNullTypeRef {
+    fn from(value: &query::NonNullType) -> Self {
+        match value {
+            query::NonNullType::Named { name } => NonNullTypeRef::To {
                 name: name.to_string(),
             },
-            Arg::NonNullType(var_type) => {
-                let type_ref = (*var_type).into();
+            query::NonNullType::List { value } => {
+                let type_ref = (&**value).into();
+                NonNullTypeRef::Container(NonNullTypeRefContainer::List {
+                    of_type: Box::new(type_ref),
+                })
+            }
+        }
+    }
+}
+
+impl From<&query::Type> for TypeRef {
+    fn from(value: &query::Type) -> Self {
+        match value {
+            query::Type::Named { name } => TypeRef::To {
+                name: name.to_string(),
+            },
+            query::Type::NonNull { value } => {
+                let type_ref = value.into();
                 TypeRef::Container(TypeRefContainer::NonNull {
                     of_type: Box::new(type_ref),
                 })
             }
-            Arg::ListType(var_type) => {
-                let type_ref = (*var_type).into();
+            query::Type::List { value } => {
+                let type_ref = (&**value).into();
                 TypeRef::Container(TypeRefContainer::List {
                     of_type: Box::new(type_ref),
                 })
@@ -86,56 +127,88 @@ impl Type {
             Type::Named(named_type) => Ok(named_type),
         }
     }
+
+    pub fn into_type_ref(self) -> TypeRef {
+        self.into()
+    }
+}
+
+pub mod named_type {
+    use serde::{Deserialize, Serialize};
+
+    use super::{EnumValue, Field, InputValue, TypeRef};
+
+    #[derive(Serialize, Deserialize, Debug, Clone)]
+    #[serde(rename_all = "camelCase")]
+    pub struct Scalar {
+        pub name: String,
+        pub description: Option<String>,
+    }
+
+    #[derive(Serialize, Deserialize, Debug, Clone)]
+    #[serde(rename_all = "camelCase")]
+    pub struct Object {
+        pub name: String,
+        pub description: Option<String>,
+        pub fields: Vec<Field>,
+        pub interfaces: Vec<TypeRef>,
+    }
+
+    #[derive(Serialize, Deserialize, Debug, Clone)]
+    #[serde(rename_all = "camelCase")]
+    pub struct Interface {
+        pub name: String,
+        pub description: Option<String>,
+        pub fields: Vec<Field>,
+        pub possible_types: Vec<TypeRef>,
+        // FIXME: this field only valid in the October 2021 GraphQL spec
+        #[serde(skip)]
+        pub interfaces: Vec<TypeRef>,
+    }
+
+    #[derive(Serialize, Deserialize, Debug, Clone)]
+    #[serde(rename_all = "camelCase")]
+    pub struct Union {
+        pub name: String,
+        pub description: Option<String>,
+        pub possible_types: Vec<TypeRef>,
+    }
+
+    #[derive(Serialize, Deserialize, Debug, Clone)]
+    #[serde(rename_all = "camelCase")]
+    pub struct Enum {
+        pub name: String,
+        pub description: Option<String>,
+        pub enum_values: Vec<EnumValue>,
+    }
+
+    #[derive(Serialize, Deserialize, Debug, Clone)]
+    #[serde(rename_all = "camelCase")]
+    pub struct InputObject {
+        pub name: String,
+        pub description: Option<String>,
+        pub input_fields: Vec<InputValue>,
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "kind", rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum NamedType {
-    #[serde(rename_all = "camelCase")]
-    Scalar {
-        name: String,
-        description: Option<String>,
-    },
-    #[serde(rename_all = "camelCase")]
-    Object {
-        name: String,
-        description: Option<String>,
-        fields: Vec<Field>,
-        interfaces: Vec<TypeRef>,
-    },
-    #[serde(rename_all = "camelCase")]
-    Interface {
-        name: String,
-        description: Option<String>,
-        fields: Vec<Field>,
-        possible_types: Vec<TypeRef>,
-        // FIXME: this field only valid in the October 2021 GraphQL spec
-        #[serde(skip)]
-        interfaces: Vec<TypeRef>,
-    },
-    #[serde(rename_all = "camelCase")]
-    Union {
-        name: String,
-        description: Option<String>,
-        possible_types: Vec<TypeRef>,
-    },
-    #[serde(rename_all = "camelCase")]
-    Enum {
-        name: String,
-        description: Option<String>,
-        enum_values: Vec<EnumValue>,
-    },
-    #[serde(rename_all = "camelCase")]
-    InputObject {
-        name: String,
-        description: Option<String>,
-        input_fields: Vec<InputValue>,
-    },
+    Scalar(named_type::Scalar),
+    Object(named_type::Object),
+    Interface(named_type::Interface),
+    Union(named_type::Union),
+    Enum(named_type::Enum),
+    InputObject(named_type::InputObject),
 }
 
 impl NamedType {
     pub fn is_internal(&self) -> bool {
         self.name().starts_with("__")
+    }
+
+    pub fn to_type_ref(&self) -> TypeRef {
+        self.into()
     }
 }
 
